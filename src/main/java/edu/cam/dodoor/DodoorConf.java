@@ -20,6 +20,10 @@ public class DodoorConf {
     // Values: "debug", "info", "warn", "error", "fatal"
     public final static String LOG_LEVEL = "log_level";
 
+
+    /**
+     * Scheduler config
+     */
     public final static String SCHEDULER_THRIFT_PORT = "scheduler.thrift.port";
     public final static String SCHEDULER_THRIFT_THREADS =
             "scheduler.thrift.threads";
@@ -27,6 +31,18 @@ public class DodoorConf {
     public final static String SCHEDULER_STATE_THRIFT_PORT = "scheduler.state.thrift.port";
     public final static String SCHEDULER_STATE_THRIFT_THREADS =
             "scheduler.state.thrift.threads";
+
+
+
+    /**
+     * Data Store Config
+     */
+    public final static String DATA_STORE_THRIFT_PORT = "datastore.thrift.port";
+    public final static String DATA_STORE_THRIFT_THREADS =
+            "scheduler.thrift.threads";
+
+    public final static int DEFAULT_DATA_STORE_THRIFT_PORT = 53001;
+    public final static int DEFAULT_DATA_STORE_THRIFT_THREADS = 1;
 
     /**
      * Whether the scheduler should cancel outstanding reservations when all of a job's tasks have

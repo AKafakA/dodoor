@@ -85,7 +85,6 @@ struct TTaskLaunchSpec {
 struct TNodeState {
   1: TResourceVector resourceUsed;   # Resources currently used
   2: TResourceVector resourceRequested;  # Resources has been requested and pending
-  3: THostPort nodeAddress;
 }
 
 exception ServerNotReadyException {

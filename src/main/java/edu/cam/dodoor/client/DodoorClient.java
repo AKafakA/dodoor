@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.cam.dodoor.api;
+package edu.cam.dodoor.client;
 
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.utils.TClients;
@@ -27,6 +27,7 @@ import edu.cam.dodoor.thrift.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,19 +36,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Thread-safe Java API to Dodoor scheduling service.
  */
 public class DodoorClient {
-    public static boolean launchedServerAlready = false;
+    public static boolean _launchedServerAlready = false;
 
     private final static Logger LOG = Logger.getLogger(DodoorClient.class);
     private final static int NUM_CLIENTS = 8;
     private final static int DEFAULT_LISTEN_PORT = 50201;
 
-    BlockingQueue<SchedulerService.Client> clients =
+    BlockingQueue<SchedulerService.Client> _clients =
             new LinkedBlockingQueue<>();
 
-    DataStoreService.Client dataStoreClient;
-    private int batchSize;
-
-    private AtomicInteger counter;
+    DataStoreService.Client _dataStoreClient;
+    private int _batchSize;
+    private AtomicInteger _counter;
 
     public void initialize(InetSocketAddress sparrowSchedulerAddr,
                            FrontendService.Iface frontendServer,
@@ -63,23 +63,23 @@ public class DodoorClient {
         FrontendService.Processor<FrontendService.Iface> processor =
                 new FrontendService.Processor<>(frontendServer);
 
-        if (!launchedServerAlready) {
+        if (!_launchedServerAlready) {
             try {
                 TServers.launchThreadedThriftServer(listenPort, NUM_CLIENTS, processor);
             } catch (IOException e) {
                 LOG.fatal("Couldn't launch server side of frontend", e);
             }
-            launchedServerAlready = true;
+            _launchedServerAlready = true;
         }
 
         for (int i = 0; i < NUM_CLIENTS; i++) {
             SchedulerService.Client client = TClients.createBlockingSchedulerClient(
                     schedulerAddr.getAddress().getHostAddress(), schedulerAddr.getPort(),
                     60000);
-            clients.add(client);
+            _clients.add(client);
         }
-        counter = new AtomicInteger(0);
-        batchSize = conf.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
+        _counter = new AtomicInteger(0);
+        _batchSize = conf.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
     }
 
     public boolean submitJob(List<TTaskSpec> tasks, TUserGroupInfo user)
@@ -103,10 +103,10 @@ public class DodoorClient {
 
     public boolean submitRequest(TSchedulingRequest request) throws TException {
         try {
-            SchedulerService.Client client = clients.take();
+            SchedulerService.Client client = _clients.take();
             client.submitJob(request);
-            clients.put(client);
-            counter.getAndAdd(request.tasks.size());
+            _clients.put(client);
+            _counter.getAndAdd(request.tasks.size());
         } catch (InterruptedException e) {
             LOG.fatal(e);
         } catch (TException e) {
@@ -114,14 +114,14 @@ public class DodoorClient {
             return false;
         }
 
-        if (counter.get() >= batchSize) {
-            List<TNodeState> nodeStates = dataStoreClient.getNodeStates();
-            for (SchedulerService.Client client : clients) {
-                client.updateNodeLoad(nodeStates);
+        if (_counter.get() >= _batchSize) {
+            Map<String, TNodeState> nodeStates = _dataStoreClient.getNodeStates();
+            for (SchedulerService.Client client : _clients) {
+                client.updateNodeState(nodeStates);
             }
         }
 
-        counter.set(0);
+        _counter.set(0);
 
         return true;
     }
