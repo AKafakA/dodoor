@@ -16,14 +16,9 @@ import java.util.List;
 
 public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalService.Iface {
     // Defaults if not specified by configuration
-    public final static int DEFAULT_NM_THRIFT_PORT = 20501;
     public final static int DEFAULT_NM_THRIFT_THREADS = 32;
-    public final static int DEFAULT_INTERNAL_THRIFT_PORT = 20502;
     public final static int DEFAULT_INTERNAL_THRIFT_THREADS = 8;
-
     private final NodeMonitor _nodeMonitor = new NodeMonitorImpl();
-    // The socket addr (ip:port) where we listen for requests from other Sparrow daemons.
-    // Used when registering backends with the state store.
     private InetSocketAddress _internalAddr;
 
     /**
@@ -42,7 +37,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
 
         // Setup application-facing agent service.
         NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
-                new NodeMonitorService.Processor<NodeMonitorService.Iface>(this);
+                new NodeMonitorService.Processor<>(this);
 
         int threads = conf.getInt(DodoorConf.NM_THRIFT_THREADS,
                 DEFAULT_NM_THRIFT_THREADS);
@@ -50,7 +45,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
 
         // Setup internal-facing agent service.
         InternalService.Processor<InternalService.Iface> internalProcessor =
-                new InternalService.Processor<InternalService.Iface>(this);
+                new InternalService.Processor<>(this);
         int internalThreads = conf.getInt(
                 DodoorConf.INTERNAL_THRIFT_THREADS,
                 DEFAULT_INTERNAL_THRIFT_THREADS);

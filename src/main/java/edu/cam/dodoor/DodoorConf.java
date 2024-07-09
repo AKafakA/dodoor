@@ -24,13 +24,12 @@ public class DodoorConf {
     /**
      * Scheduler config
      */
+    public final static String SCHEDULER_TYPE = "scheduler.type";
     public final static String SCHEDULER_THRIFT_PORT = "scheduler.thrift.port";
-    public final static String SCHEDULER_THRIFT_THREADS =
-            "scheduler.thrift.threads";
+    public final static String NUM_SCHEDULER =
+            "scheduler.count";
     // Listen port for the state store --> scheduler interface
-    public final static String SCHEDULER_STATE_THRIFT_PORT = "scheduler.state.thrift.port";
-    public final static String SCHEDULER_STATE_THRIFT_THREADS =
-            "scheduler.state.thrift.threads";
+    public final static int DEFAULT_NUM_SCHEDULER = 10;
 
 
 
@@ -98,4 +97,8 @@ public class DodoorConf {
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20503;
     private final static int DEFAULT_SCHEDULER_THRIFT_THREADS = 8;
     public final static int DEFAULT_GET_TASK_PORT = 20507;
+
+
+    public final static String DODOOR_SCHEDULER = "DodoorScheduler";
+    public final static String SPARROW_SCHEDULER = "SparrowScheduler";
 }
