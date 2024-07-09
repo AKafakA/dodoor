@@ -67,11 +67,17 @@ public class DodoorConf {
     /** Type of task scheduler to use on node monitor. Values: "fifo," "round_robin, " "priority." */
     public final static String NM_TASK_SCHEDULER_TYPE = "node_monitor.task_scheduler";
 
+    public final static String NUM_SLOTS = "node_monitor.num_slots";
+    public final static int DEFAULT_NUM_SLOTS = 4;
+
     public final static String SYSTEM_MEMORY = "system.memory";
     public final static int DEFAULT_SYSTEM_MEMORY = 1024;
 
     public final static String SYSTEM_CPUS = "system.cpus";
     public final static int DEFAULT_SYSTEM_CPUS = 4;
+
+    public final static String SYSTEM_DISK = "system.disks";
+    public final static int DEFAULT_SYSTEM_DISK = 10240;
 
     // Values: "standalone", "configbased." Only "configbased" works currently.
     public final static String DEPLYOMENT_MODE = "deployment.mode";
@@ -87,4 +93,9 @@ public class DodoorConf {
 
     public final static String BATCH_SIZE = "static.batch_size";
     public final static int DEFAULT_BATCH_SIZE = 1024;
+
+
+    public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20503;
+    private final static int DEFAULT_SCHEDULER_THRIFT_THREADS = 8;
+    public final static int DEFAULT_GET_TASK_PORT = 20507;
 }

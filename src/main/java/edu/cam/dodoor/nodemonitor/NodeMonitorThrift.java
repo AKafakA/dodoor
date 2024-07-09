@@ -24,7 +24,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
     private final NodeMonitor _nodeMonitor = new NodeMonitorImpl();
     // The socket addr (ip:port) where we listen for requests from other Sparrow daemons.
     // Used when registering backends with the state store.
-    private InetSocketAddress internalAddr;
+    private InetSocketAddress _internalAddr;
 
     /**
      * Initialize this thrift service.
@@ -56,7 +56,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
                 DEFAULT_INTERNAL_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(internalPort, internalThreads, internalProcessor);
 
-        internalAddr = new InetSocketAddress(InetAddress.getLocalHost(), internalPort);
+        _internalAddr = new InetSocketAddress(InetAddress.getLocalHost(), internalPort);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
         if (!backendAddr.isPresent()) {
             return false;
         }
-        return _nodeMonitor.registerBackend(app, internalAddr, backendAddr.get());
+        return _nodeMonitor.registerBackend(app, _internalAddr, backendAddr.get());
     }
 
     @Override

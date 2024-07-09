@@ -52,7 +52,8 @@ service DataStoreService {
 # lauch the scheduled tasks
 service BackendService {
   void launchTask(1: binary message, 2: types.TFullTaskId taskId,
-                  3: types.TUserGroupInfo user);
+                  3: types.TUserGroupInfo user,
+                  4: types.TResourceVector requestedResources);
 }
 
 # A service that workers frontends are expected to extend.

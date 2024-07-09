@@ -1,13 +1,15 @@
 package edu.cam.dodoor.nodemonitor;
 
 import com.google.common.collect.Maps;
+import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
-import edu.cam.dodoor.utils.Logging;
+import edu.cam.dodoor.utils.*;
 import edu.cam.dodoor.utils.ThriftClientPool;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -32,13 +34,23 @@ public class NodeMonitorImpl implements NodeMonitor{
     private final ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool =
             new ThriftClientPool<SchedulerService.AsyncClient>(
                     new ThriftClientPool.SchedulerServiceMakerFactory());
-    private TaskScheduler scheduler;
-    private TaskLauncherService taskLauncherService;
-    private String ipAddress;
+    private TaskScheduler _taskScheduler;
+    private TaskLauncherService _taskLauncherService;
+    private String _ipAddress;
+    private int _internalPort;
 
     @Override
     public void initialize(Configuration config, int internalPort) {
+        _ipAddress = Network.getIPAddress(config);
+        _internalPort = internalPort;
+        int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
 
+        // TODO(wda): add more task scheduler
+        _taskScheduler = new FifoTaskScheduler(numSlots);
+
+        _taskScheduler.initialize(config, internalPort);
+        _taskLauncherService = new TaskLauncherService();
+        _taskLauncherService.initialize(config, _taskScheduler, internalPort);
     }
 
     @Override

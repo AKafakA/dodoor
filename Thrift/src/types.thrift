@@ -30,7 +30,7 @@ struct TPlacementPreference {
 }
 
 struct TResourceVector {
-  1: i32 cores;       // # Cores
+  1: double cores;       // # Cores
   2: i64 memory;      // Memory, in Mb
   3: i64 disks;
 }
@@ -41,6 +41,8 @@ struct TFullTaskId {
   1: string taskId;    // Task ID as reported from the FE
   2: string requestId; // Scheduling request ID as assigned by the FE
   3: THostPort schedulerAddress; // Address of the scheduler that scheduled the task.
+  4: string appId;
+  5: TResourceVector resourceRequest;
 }
 
 struct TUserGroupInfo {
@@ -79,6 +81,7 @@ struct TTaskLaunchSpec {
 
   # Description of the task passed on to the application backend.
   2: binary message;
+  3: TResourceVector resourceRequested;
 }
 
 # Represents the State Store's view of resource consumption on a node.
