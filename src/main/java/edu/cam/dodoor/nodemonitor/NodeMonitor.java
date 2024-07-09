@@ -16,8 +16,6 @@ public interface NodeMonitor {
 
     public void taskFinished(List<TFullTaskId> tasks);
 
-    public void assignTask(TFullTaskId taskId, int status, boolean message);
-
     public void sendFrontendMessage(String app, TFullTaskId taskId,
                                     int status, ByteBuffer message) throws TException;
 
