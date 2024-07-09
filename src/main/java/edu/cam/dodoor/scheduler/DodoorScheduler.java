@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DodoorScheduler implements Scheduler{
+
     @Override
     public void initialize(Configuration conf, InetSocketAddress socket) throws IOException {
     }

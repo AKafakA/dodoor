@@ -1,9 +1,7 @@
 package edu.cam.dodoor.scheduler;
 
 import edu.cam.dodoor.thrift.*;
-import edu.cam.dodoor.utils.Logging;
 import org.apache.commons.configuration.Configuration;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
 import java.io.IOException;
@@ -11,7 +9,6 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public interface Scheduler {
 

@@ -78,9 +78,6 @@ public class DodoorConf {
     public final static String SYSTEM_DISK = "system.disks";
     public final static int DEFAULT_SYSTEM_DISK = 10240;
 
-    // Values: "standalone", "configbased." Only "configbased" works currently.
-    public final static String DEPLYOMENT_MODE = "deployment.mode";
-    public final static String DEFAULT_DEPLOYMENT_MODE = "production";
 
     /** The hostname of this machine. */
     public final static String HOSTNAME = "hostname";
