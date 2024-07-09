@@ -29,12 +29,13 @@ service SchedulerService {
 service DataStoreService {
   # Register a scheduler with the given socket address (IP: Port)
   void registerScheduler(1: string schedulerAddress);
-  void updateNodeLoad(1:string nodeMonitorAddress, 2:types.TNodeState nodeStates);
+  void updateNodeLoad(1:string nodeMonitorAddress, 2:types.TNodeState nodeStates, 3:i32 numTasks);
   map<string, types.TNodeState> getNodeStates();
 }
 
 # A service worked as worker nodes to communicate with scheduler
 service NodeMonitorService {
+  void registerDataStore(1: string dataStoreAddress);
   # Inform the NodeMonitor that a particular task has finished
   void tasksFinished(1: list<types.TFullTaskId> tasks);
 }

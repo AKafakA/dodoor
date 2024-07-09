@@ -1,5 +1,6 @@
 package edu.cam.dodoor.nodemonitor;
 
+import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
@@ -45,16 +46,17 @@ public class FifoTaskScheduler extends TaskScheduler {
     }
 
     @Override
-    synchronized void cancelTaskReservations(String requestId) {
-        int numReservationsCancelled = 0;
+    synchronized TResourceVector cancelTaskReservations(String requestId) {
         Iterator<TaskSpec> reservationsIterator = _taskReservations.iterator();
+        TaskSpec reservation;
         while (reservationsIterator.hasNext()) {
-            TaskSpec reservation = reservationsIterator.next();
+            reservation = reservationsIterator.next();
             if (reservation._requestId.equals(requestId)) {
                 reservationsIterator.remove();
-                ++numReservationsCancelled;
             }
+            return reservation._resourceVector;
         }
+        return new TResourceVector(0, 0, 0);
     }
 
     @Override

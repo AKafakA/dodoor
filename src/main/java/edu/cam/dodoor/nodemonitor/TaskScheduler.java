@@ -77,17 +77,21 @@ public abstract class TaskScheduler {
 
     public synchronized void submitTaskReservations(TEnqueueTaskReservationsRequest request) {
         TaskSpec reservation = new TaskSpec(request);
-        if (!enoughResourcesToRun(reservation._cores, reservation._memory, reservation._disks)){
+        if (!enoughResourcesToRun(request.resourceRequested)){
             AUDIT_LOG.info(Logging.auditEventString("big_task_failed_enqueued",
-                    reservation._requestId, reservation._cores, reservation._memory, reservation._disks));
+                    reservation._requestId, request.resourceRequested.cores,
+                    request.resourceRequested.memory,
+                    request.resourceRequested.disks));
         }
         int queuedReservations = handleSubmitTaskReservation(reservation);
         AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", _ipAddress, request.taskId,
                 queuedReservations));
     }
 
-    boolean enoughResourcesToRun(int cores, long memory, long disk) {
-        return cores <= _cores_per_slots && memory <= _memory_per_slots && disk <= _disk_per_slots;
+    boolean enoughResourcesToRun(TResourceVector requestedResources) {
+        return requestedResources.cores <= _cores_per_slots
+                && requestedResources.memory <= _memory_per_slots
+                && requestedResources.disks <= _disk_per_slots;
     }
 
     // TASK SCHEDULERS MUST IMPLEMENT THE FOLLOWING.
@@ -101,7 +105,7 @@ public abstract class TaskScheduler {
      * Cancels all task reservations with the given request id. Returns the number of task
      * reservations cancelled.
      */
-    abstract void cancelTaskReservations(String requestId);
+    abstract TResourceVector cancelTaskReservations(String requestId);
 
     /**
      * Handles the completion of a task that has finished executing.

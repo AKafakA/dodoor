@@ -69,8 +69,7 @@ struct TSchedulingRequest {
 
 # Represents the State Store's view of resource consumption on a node.
 struct TNodeState {
-  1: TResourceVector resourceUsed;   # Resources currently used
-  2: TResourceVector resourceRequested;  # Resources has been requested and pending
+  1: TResourceVector resourceRequested;  # Resources has been requested and pending
 }
 
 exception ServerNotReadyException {

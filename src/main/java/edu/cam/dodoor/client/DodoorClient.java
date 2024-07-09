@@ -45,8 +45,6 @@ public class DodoorClient {
             new LinkedBlockingQueue<>();
 
     DataStoreService.Client _dataStoreClient;
-    private int _batchSize;
-    private AtomicInteger _counter;
 
     public void initialize(InetSocketAddress sparrowSchedulerAddr,
                            Configuration conf)
@@ -64,8 +62,6 @@ public class DodoorClient {
                     60000);
             _clients.add(client);
         }
-        _counter = new AtomicInteger(0);
-        _batchSize = conf.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
     }
 
     public boolean submitJob(List<TTaskSpec> tasks, TUserGroupInfo user)
@@ -92,23 +88,12 @@ public class DodoorClient {
             SchedulerService.Client client = _clients.take();
             client.submitJob(request);
             _clients.put(client);
-            _counter.getAndAdd(request.tasks.size());
         } catch (InterruptedException e) {
             LOG.fatal(e);
         } catch (TException e) {
             LOG.error("Thrift exception when submitting job: " + e.getMessage());
             return false;
         }
-
-        if (_counter.get() >= _batchSize) {
-            Map<String, TNodeState> nodeStates = _dataStoreClient.getNodeStates();
-            for (SchedulerService.Client client : _clients) {
-                client.updateNodeState(nodeStates);
-            }
-        }
-
-        _counter.set(0);
-
         return true;
     }
 

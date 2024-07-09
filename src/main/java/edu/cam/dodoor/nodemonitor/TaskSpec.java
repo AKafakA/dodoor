@@ -1,9 +1,9 @@
 package edu.cam.dodoor.nodemonitor;
 
 import edu.cam.dodoor.thrift.TEnqueueTaskReservationsRequest;
+import edu.cam.dodoor.thrift.TResourceVector;
 import edu.cam.dodoor.thrift.TUserGroupInfo;
 
-import java.net.InetSocketAddress;
 
 /**
  * Class define a task to be scheduled to be run within the nodes
@@ -21,9 +21,7 @@ public class TaskSpec {
     public String _previousRequestId;
     public String _previousTaskId;
 
-    public int _cores;
-    public long _memory;
-    public long _disks;
+    public TResourceVector _resourceVector;
     public long _duration;
 
 
@@ -33,9 +31,7 @@ public class TaskSpec {
         _previousRequestId = "";
         _previousTaskId = "";
 
-        _cores = request.resourceRequested.cores;
-        _memory = request.resourceRequested.memory;
-        _disks = request.resourceRequested.disks;
+        _resourceVector = request.resourceRequested;
         _duration = request.durationInMs;
     }
 }

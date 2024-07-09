@@ -10,8 +10,6 @@ import org.apache.thrift.TException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 
 public class SchedulerThrift implements SchedulerService.Iface{
@@ -27,11 +25,11 @@ public class SchedulerThrift implements SchedulerService.Iface{
     }
 
     @Override
-    public void submitJob(TSchedulingRequest req) throws IncompleteRequestException, TException {
+    public void submitJob(TSchedulingRequest req) throws TException {
         _scheduler.submitJob(req);
     }
     @Override
-    public void updateNodeState(Map<String, TNodeState> snapshot) throws TException {
+    public void updateNodeState(Map<String, TNodeState> snapshot) {
         _scheduler.updateNodeState(snapshot);
     }
 

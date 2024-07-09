@@ -6,8 +6,6 @@ import org.apache.thrift.TException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 
 public class SparrowScheduler implements Scheduler{
@@ -16,10 +14,6 @@ public class SparrowScheduler implements Scheduler{
 
     }
 
-    @Override
-    public boolean registerFrontend(String appId, String addr) {
-        return false;
-    }
 
     @Override
     public void submitJob(TSchedulingRequest request) throws TException {
@@ -28,16 +22,6 @@ public class SparrowScheduler implements Scheduler{
 
     @Override
     public void handleJobSubmission(TSchedulingRequest request) throws TException {
-
-    }
-
-    @Override
-    public List<TTaskLaunchSpec> getTask(String requestId, THostPort nodeMonitorAddress) {
-        return List.of();
-    }
-
-    @Override
-    public void sendFrontendMessage(String app, TFullTaskId taskId, int status, ByteBuffer message) {
 
     }
 

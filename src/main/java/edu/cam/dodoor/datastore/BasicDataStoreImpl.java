@@ -1,13 +1,9 @@
 package edu.cam.dodoor.datastore;
 
 import edu.cam.dodoor.thrift.TNodeState;
-import edu.cam.dodoor.utils.ConfigUtil;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,7 +11,6 @@ import java.util.Map;
  */
 public class BasicDataStoreImpl implements DataStore{
     private final Map<String, TNodeState> _nodeStates;
-    List<InetSocketAddress> _backendAddress;
 
 
     public BasicDataStoreImpl(Map<String, TNodeState> nodeStates){
@@ -24,7 +19,6 @@ public class BasicDataStoreImpl implements DataStore{
 
     @Override
     public void initialize(Configuration config) throws TException {
-        _backendAddress = new ArrayList<>(ConfigUtil.parseBackends(config));
     }
 
     @Override
