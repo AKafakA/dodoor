@@ -61,6 +61,8 @@ public class DodoorConf {
     public final static String INTERNAL_THRIFT_PORTS = "internal_agent.thrift.ports";
 
     public final static String NM_THRIFT_THREADS = "agent.thrift.threads";
+    public final static int DEFAULT_NM_THRIFT_THREADS = 4;
+    public final static int DEFAULT_NM_INTERNAL_THRIFT_THREADS = 8;
     public final static String INTERNAL_THRIFT_THREADS =
             "internal_agent.thrift.threads";
     /** Type of task scheduler to use on node monitor. Values: "fifo," "round_robin, " "priority." */

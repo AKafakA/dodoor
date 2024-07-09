@@ -16,10 +16,7 @@ import java.util.List;
 
 public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalService.Iface {
     // Defaults if not specified by configuration
-    public final static int DEFAULT_NM_THRIFT_THREADS = 32;
-    public final static int DEFAULT_INTERNAL_THRIFT_THREADS = 8;
     private final NodeMonitor _nodeMonitor = new NodeMonitorImpl();
-    private InetSocketAddress _internalAddr;
 
     /**
      * Initialize this thrift service.
@@ -40,7 +37,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
                 new NodeMonitorService.Processor<>(this);
 
         int threads = conf.getInt(DodoorConf.NM_THRIFT_THREADS,
-                DEFAULT_NM_THRIFT_THREADS);
+                DodoorConf.DEFAULT_NM_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(nmPort, threads, processor);
 
         // Setup internal-facing agent service.
@@ -48,10 +45,8 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
                 new InternalService.Processor<>(this);
         int internalThreads = conf.getInt(
                 DodoorConf.INTERNAL_THRIFT_THREADS,
-                DEFAULT_INTERNAL_THRIFT_THREADS);
+                DodoorConf.DEFAULT_NM_INTERNAL_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(internalPort, internalThreads, internalProcessor);
-
-        _internalAddr = new InetSocketAddress(InetAddress.getLocalHost(), internalPort);
     }
 
     @Override
@@ -65,21 +60,8 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
     }
 
     @Override
-    public boolean registerBackend(String app, String listenSocket) throws TException {
-        Optional<InetSocketAddress> backendAddr = Serialization.strToSocket(listenSocket);
-        if (!backendAddr.isPresent()) {
-            return false;
-        }
-        return _nodeMonitor.registerBackend(app, _internalAddr, backendAddr.get());
-    }
-
-    @Override
     public void tasksFinished(List<TFullTaskId> tasks) throws TException {
         _nodeMonitor.taskFinished(tasks);
     }
 
-    @Override
-    public void sendFrontendMessage(String app, TFullTaskId taskId, int status, ByteBuffer message) throws TException {
-        _nodeMonitor.sendFrontendMessage(app, taskId, status, message);
-    }
 }

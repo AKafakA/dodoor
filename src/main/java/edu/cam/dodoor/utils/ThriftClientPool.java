@@ -68,16 +68,6 @@ public class ThriftClientPool<T extends TAsyncClient> {
     }
   }
 
-  public static class FrontendServiceMakerFactory
-    implements MakerFactory<FrontendService.AsyncClient> {
-    @Override
-    public FrontendService.AsyncClient create(TNonblockingTransport tr,
-        TAsyncClientManager mgr, TProtocolFactory factory) {
-      return new FrontendService.AsyncClient(factory, mgr, tr);
-    }
-  }
-
-
   private class PoolFactory implements KeyedPoolableObjectFactory<InetSocketAddress, T> {
     // Thrift clients do not expose their underlying transports, so we track them
     // separately here to let us call close() on the transport associated with a

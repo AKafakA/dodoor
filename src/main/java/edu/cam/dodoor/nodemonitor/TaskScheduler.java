@@ -6,7 +6,6 @@ import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.List;
@@ -67,14 +66,6 @@ public abstract class TaskScheduler {
         }
     }
 
-    void noTaskForReservation(TaskSpec taskReservation) {
-        AUDIT_LOG.info(Logging.auditEventString("node_monitor_get_task_no_task",
-                taskReservation._requestId,
-                taskReservation._previousRequestId,
-                taskReservation._previousTaskId));
-        handleNoTaskForReservation(taskReservation);
-    }
-
     protected void makeTaskRunnable(TaskSpec task) {
         try {
             LOG.debug("Putting reservation for request " + task._requestId + " in runnable queue");
@@ -84,15 +75,19 @@ public abstract class TaskScheduler {
         }
     }
 
-    public synchronized void submitTaskReservations(TEnqueueTaskReservationsRequest request,
-                                                    InetSocketAddress appBackendAddress) {
-        for (int i = 0; i < request.getNumTasks(); ++i) {
-            LOG.debug("Creating reservation " + i + " for request " + request.getRequestId());
-            TaskSpec reservation = new TaskSpec(request, appBackendAddress);
-            int queuedReservations = handleSubmitTaskReservation(reservation);
-            AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", _ipAddress, request.requestId,
-                    queuedReservations));
+    public synchronized void submitTaskReservations(TEnqueueTaskReservationsRequest request) {
+        TaskSpec reservation = new TaskSpec(request);
+        if (!enoughResourcesToRun(reservation._cores, reservation._memory, reservation._disks)){
+            AUDIT_LOG.info(Logging.auditEventString("big_task_failed_enqueued",
+                    reservation._requestId, reservation._cores, reservation._memory, reservation._disks));
         }
+        int queuedReservations = handleSubmitTaskReservation(reservation);
+        AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", _ipAddress, request.taskId,
+                queuedReservations));
+    }
+
+    boolean enoughResourcesToRun(int cores, long memory, long disk) {
+        return cores <= _cores_per_slots && memory <= _memory_per_slots && disk <= _disk_per_slots;
     }
 
     // TASK SCHEDULERS MUST IMPLEMENT THE FOLLOWING.
@@ -106,7 +101,7 @@ public abstract class TaskScheduler {
      * Cancels all task reservations with the given request id. Returns the number of task
      * reservations cancelled.
      */
-    abstract int cancelTaskReservations(String requestId);
+    abstract void cancelTaskReservations(String requestId);
 
     /**
      * Handles the completion of a task that has finished executing.

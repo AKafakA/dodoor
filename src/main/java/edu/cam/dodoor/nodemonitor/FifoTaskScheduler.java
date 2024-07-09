@@ -45,7 +45,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     }
 
     @Override
-    synchronized int cancelTaskReservations(String requestId) {
+    synchronized void cancelTaskReservations(String requestId) {
         int numReservationsCancelled = 0;
         Iterator<TaskSpec> reservationsIterator = _taskReservations.iterator();
         while (reservationsIterator.hasNext()) {
@@ -55,7 +55,6 @@ public class FifoTaskScheduler extends TaskScheduler {
                 ++numReservationsCancelled;
             }
         }
-        return numReservationsCancelled;
     }
 
     @Override

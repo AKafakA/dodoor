@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
-public class SchedulerThrift implements SchedulerService.Iface, GetTaskService.Iface{
+public class SchedulerThrift implements SchedulerService.Iface{
     Scheduler _scheduler;
 
     public SchedulerThrift(Configuration config) {
@@ -27,25 +27,9 @@ public class SchedulerThrift implements SchedulerService.Iface, GetTaskService.I
     }
 
     @Override
-    public List<TTaskLaunchSpec> getTask(String requestId, THostPort nodeMonitorAddress) throws TException {
-        return _scheduler.getTask(requestId, nodeMonitorAddress);
-    }
-
-    @Override
-    public boolean registerFrontend(String app, String socketAddress) throws TException {
-        return _scheduler.registerFrontend(app, socketAddress);
-    }
-
-    @Override
     public void submitJob(TSchedulingRequest req) throws IncompleteRequestException, TException {
         _scheduler.submitJob(req);
     }
-
-    @Override
-    public void sendFrontendMessage(String app, TFullTaskId taskId, int status, ByteBuffer message) throws TException {
-        _scheduler.sendFrontendMessage(app, taskId, status, message);
-    }
-
     @Override
     public void updateNodeState(Map<String, TNodeState> snapshot) throws TException {
         _scheduler.updateNodeState(snapshot);
@@ -62,10 +46,5 @@ public class SchedulerThrift implements SchedulerService.Iface, GetTaskService.I
         InetSocketAddress addr = new InetSocketAddress(hostname, port);
         _scheduler.initialize(config, addr);
         TServers.launchThreadedThriftServer(port, threads, processor);
-        int getTaskPort = config.getInt(DodoorConf.GET_TASK_PORT,
-                DodoorConf.DEFAULT_GET_TASK_PORT);
-        GetTaskService.Processor<GetTaskService.Iface> getTaskprocessor =
-                new GetTaskService.Processor<>(this);
-        TServers.launchSingleThreadThriftServer(getTaskPort, getTaskprocessor);
     }
 }

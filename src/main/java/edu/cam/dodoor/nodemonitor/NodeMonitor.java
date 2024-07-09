@@ -16,15 +16,10 @@ public interface NodeMonitor {
 
     public void taskFinished(List<TFullTaskId> tasks);
 
-    public void sendFrontendMessage(String app, TFullTaskId taskId,
-                                    int status, ByteBuffer message) throws TException;
 
     public boolean enqueueTaskReservations(TEnqueueTaskReservationsRequest request)
             throws TException;
 
     public void cancelTaskReservations(TCancelTaskReservationsRequest request)
             throws TException;
-
-    public boolean registerBackend(String appId, InetSocketAddress nmAddr,
-                                   InetSocketAddress backendAddr);
 }

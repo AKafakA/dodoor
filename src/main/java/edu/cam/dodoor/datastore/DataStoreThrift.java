@@ -3,10 +3,8 @@ package edu.cam.dodoor.datastore;
 import com.google.common.base.Optional;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.DataStoreService;
-import edu.cam.dodoor.thrift.SchedulerService;
 import edu.cam.dodoor.thrift.THostPort;
 import edu.cam.dodoor.thrift.TNodeState;
-import edu.cam.dodoor.utils.ConfigUtil;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.Serialization;
 import edu.cam.dodoor.utils.TServers;
@@ -15,7 +13,6 @@ import org.apache.thrift.TException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -13,11 +13,7 @@ import java.util.Map;
 public interface Scheduler {
 
     public void initialize(Configuration conf, InetSocketAddress socket) throws IOException;
-    public boolean registerFrontend(String appId, String addr);
     public void submitJob(TSchedulingRequest request) throws TException;
     public void handleJobSubmission(TSchedulingRequest request) throws TException;
-    public List<TTaskLaunchSpec> getTask(String requestId, THostPort nodeMonitorAddress);
-    public void sendFrontendMessage(String app, TFullTaskId taskId, int status, ByteBuffer message);
     public void updateNodeState(Map<String, TNodeState> snapshot);
-
 }

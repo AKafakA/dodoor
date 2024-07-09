@@ -18,7 +18,6 @@ package edu.cam.dodoor.client;
 
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.utils.TClients;
-import edu.cam.dodoor.utils.TServers;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
@@ -50,27 +49,14 @@ public class DodoorClient {
     private AtomicInteger _counter;
 
     public void initialize(InetSocketAddress sparrowSchedulerAddr,
-                           FrontendService.Iface frontendServer,
                            Configuration conf)
             throws TException, IOException {
-        initialize(sparrowSchedulerAddr, frontendServer, DEFAULT_LISTEN_PORT, conf);
+        initialize(sparrowSchedulerAddr, DEFAULT_LISTEN_PORT, conf);
     }
 
-    public void initialize(InetSocketAddress schedulerAddr,
-                           FrontendService.Iface frontendServer, int listenPort, Configuration conf)
+    public void initialize(InetSocketAddress schedulerAddr, int listenPort, Configuration conf)
             throws TException, IOException {
 
-        FrontendService.Processor<FrontendService.Iface> processor =
-                new FrontendService.Processor<>(frontendServer);
-
-        if (!_launchedServerAlready) {
-            try {
-                TServers.launchThreadedThriftServer(listenPort, NUM_CLIENTS, processor);
-            } catch (IOException e) {
-                LOG.fatal("Couldn't launch server side of frontend", e);
-            }
-            _launchedServerAlready = true;
-        }
 
         for (int i = 0; i < NUM_CLIENTS; i++) {
             SchedulerService.Client client = TClients.createBlockingSchedulerClient(
