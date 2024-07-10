@@ -8,9 +8,11 @@ import java.util.Map;
 
 public interface DataStore {
 
-    void initialize(Configuration config) throws TException;
+    void initialize(Configuration config);
 
-    void updateNodeLoad(String nodeMonitorAddress, TNodeState nodeStates) throws TException;
+    void updateNodeLoad(String nodeMonitorAddress, TNodeState nodeStates);
 
-    Map<String, TNodeState> getNodeStates() throws TException ;
+    Map<String, TNodeState> getNodeStates();
+
+    boolean containsNode(String nodeMonitorAddress);
 }

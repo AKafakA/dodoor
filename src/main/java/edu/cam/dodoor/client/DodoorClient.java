@@ -46,6 +46,8 @@ public class DodoorClient {
 
     DataStoreService.Client _dataStoreClient;
 
+    private AtomicInteger _nextRequestId = new AtomicInteger(0);
+
     public void initialize(InetSocketAddress sparrowSchedulerAddr,
                            Configuration conf)
             throws TException, IOException {
@@ -54,7 +56,6 @@ public class DodoorClient {
 
     public void initialize(InetSocketAddress schedulerAddr, int listenPort, Configuration conf)
             throws TException, IOException {
-
 
         for (int i = 0; i < NUM_CLIENTS; i++) {
             SchedulerService.Client client = TClients.createBlockingSchedulerClient(
@@ -66,12 +67,12 @@ public class DodoorClient {
 
     public boolean submitJob(List<TTaskSpec> tasks, TUserGroupInfo user)
             throws TException {
-        return submitRequest(new TSchedulingRequest(tasks, user));
+        return submitRequest(new TSchedulingRequest(tasks, user, _nextRequestId.getAndIncrement()));
     }
 
     public boolean submitJob(List<TTaskSpec> tasks,
                              TUserGroupInfo user, String description) throws TException {
-        TSchedulingRequest request = new TSchedulingRequest(tasks, user);
+        TSchedulingRequest request = new TSchedulingRequest(tasks, user, _nextRequestId.getAndIncrement());
         request.setDescription(description);
         return submitRequest(request);
     }
@@ -79,7 +80,7 @@ public class DodoorClient {
     public boolean submitJob(List<TTaskSpec> tasks, TUserGroupInfo user,
                              double probeRatio)
             throws TException {
-        TSchedulingRequest request = new TSchedulingRequest(tasks, user);
+        TSchedulingRequest request = new TSchedulingRequest(tasks, user, _nextRequestId.getAndIncrement());
         return submitRequest(request);
     }
 

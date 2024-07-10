@@ -13,11 +13,11 @@ public interface NodeMonitor {
 
     void initialize(Configuration config, int internalPort);
 
-    void taskFinished(List<TFullTaskId> tasks);
+    void taskFinished(TFullTaskId task);
 
     boolean enqueueTaskReservations(TEnqueueTaskReservationsRequest request) throws TException;
 
-    void cancelTaskReservations(TCancelTaskReservationsRequest request) throws TException;
-
     TResourceVector getRequestedResourceVector();
+
+    int getNumTasks() throws TException;
 }

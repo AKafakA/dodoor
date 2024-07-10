@@ -59,11 +59,9 @@ public abstract class TaskScheduler {
         return _runnableTaskQueue.size();
     }
 
-    void tasksFinished(List<TFullTaskId> finishedTasks) {
-        for (TFullTaskId t : finishedTasks) {
-            AUDIT_LOG.info(Logging.auditEventString("task_completed", t.getRequestId(), t.getTaskId()));
-            handleTaskFinished(t.getRequestId(), t.getTaskId());
-        }
+    void tasksFinished(TFullTaskId finishedTask) {
+        AUDIT_LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
+        handleTaskFinished(finishedTask.getRequestId(), finishedTask.getTaskId());
     }
 
     protected void makeTaskRunnable(TaskSpec task) {

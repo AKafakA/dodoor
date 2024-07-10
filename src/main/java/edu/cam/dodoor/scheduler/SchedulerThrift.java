@@ -10,17 +10,19 @@ import org.apache.thrift.TException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 
 public class SchedulerThrift implements SchedulerService.Iface{
     Scheduler _scheduler;
 
-    public SchedulerThrift(Configuration config) {
+    public SchedulerThrift(Configuration config, List<String> nodeMonitorAddresses) throws TException {
         String schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, "DodoorScheduler");
-        if (schedulerType.equals(DodoorConf.DODOOR_SCHEDULER)) {
-            _scheduler = new DodoorScheduler();
-        } else if (schedulerType.equals(DodoorConf.SPARROW_SCHEDULER)) {
-            _scheduler = new SparrowScheduler();
+        _scheduler = new SchedulerImpl();
+
+        for (String nodeMonitorAddress : nodeMonitorAddresses) {
+            assert _scheduler != null;
+            _scheduler.registerNodeMonitor(nodeMonitorAddress);
         }
     }
 
@@ -31,6 +33,11 @@ public class SchedulerThrift implements SchedulerService.Iface{
     @Override
     public void updateNodeState(Map<String, TNodeState> snapshot) {
         _scheduler.updateNodeState(snapshot);
+    }
+
+    @Override
+    public void registerNodeMonitor(String nodeMonitorAddress) throws TException {
+        _scheduler.registerNodeMonitor(nodeMonitorAddress);
     }
 
     public void initialize(Configuration config) throws TException, IOException {

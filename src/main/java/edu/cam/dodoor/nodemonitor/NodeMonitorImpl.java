@@ -22,6 +22,9 @@ public class NodeMonitorImpl implements NodeMonitor{
     private AtomicLong _requested_memory;
     private AtomicLong _requested_disk;
 
+    // count number of enqueued tasks
+    private AtomicInteger _counter;
+
     @Override
     public void initialize(Configuration config, int internalPort) {
         _ipAddress = Network.getIPAddress(config);
@@ -35,17 +38,17 @@ public class NodeMonitorImpl implements NodeMonitor{
         _requested_cores = new AtomicInteger();
         _requested_memory = new AtomicLong();
         _requested_disk = new AtomicLong();
+        _counter = new AtomicInteger(0);
     }
 
     @Override
-    public void taskFinished(List<TFullTaskId> tasks) {
-        _taskScheduler.tasksFinished(tasks);
+    public void taskFinished(TFullTaskId task) {
+        _taskScheduler.tasksFinished(task);
+        _requested_cores.getAndAdd(-task.resourceRequest.cores);
+        _requested_memory.getAndAdd(-task.resourceRequest.memory);
+        _requested_disk.getAndAdd(-task.resourceRequest.disks);
 
-        for (TFullTaskId task : tasks) {
-            _requested_cores.getAndAdd(-task.resourceRequest.cores);
-            _requested_memory.getAndAdd(-task.resourceRequest.memory);
-            _requested_disk.getAndAdd(-task.resourceRequest.disks);
-        }
+        _counter.getAndAdd(-1);
     }
 
 
@@ -63,6 +66,11 @@ public class NodeMonitorImpl implements NodeMonitor{
     }
 
     @Override
+    public int getNumTasks() throws TException {
+        return _counter.get();
+    }
+
+    @Override
     public boolean enqueueTaskReservations(TEnqueueTaskReservationsRequest request) throws TException {
         LOG.debug(Logging.functionCall(request));
         AUDIT_LOG.info(Logging.auditEventString("node_monitor_enqueue_task_reservation",
@@ -75,6 +83,8 @@ public class NodeMonitorImpl implements NodeMonitor{
         _requested_cores.getAndAdd(request.resourceRequested.cores);
         _requested_memory.getAndAdd(request.resourceRequested.memory);
         _requested_disk.getAndAdd(request.resourceRequested.disks);
+
+        _counter.getAndAdd(1);
         return true;
     }
 }

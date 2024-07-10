@@ -71,11 +71,6 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
     }
 
     @Override
-    public void cancelTaskReservations(TCancelTaskReservationsRequest request) throws TException {
-        _nodeMonitor.cancelTaskReservations(request);
-    }
-
-    @Override
     public void registerDataStore(String dataStoreAddress) throws TException {
         Optional<InetSocketAddress> dataStoreAddressOptional = Serialization.strToSocket(dataStoreAddress);
         if (dataStoreAddressOptional.isPresent()) {
@@ -86,23 +81,51 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
     }
 
     @Override
-    public void tasksFinished(List<TFullTaskId> tasks) throws Exception {
-        _nodeMonitor.taskFinished(tasks);
+    public void tasksFinished(TFullTaskId task) throws TException {
+        _nodeMonitor.taskFinished(task);
         for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
-            DataStoreService.AsyncClient dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
-            TNodeState nodeState = new TNodeState(_nodeMonitor.getRequestedResourceVector());
-            dataStoreClient.updateNodeLoad(_nmAddress.toString(), nodeState, tasks.size(), new AsyncMethodCallback<Void>() {
-                @Override
-                public void onComplete(Void unused) {
-                    LOG.info(Logging.auditEventString("update_node_state", _nmAddress.toString()));
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    LOG.warn(Logging.auditEventString("fail_to_update_node_state", _nmAddress.toString()));
-                }
-            });
+            DataStoreService.AsyncClient dataStoreClient = null;
+            try {
+                dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            TNodeState nodeState = new TNodeState(_nodeMonitor.getRequestedResourceVector(), _nodeMonitor.getNumTasks());
+            dataStoreClient.updateNodeLoad(_nmAddress.toString(), nodeState,
+                    new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
         }
     }
 
+    @Override
+    public int getNumTasks() throws TException {
+        return _nodeMonitor.getNumTasks();
+    }
+
+    private class UpdateNodeLoadCallBack implements AsyncMethodCallback<Void> {
+        private DataStoreService.AsyncClient _client;
+        private InetSocketAddress _address;
+
+        public UpdateNodeLoadCallBack(InetSocketAddress address, DataStoreService.AsyncClient client) {
+            _client = client;
+            _address = address;
+        }
+
+        @Override
+        public void onComplete(Void unused) {
+            LOG.info(Logging.auditEventString("deliver_nodes_load_to_scheduler",
+                    _address.getHostName()));
+            try {
+                _dataStoreClientPool.returnClient(_address, _client);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void onError(Exception e) {
+            LOG.warn(Logging.auditEventString("failed_deliver_nodes_load_to_scheduler",
+                    _address.getHostName()));
+        }
+
+    }
 }

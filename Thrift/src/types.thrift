@@ -54,6 +54,7 @@ struct TUserGroupInfo {
 
 struct TTaskSpec {
   1: string taskId;
+  # The placement preference for selected noded for the task, not been implemented so far.
   2: TPlacementPreference preference;
   3: binary message;
   4: TResourceVector resourceRequest;
@@ -62,14 +63,17 @@ struct TTaskSpec {
 
 struct TSchedulingRequest {
   1: list<TTaskSpec> tasks;
+  # Not been implemented with user level priority
   2: TUserGroupInfo user;
   # A description that will be logged alongside the requestId that Pigeon assigns.
   3: optional string description;
+  4: i64 requestId;
 }
 
 # Represents the State Store's view of resource consumption on a node.
 struct TNodeState {
   1: TResourceVector resourceRequested;  # Resources has been requested and pending
+  2: i32 numTasks;  # Number of tasks running on the node
 }
 
 exception ServerNotReadyException {

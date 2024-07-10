@@ -25,11 +25,21 @@ public class DodoorConf {
      * Scheduler config
      */
     public final static String SCHEDULER_TYPE = "scheduler.type";
+    /** Current supported scheduling algorithm*/
+    public final static String DODOOR_SCHEDULER = "Dodoor";
+    public final static String SPARROW_SCHEDULER = "Sparrow";
+    // TODO(wda): to be implemented
+    public final static String CACHED_SPARROW_SCHEDULER = "CachedSparrowScheduler";
+
     public final static String SCHEDULER_THRIFT_PORT = "scheduler.thrift.port";
     public final static String NUM_SCHEDULER =
             "scheduler.count";
     // Listen port for the state store --> scheduler interface
     public final static int DEFAULT_NUM_SCHEDULER = 10;
+
+    // beta value for 1 + beta process
+    public final static String BETA = "scheduler.beta";
+    public final static double DEFAULT_BETA = 0.5;
 
 
 
@@ -42,13 +52,6 @@ public class DodoorConf {
 
     public final static int DEFAULT_DATA_STORE_THRIFT_PORT = 53001;
     public final static int DEFAULT_DATA_STORE_THRIFT_THREADS = 1;
-
-    /**
-     * Whether the scheduler should cancel outstanding reservations when all of a job's tasks have
-     * been scheduled.  Should be set to "true" or "false".
-     */
-    public final static String CANCELLATION = "cancellation";
-    public final static boolean DEFAULT_CANCELLATION = true;
 
     /* List of ports corresponding to node monitors (backend interface) this daemon is
      * supposed to run. In most deployment scenarios this will consist of a single port,
@@ -97,7 +100,4 @@ public class DodoorConf {
     private final static int DEFAULT_SCHEDULER_THRIFT_THREADS = 8;
     public final static int DEFAULT_GET_TASK_PORT = 20507;
 
-
-    public final static String DODOOR_SCHEDULER = "DodoorScheduler";
-    public final static String SPARROW_SCHEDULER = "SparrowScheduler";
 }

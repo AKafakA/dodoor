@@ -18,16 +18,22 @@ public class BasicDataStoreImpl implements DataStore{
     }
 
     @Override
-    public void initialize(Configuration config) throws TException {
+    public void initialize(Configuration config) {
     }
 
     @Override
-    public void updateNodeLoad(String nodeMonitorAddress, TNodeState nodeStates) throws TException {
+    public void updateNodeLoad(String nodeMonitorAddress, TNodeState nodeStates) {
         _nodeStates.put(nodeMonitorAddress, nodeStates);
     }
 
     @Override
-    public Map<String, TNodeState> getNodeStates() throws TException {
+    public Map<String, TNodeState> getNodeStates() {
         return _nodeStates;
     }
+
+    @Override
+    public boolean containsNode(String nodeMonitorAddress) {
+        return _nodeStates.containsKey(nodeMonitorAddress);
+    }
+
 }

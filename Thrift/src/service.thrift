@@ -24,12 +24,14 @@ service SchedulerService {
   # Submit a job composed of a list of individual tasks.
   void submitJob(1: types.TSchedulingRequest req) throws (1: types.IncompleteRequestException e);
   void updateNodeState(1: map<string, types.TNodeState> snapshot);
+  void registerNodeMonitor(1: string nodeMonitorAddress);
 }
 
 service DataStoreService {
   # Register a scheduler with the given socket address (IP: Port)
   void registerScheduler(1: string schedulerAddress);
-  void updateNodeLoad(1:string nodeMonitorAddress, 2:types.TNodeState nodeStates, 3:i32 numTasks);
+  void registerNodeMonitor(1: string nodeMonitorAddress);
+  void updateNodeLoad(1:string nodeMonitorAddress, 2:types.TNodeState nodeStates);
   map<string, types.TNodeState> getNodeStates();
 }
 
@@ -37,7 +39,8 @@ service DataStoreService {
 service NodeMonitorService {
   void registerDataStore(1: string dataStoreAddress);
   # Inform the NodeMonitor that a particular task has finished
-  void tasksFinished(1: list<types.TFullTaskId> tasks);
+  void tasksFinished(1: types.TFullTaskId task);
+  i32 getNumTasks();
 }
 
 
@@ -46,7 +49,4 @@ service InternalService {
   # a GetTask() RPC to the given schedulerAddress when it is ready to launch a task, for each
   # enqueued task reservation. Returns whether or not the task was successfully enqueued.
   bool enqueueTaskReservations(1: types.TEnqueueTaskReservationsRequest request);
-
-  # Cancels reservations for jobs for which all tasks have already been launched.
-  void cancelTaskReservations(1: types.TCancelTaskReservationsRequest request);
 }

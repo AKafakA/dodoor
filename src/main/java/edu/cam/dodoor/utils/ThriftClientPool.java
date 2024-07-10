@@ -68,6 +68,16 @@ public class ThriftClientPool<T extends TAsyncClient> {
     }
   }
 
+  // MakerFactory implementations for Sparrow interfaces...
+  public static class InternalServiceMakerFactory
+          implements MakerFactory<InternalService.AsyncClient> {
+    @Override
+    public InternalService.AsyncClient create(TNonblockingTransport tr,
+                                              TAsyncClientManager mgr, TProtocolFactory factory) {
+      return new InternalService.AsyncClient(factory, mgr, tr);
+    }
+  }
+
   private class PoolFactory implements KeyedPoolableObjectFactory<InetSocketAddress, T> {
     // Thrift clients do not expose their underlying transports, so we track them
     // separately here to let us call close() on the transport associated with a
