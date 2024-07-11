@@ -7,28 +7,26 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 
 public abstract class TaskPlacer {
-    long _requestId;
     double _beta;
 
-    public TaskPlacer(long requestId, double beta) {
-        _requestId = requestId;
+    public TaskPlacer(double beta) {
         _beta = beta;
     }
 
     public Map<InetSocketAddress, TEnqueueTaskReservationsRequest> getEnqueueTaskReservationsRequests(
-            TSchedulingRequest schedulingRequest, long requestId,
+            TSchedulingRequest schedulingRequest,
             Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress) {
         return null;
     }
 
-    public static TaskPlacer createTaskPlacer(long requestId, double beta, String schedulingStrategy,
+    public static TaskPlacer createTaskPlacer(double beta, String schedulingStrategy,
                                               Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients) {
         if (schedulingStrategy.equals(DodoorConf.DODOOR_SCHEDULER)) {
-            return new CachedTaskPlacer(requestId, beta, true);
+            return new CachedTaskPlacer(beta, true);
         } else if (schedulingStrategy.equals(DodoorConf.SPARROW_SCHEDULER)) {
-            return new SparrowTaskPlacer(requestId, beta, nodeMonitorClients);
+            return new SparrowTaskPlacer(beta, nodeMonitorClients);
         } else if (schedulingStrategy.equals(DodoorConf.CACHED_SPARROW_SCHEDULER)) {
-            return new CachedTaskPlacer(requestId, beta, false);
+            return new CachedTaskPlacer(beta, false);
         } else {
             throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         }

@@ -12,6 +12,7 @@ import org.apache.thrift.async.AsyncMethodCallback;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,34 +23,40 @@ public class SchedulerImpl implements Scheduler{
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(SchedulerImpl.class);
 
     /** Used to uniquely identify requests arriving at this scheduler. */
-    private AtomicInteger _counter = new AtomicInteger(0);
+    private final AtomicInteger _counter = new AtomicInteger(0);
 
 
     /** Thrift client pool for async communicating with node monitors */
-    private ThriftClientPool<InternalService.AsyncClient> _nodeMonitorAsyncClientPool =
+    private final ThriftClientPool<InternalService.AsyncClient> _nodeMonitorAsyncClientPool =
             new ThriftClientPool<>(
                     new ThriftClientPool.InternalServiceMakerFactory());
     
     private Map<InetSocketAddress, NodeMonitorService.Client> _nodeMonitorClients;
 
-    private Map<InetSocketAddress, TNodeState> _loadMaps;
+    private ConcurrentMap<InetSocketAddress, TNodeState> _loadMaps;
     private THostPort _address;
-
-    private ConcurrentMap<Long, TaskPlacer> _requestTaskPlacers;
     private String _schedulingStrategy;
-
     private double _beta;
     private int _batchSize;
+    private TaskPlacer _taskPlacer;
 
     @Override
     public void initialize(Configuration config, InetSocketAddress socket) throws IOException {
         _address = Network.socketAddressToThrift(socket);
-        _requestTaskPlacers = Maps.newConcurrentMap();
         _loadMaps = Maps.newConcurrentMap();
         _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
-
         _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
+        List<String> nodeMonitorAddresses = ConfigUtil.parseNodeAddress(config);
+        for (String nodeMonitorAddress : nodeMonitorAddresses) {
+            try {
+                this.registerNodeMonitor(nodeMonitorAddress);
+            } catch (TException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        _taskPlacer = TaskPlacer.createTaskPlacer(_beta,
+                _schedulingStrategy, _nodeMonitorClients);
     }
 
 
@@ -89,20 +96,15 @@ public class SchedulerImpl implements Scheduler{
                 _address.getPort(),
                 user, description));
 
-        TaskPlacer taskPlacer = TaskPlacer.createTaskPlacer(request.requestId, _beta,
-                _schedulingStrategy, _nodeMonitorClients);
-        long requestId = request.requestId;
-
-        _requestTaskPlacers.put(requestId, taskPlacer);
         Map<InetSocketAddress, TEnqueueTaskReservationsRequest> enqueueTaskReservationsRequests;
-        enqueueTaskReservationsRequests = taskPlacer.getEnqueueTaskReservationsRequests(
-                request, requestId, _loadMaps, _address);
+        enqueueTaskReservationsRequests = _taskPlacer.getEnqueueTaskReservationsRequests(
+                request, _loadMaps, _address);
 
         for (Map.Entry<InetSocketAddress, TEnqueueTaskReservationsRequest> entry :
                 enqueueTaskReservationsRequests.entrySet())  {
             try {
                 InternalService.AsyncClient client = _nodeMonitorAsyncClientPool.borrowClient(entry.getKey());
-                LOG.debug("Launching enqueueTask for request " + requestId + "on node: " + entry.getKey());
+                LOG.debug("Launching enqueueTask for request " + request.requestId + "on node: " + entry.getKey());
                 AUDIT_LOG.debug(Logging.auditEventString(
                         "scheduler_launch_enqueue_task", entry.getValue().taskId,
                         entry.getKey().getAddress().getHostAddress()));
@@ -113,7 +115,7 @@ public class SchedulerImpl implements Scheduler{
             }
         }
         long end = System.currentTimeMillis();
-        LOG.debug("All tasks enqueued for request " + requestId + "; returning. Total time: " +
+        LOG.debug("All tasks enqueued for request " + request.requestId + "; returning. Total time: " +
                 (end - start) + " milliseconds");
     }
 

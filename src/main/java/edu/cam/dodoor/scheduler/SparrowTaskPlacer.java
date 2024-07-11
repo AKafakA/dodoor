@@ -9,15 +9,15 @@ import java.util.*;
 
 public class SparrowTaskPlacer extends TaskPlacer{
     Map<InetSocketAddress, NodeMonitorService.Client> _nodeMonitorClients;
-    public SparrowTaskPlacer(long requestId, double beta,
+    public SparrowTaskPlacer(double beta,
                              Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients) {
-        super(requestId, beta);
+        super(beta);
         _nodeMonitorClients = nodeMonitorClients;
     }
 
     @Override
     public Map<InetSocketAddress, TEnqueueTaskReservationsRequest> getEnqueueTaskReservationsRequests(
-            TSchedulingRequest schedulingRequest, long requestId,
+            TSchedulingRequest schedulingRequest,
             Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress) {
         Map<InetSocketAddress, TEnqueueTaskReservationsRequest> allocations = new HashMap<>();
         for (TTaskSpec taskSpec : schedulingRequest.tasks) {

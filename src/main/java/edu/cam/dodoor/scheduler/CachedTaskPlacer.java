@@ -7,14 +7,14 @@ import java.util.*;
 
 public class CachedTaskPlacer extends TaskPlacer{
     private boolean _useLoadScores;
-    public CachedTaskPlacer(long requestId, double beta, boolean useLoadScores) {
-        super(requestId, beta);
+    public CachedTaskPlacer(double beta, boolean useLoadScores) {
+        super(beta);
         _useLoadScores = useLoadScores;
     }
 
     @Override
     public Map<InetSocketAddress, TEnqueueTaskReservationsRequest> getEnqueueTaskReservationsRequests(
-            TSchedulingRequest schedulingRequest, long requestId,
+            TSchedulingRequest schedulingRequest,
             Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress) {
         Map<InetSocketAddress, TEnqueueTaskReservationsRequest> allocations = new HashMap<>();
         for (TTaskSpec taskSpec : schedulingRequest.tasks) {
