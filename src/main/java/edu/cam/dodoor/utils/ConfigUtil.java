@@ -27,11 +27,11 @@ public class ConfigUtil {
    * total resource capacity for that backend.
    */
   public static List<String> parseNodeAddress(
-      Configuration conf) {
+      Configuration conf, String key) {
 
     List<String> nodeAddress = new ArrayList<>();
 
-    for (String node: conf.getStringArray(DodoorConf.STATIC_NODE_MONITORS)) {
+    for (String node: conf.getStringArray(key)) {
       Optional<InetSocketAddress> addr = Serialization.strToSocket(node);
       if (!addr.isPresent()) {
         LOG.warn("Bad backend address: " + node);

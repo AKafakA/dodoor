@@ -43,7 +43,7 @@ public class Resources {
     return conf.getInt(DodoorConf.SYSTEM_CPUS, DodoorConf.DEFAULT_SYSTEM_CPUS);
   }
 
-  public static int getSystemDiskMb(Configuration conf) {
+  public static int getSystemDiskGb(Configuration conf) {
     return conf.getInt(DodoorConf.SYSTEM_CPUS, DodoorConf.DEFAULT_SYSTEM_CPUS);
   }
 }

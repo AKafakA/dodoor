@@ -33,8 +33,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
      * within this class under certain configurations (e.g. a config file specifies
      * multiple NodeMonitors).
      */
-    public void initialize(Configuration conf, int nmPort, int internalPort,
-                           List<String> dataStoreAddresses)
+    public void initialize(Configuration conf, int nmPort, int internalPort)
             throws IOException, TException {
         _nodeMonitor.initialize(conf, internalPort);
 
@@ -57,7 +56,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _dataStoreAddress = new ArrayList<>();
 
-        for (String dataStoreAddress : dataStoreAddresses) {
+        for (String dataStoreAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_DATA_STORE)) {
             registerDataStore(dataStoreAddress);
         }
 

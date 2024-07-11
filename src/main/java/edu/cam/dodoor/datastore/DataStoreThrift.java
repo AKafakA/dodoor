@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
 
+import edu.cam.dodoor.utils.ConfigUtil;
+
 
 public class DataStoreThrift implements DataStoreService.Iface {
     private final static Logger LOG = Logger.getLogger(DataStoreThrift.class);
@@ -33,9 +35,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
     private int _batchSize;
 
     void initialize(Configuration conf,
-                    InetSocketAddress socket,
-                    List<String> schedulerAddresses,
-                    List<String> nodeMonitorAddresses)
+                    InetSocketAddress socket)
             throws TException, IOException {
         _dataStore = new BasicDataStoreImpl(new HashMap<>());
         _config = conf;
@@ -48,11 +48,12 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _schedulerAddress = new ArrayList<>();
         _nodeMonitorAddress = new ArrayList<>();
 
-        for (String schedulerAddress : schedulerAddresses) {
+
+        for (String schedulerAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_SCHEDULER)) {
             this.registerScheduler(schedulerAddress);
         }
 
-        for (String nodeMonitorAddress : nodeMonitorAddresses) {
+        for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_NODE_MONITORS)) {
             this.registerNodeMonitor(nodeMonitorAddress);
         }
 
@@ -111,8 +112,8 @@ public class DataStoreThrift implements DataStoreService.Iface {
     }
 
     private class UpdateNodeLoadCallBack implements AsyncMethodCallback<Void> {
-        private SchedulerService.AsyncClient _client;
-        private InetSocketAddress _address;
+        private final SchedulerService.AsyncClient _client;
+        private final InetSocketAddress _address;
 
         public UpdateNodeLoadCallBack(InetSocketAddress address, SchedulerService.AsyncClient client) {
             _client = client;

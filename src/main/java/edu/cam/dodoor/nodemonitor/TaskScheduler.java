@@ -34,13 +34,13 @@ public abstract class TaskScheduler {
 
     /** Initialize the task scheduler, passing it the current available resources
      *  on the machine. */
-    void initialize(Configuration config, int nodeMonitorPort) {
+    void initialize(Configuration config) {
         _conf = config;
         _ipAddress = Network.getIPAddress(config);
 
         _cores_per_slots = Resources.getSystemCPUCount(config) / _numSlots;
         _memory_per_slots = Resources.getSystemMemoryMb(config) / _numSlots;
-        _disk_per_slots = Resources.getSystemDiskMb(config) / _numSlots;
+        _disk_per_slots = Resources.getSystemDiskGb(config) / _numSlots;
     }
 
     TaskSpec getNextTask() {

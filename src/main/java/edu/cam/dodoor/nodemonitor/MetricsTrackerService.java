@@ -1,12 +1,12 @@
 package edu.cam.dodoor.nodemonitor;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import com.sun.management.OperatingSystemMXBean;
+
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 public class MetricsTrackerService {
 
@@ -16,11 +16,15 @@ public class MetricsTrackerService {
     private final File _root;
     private final double _totalSpace;
     private static final int GB_SIZE = 1073741824;
+    private final OperatingSystemMXBean _operatingSystemMXBean;
+    private final long _systemMemory;
 
-    public MetricsTrackerService(int trackingInterval) {
+    public MetricsTrackerService(int trackingInterval, Configuration config) {
+        _operatingSystemMXBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         _trackingInterval = trackingInterval;
         _root = new File("/");
         _totalSpace = (double) _root.getTotalSpace() / GB_SIZE;
+        _systemMemory = _operatingSystemMXBean.getTotalPhysicalMemorySize();
     }
 
     private class MetricTrackRunnable implements Runnable {
@@ -39,20 +43,11 @@ public class MetricsTrackerService {
     }
 
     private void logUsage() {
-        OperatingSystemMXBean operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
-        for (Method method : operatingSystemMXBean.getClass().getDeclaredMethods()) {
-            method.setAccessible(true);
-            if (method.getName().startsWith("get")
-                    && Modifier.isPublic(method.getModifiers())) {
-                Object value;
-                try {
-                    value = method.invoke(operatingSystemMXBean);
-                } catch (Exception e) {
-                    value = e;
-                }
-                LOG.trace(method.getName() + " = " + value);
-            }
-        }
+        double cpuUsage = _operatingSystemMXBean.getSystemCpuLoad();
+        LOG.trace("CPU Usage = " + cpuUsage);
+        double memoryUsage =
+                (double) (_systemMemory - _operatingSystemMXBean.getFreePhysicalMemorySize()) / _systemMemory;
+        LOG.trace("Memory Usage = " + memoryUsage);
     }
 
     private void logDisk() {

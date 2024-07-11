@@ -87,6 +87,8 @@ public class DodoorConf {
     /** The hostname of this machine. */
     public final static String HOSTNAME = "hostname";
     public final static String STATIC_NODE_MONITORS = "static.node_monitors";
+    public final static String STATIC_SCHEDULER = "static.scheduler";
+    public final static String STATIC_DATA_STORE = "static.data_store";
 
 
     public static final String GET_TASK_PORT = "get_task.port";

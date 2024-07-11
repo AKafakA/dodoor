@@ -47,7 +47,7 @@ public class SchedulerImpl implements Scheduler{
         _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
-        List<String> nodeMonitorAddresses = ConfigUtil.parseNodeAddress(config);
+        List<String> nodeMonitorAddresses = ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE_MONITORS);
         for (String nodeMonitorAddress : nodeMonitorAddresses) {
             try {
                 this.registerNodeMonitor(nodeMonitorAddress);

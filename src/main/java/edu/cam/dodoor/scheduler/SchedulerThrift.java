@@ -11,21 +11,10 @@ import org.apache.thrift.TException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Map;
 
 public class SchedulerThrift implements SchedulerService.Iface{
     Scheduler _scheduler;
-
-    public SchedulerThrift(Configuration config, List<String> nodeMonitorAddresses) throws TException {
-        String schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, "DodoorScheduler");
-        _scheduler = new SchedulerImpl();
-
-        for (String nodeMonitorAddress : nodeMonitorAddresses) {
-            assert _scheduler != null;
-            _scheduler.registerNodeMonitor(nodeMonitorAddress);
-        }
-    }
 
     @Override
     public void submitJob(TSchedulingRequest req) throws TException {
@@ -42,6 +31,11 @@ public class SchedulerThrift implements SchedulerService.Iface{
     }
 
     public void initialize(Configuration config) throws TException, IOException {
+        _scheduler = new SchedulerImpl();
+        for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE_MONITORS)) {
+            assert _scheduler != null;
+            _scheduler.registerNodeMonitor(nodeMonitorAddress);
+        }
         SchedulerService.Processor<SchedulerService.Iface> processor =
                 new SchedulerService.Processor<>(this);
         int port = config.getInt(DodoorConf.SCHEDULER_THRIFT_PORT,
