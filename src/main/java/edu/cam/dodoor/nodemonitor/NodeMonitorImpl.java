@@ -7,7 +7,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -35,6 +34,13 @@ public class NodeMonitorImpl implements NodeMonitor{
         TaskLauncherService taskLauncherService = new TaskLauncherService();
         taskLauncherService.initialize(config, _taskScheduler, internalPort);
 
+        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
+            int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_MS,
+                    DodoorConf.DEFAULT_TRACKING_INTERVAL);
+            MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval);
+            metricsTrackerService.start();
+        }
+
         _requested_cores = new AtomicInteger();
         _requested_memory = new AtomicLong();
         _requested_disk = new AtomicLong();
@@ -51,14 +57,6 @@ public class NodeMonitorImpl implements NodeMonitor{
         _counter.getAndAdd(-1);
     }
 
-
-    @Override
-    public void cancelTaskReservations(TCancelTaskReservationsRequest request) throws TException {
-        TResourceVector resourceVector = _taskScheduler.cancelTaskReservations(request.requestId);
-        _requested_cores.getAndAdd(-resourceVector.cores);
-        _requested_memory.getAndAdd(-resourceVector.memory);
-        _requested_disk.getAndAdd(-resourceVector.disks);
-    }
 
     @Override
     public TResourceVector getRequestedResourceVector() {

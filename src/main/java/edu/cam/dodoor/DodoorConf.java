@@ -100,4 +100,9 @@ public class DodoorConf {
     private final static int DEFAULT_SCHEDULER_THRIFT_THREADS = 8;
     public final static int DEFAULT_GET_TASK_PORT = 20507;
 
+    /** Config for tracing and monitoring. */
+    public final static String TRACKING_ENABLED = "tracking.enabled";
+    public final static boolean DEFAULT_TRACKING_ENABLED = false;
+    public final static String TRACKING_INTERVAL_IN_MS = "tracking.interval";
+    public final static int DEFAULT_TRACKING_INTERVAL = 10000;
 }

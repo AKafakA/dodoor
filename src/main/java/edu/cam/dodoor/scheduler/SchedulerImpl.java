@@ -4,23 +4,14 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
-import edu.cam.dodoor.utils.Logging;
-import edu.cam.dodoor.utils.Network;
-import edu.cam.dodoor.utils.Serialization;
-import edu.cam.dodoor.utils.ThriftClientPool;
+import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.TNonblockingSocket;
-import org.apache.thrift.transport.TNonblockingTransport;
-import org.apache.thrift.transport.TTransportException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +39,7 @@ public class SchedulerImpl implements Scheduler{
     private String _schedulingStrategy;
 
     private double _beta;
+    private int _batchSize;
 
     @Override
     public void initialize(Configuration config, InetSocketAddress socket) throws IOException {
@@ -56,6 +48,8 @@ public class SchedulerImpl implements Scheduler{
         _loadMaps = Maps.newConcurrentMap();
         _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
+
+        _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
     }
 
 
@@ -65,6 +59,10 @@ public class SchedulerImpl implements Scheduler{
             return;
         }
         handleJobSubmission(request);
+        _counter.getAndAdd(request.tasks.size());
+        if (_counter.get() / _batchSize == 0) {
+            LOG.info(_counter.get() + " tasks scheduled.");
+        }
     }
 
     @Override
@@ -145,19 +143,13 @@ public class SchedulerImpl implements Scheduler{
             InetSocketAddress socket = address.get();
             _loadMaps.put(socket,
                     new TNodeState(new TResourceVector(0, 0, 0), 0));
-            _nodeMonitorClients.put(address.get(), createNodeMonitorClient(socket));
+            try {
+                _nodeMonitorClients.put(address.get(), TClients.createBlockingNodeMonitorClient(socket));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } else {
             throw new TException("Invalid address: " + nodeMonitorAddress);
-        }
-    }
-
-    private NodeMonitorService.Client createNodeMonitorClient(InetSocketAddress socket) {
-        try {
-            TNonblockingTransport nbTr = new TNonblockingSocket(socket.getAddress().getHostAddress(), socket.getPort());
-            TProtocolFactory factory = new TBinaryProtocol.Factory();
-            return new NodeMonitorService.Client.Factory().getClient(factory.getProtocol(nbTr));
-        } catch (IOException | TTransportException e) {
-            throw new RuntimeException(e);
         }
     }
 

@@ -17,6 +17,23 @@ import org.apache.thrift.transport.TTransportException;
 public class TClients {
   private final static Logger LOG = Logger.getLogger(TClients.class);
 
+
+  public static NodeMonitorService.Client createBlockingNodeMonitorClient(
+          InetSocketAddress socket) throws IOException, TTransportException {
+    return createBlockingNodeMonitorClient(socket.getAddress().getHostAddress(), socket.getPort());
+  }
+
+  public static NodeMonitorService.Client createBlockingNodeMonitorClient(
+          String host, int port) throws IOException, TTransportException {
+    return createBlockingNodeMonitorClient(host, port, 0);
+  }
+
+  public static NodeMonitorService.Client createBlockingNodeMonitorClient(
+          String host, int port, int timeout) throws IOException, TTransportException {
+    return new NodeMonitorService.Client(getProtocol(host, port, timeout));
+  }
+
+
   public static SchedulerService.Client createBlockingSchedulerClient(
       InetSocketAddress socket) throws IOException, TTransportException {
     return createBlockingSchedulerClient(socket.getAddress().getHostAddress(), socket.getPort());
