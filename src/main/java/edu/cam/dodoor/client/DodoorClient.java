@@ -23,8 +23,10 @@ import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import edu.cam.dodoor.thrift.*;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -39,22 +41,17 @@ public class DodoorClient {
 
     private final static Logger LOG = Logger.getLogger(DodoorClient.class);
     private final static int NUM_CLIENTS = 8;
-    private final static int DEFAULT_LISTEN_PORT = 50201;
 
     BlockingQueue<SchedulerService.Client> _clients =
             new LinkedBlockingQueue<>();
 
-    DataStoreService.Client _dataStoreClient;
-
     private AtomicInteger _nextRequestId = new AtomicInteger(0);
 
-    public void initialize(InetSocketAddress sparrowSchedulerAddr,
-                           Configuration conf)
-            throws TException, IOException {
-        initialize(sparrowSchedulerAddr, DEFAULT_LISTEN_PORT, conf);
-    }
+    private static TUserGroupInfo DEFAULT_USER = new TUserGroupInfo("default", "normal", 1);
 
-    public void initialize(InetSocketAddress schedulerAddr, int listenPort, Configuration conf)
+    private static TPlacementPreference NO_PREFERENCE = new TPlacementPreference(new ArrayList<>());
+
+    public void initialize(InetSocketAddress schedulerAddr)
             throws TException, IOException {
 
         for (int i = 0; i < NUM_CLIENTS; i++) {
@@ -63,6 +60,24 @@ public class DodoorClient {
                     60000);
             _clients.add(client);
         }
+    }
+
+    public boolean submitTask(String taskId, int cores, long memory, long disks, long durationInMs)
+            throws TException {
+        List<TTaskSpec> tasks = new ArrayList<>();
+        TResourceVector resources = new TResourceVector(cores, memory, disks);
+        TTaskSpec task = new TTaskSpec(taskId,
+                NO_PREFERENCE,
+                java.nio.ByteBuffer.wrap("".getBytes()),
+                resources,
+                durationInMs);
+        tasks.add(task);
+        return submitJob(tasks);
+    }
+
+    public boolean submitJob(List<TTaskSpec> tasks)
+            throws TException {
+        return submitRequest(new TSchedulingRequest(tasks, DEFAULT_USER, _nextRequestId.getAndIncrement()));
     }
 
     public boolean submitJob(List<TTaskSpec> tasks, TUserGroupInfo user)
@@ -97,5 +112,4 @@ public class DodoorClient {
         }
         return true;
     }
-
 }

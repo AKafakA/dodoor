@@ -34,26 +34,32 @@ public class DataStoreThrift implements DataStoreService.Iface {
     private AtomicInteger _counter;
     private int _batchSize;
 
-    void initialize(Configuration conf,
-                    InetSocketAddress socket)
+    public void initialize(Configuration config)
             throws TException, IOException {
         _dataStore = new BasicDataStoreImpl(new HashMap<>());
-        _config = conf;
-        _networkPort = Network.socketAddressToThrift(socket);
+        _config = config;
+
+        int port = config.getInt(DodoorConf.DATA_STORE_THRIFT_PORT,
+                DodoorConf.DEFAULT_DATA_STORE_THRIFT_PORT );
+
+        String hostname = Network.getHostName(config);
+        InetSocketAddress addr = new InetSocketAddress(hostname, port);
+        _networkPort = Network.socketAddressToThrift(addr);
+
         _dataStore.initialize(_config);
         _counter = new AtomicInteger(0);
-        _batchSize = conf.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
+        _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
 
         _schedulerAddress = new ArrayList<>();
         _nodeMonitorAddress = new ArrayList<>();
 
 
-        for (String schedulerAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_SCHEDULER)) {
+        for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER)) {
             this.registerScheduler(schedulerAddress);
         }
 
-        for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_NODE_MONITORS)) {
+        for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE_MONITORS)) {
             this.registerNodeMonitor(nodeMonitorAddress);
         }
 
