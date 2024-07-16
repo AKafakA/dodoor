@@ -13,7 +13,6 @@ import java.util.concurrent.Executors;
 
 public class TaskLauncherService {
     private final static Logger LOG = Logger.getLogger(TaskLauncherService.class);
-    private final static Logger AUDIT_LOG = Logging.getAuditLogger(TaskLauncherService.class);
 
     private THostPort _nodeMonitorInternalAddress;
 
@@ -26,14 +25,14 @@ public class TaskLauncherService {
         public void run() {
             while (true) {
                 TaskSpec task = _taskScheduler.getNextTask(); // blocks until task is ready
-                AUDIT_LOG.info(Logging.auditEventString("node_monitor_get_task_complete", task._requestId,
+                LOG.info(Logging.auditEventString("node_monitor_get_task_complete", task._requestId,
                         _nodeMonitorInternalAddress.getHost()));
 
                 LOG.debug("Received task for request " + task._requestId + ", task " +
                         task._requestId);
 
                 // Launch the task on the backend.
-                AUDIT_LOG.info(Logging.auditEventString("node_monitor_task_launch",
+                LOG.info(Logging.auditEventString("node_monitor_task_launch",
                         task._requestId,
                         _nodeMonitorInternalAddress.getHost(),
                         task._requestId,
@@ -62,7 +61,7 @@ public class TaskLauncherService {
                     String.format("stress -c %d --vm 1 --vm-bytes %dM -d 1 --hdd-bytes %dM --timeout %d",
                             cpu, memory, disks, duration));
             int exitCode = process.waitFor();
-            LOG.debug("Task " + task._requestId + " for request " + task._requestId +
+            LOG.info("Task " + task._requestId + " for request " + task._requestId +
                     " exited with code " + exitCode);
         }
     }
@@ -70,16 +69,16 @@ public class TaskLauncherService {
     public void initialize(Configuration conf, TaskScheduler taskScheduler,
                            int nodeMonitorPort) {
         /* The number of threads used by the service. */
-        int _numThreads = taskScheduler.getMaxActiveTasks();
-        if (_numThreads <= 0) {
+        int _numSlots = taskScheduler.getMaxActiveTasks();
+        if (_numSlots <= 0) {
             // If the scheduler does not enforce a maximum number of tasks, just use a number of
             // threads equal to the number of cores.
-            _numThreads = (int) Resources.getSystemCPUCount(conf);
+            _numSlots = (int) Resources.getSystemCPUCount(conf);
         }
         this._taskScheduler = taskScheduler;
         _nodeMonitorInternalAddress = new THostPort(Network.getIPAddress(conf), nodeMonitorPort);
-        ExecutorService service = Executors.newFixedThreadPool(_numThreads);
-        for (int i = 0; i < _numThreads; i++) {
+        ExecutorService service = Executors.newFixedThreadPool(_numSlots);
+        for (int i = 0; i < _numSlots; i++) {
             service.submit(new TaskLaunchRunnable());
         }
     }

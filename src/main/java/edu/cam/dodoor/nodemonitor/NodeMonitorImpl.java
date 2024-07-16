@@ -37,7 +37,7 @@ public class NodeMonitorImpl implements NodeMonitor{
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_MS,
                     DodoorConf.DEFAULT_TRACKING_INTERVAL);
-            MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval, config );
+            MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval, config);
             metricsTrackerService.start();
         }
 
