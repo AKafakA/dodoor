@@ -39,7 +39,6 @@ Thrift/resources/
 nodemonitor.ref/
 out/
 classes/
-src/main/resources/
 requestInfo.txt
 src/main/gen-java/
 .idea/
