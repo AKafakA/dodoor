@@ -32,10 +32,6 @@ public class SchedulerThrift implements SchedulerService.Iface{
 
     public void initialize(Configuration config) throws TException, IOException {
         _scheduler = new SchedulerImpl();
-        for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE_MONITORS)) {
-            assert _scheduler != null;
-            _scheduler.registerNodeMonitor(nodeMonitorAddress);
-        }
         SchedulerService.Processor<SchedulerService.Iface> processor =
                 new SchedulerService.Processor<>(this);
         int port = config.getInt(DodoorConf.SCHEDULER_THRIFT_PORT,

@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -143,8 +144,7 @@ public class SchedulerImpl implements Scheduler{
         Optional<InetSocketAddress> address = Serialization.strToSocket(nodeMonitorAddress);
         if (address.isPresent()) {
             InetSocketAddress socket = address.get();
-            _loadMaps.put(socket,
-                    new TNodeState(new TResourceVector(0, 0, 0), 0));
+            _loadMaps.put(socket, new TNodeState(new TResourceVector(0, 0, 0), 0));
             try {
                 _nodeMonitorClients.put(address.get(), TClients.createBlockingNodeMonitorClient(socket));
             } catch (IOException e) {
