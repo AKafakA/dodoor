@@ -52,15 +52,18 @@ public class TaskLauncherService {
         }
 
         /** Executes to launch a task */
-        private void executeLaunchTask(TaskSpec task) throws IOException {
+        private void executeLaunchTask(TaskSpec task) throws IOException, InterruptedException {
             Runtime rt = Runtime.getRuntime();
             int cpu = task._resourceVector.cores;
             long memory = task._resourceVector.memory;
             long disks = task._resourceVector.disks;
             long duration = task._duration;
-            rt.exec(
+            Process process = rt.exec(
                     String.format("stress -c %d --vm 1 --vm-bytes %dM -d 1 --hdd-bytes %dM --timeout %d",
                             cpu, memory, disks, duration));
+            int exitCode = process.waitFor();
+            LOG.debug("Task " + task._requestId + " for request " + task._requestId +
+                    " exited with code " + exitCode);
         }
     }
 
