@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -49,6 +48,7 @@ public class SchedulerImpl implements Scheduler{
         _beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
         List<String> nodeMonitorAddresses = ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE_MONITORS);
+        _nodeMonitorClients = Maps.newHashMap();
         for (String nodeMonitorAddress : nodeMonitorAddresses) {
             try {
                 this.registerNodeMonitor(nodeMonitorAddress);
