@@ -69,7 +69,7 @@ public class TaskLauncherService {
     public void initialize(Configuration conf, TaskScheduler taskScheduler,
                            int nodeMonitorPort) {
         /* The number of threads used by the service. */
-        int _numSlots = taskScheduler.getMaxActiveTasks();
+        int _numSlots = taskScheduler.getNumSlots();
         if (_numSlots <= 0) {
             // If the scheduler does not enforce a maximum number of tasks, just use a number of
             // threads equal to the number of cores.

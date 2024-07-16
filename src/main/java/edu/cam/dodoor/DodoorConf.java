@@ -108,5 +108,5 @@ public class DodoorConf {
     public final static int DEFAULT_TRACKING_INTERVAL = 10000;
 
     public final static String METRICS_LOG_FILE = "metrics.log.file";
-    public final static String DEFAULT_METRICS_LOG_FILE = "~/dodoor_metrics.log";
+    public final static String DEFAULT_METRICS_LOG_FILE = "dodoor_metrics.log";
 }

@@ -17,16 +17,16 @@ public class MetricsTrackerService {
     private final int _trackingInterval;
     private final File _root;
     private final double _totalSpace;
-    private static final int GB_SIZE = 1073741824;
     private final OperatingSystemMXBean _operatingSystemMXBean;
     private final long _systemMemory;
     private final String _tracingFile;
+    private long _timeline;
 
     public MetricsTrackerService(int trackingInterval, Configuration config) {
         _operatingSystemMXBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         _trackingInterval = trackingInterval;
         _root = new File("/");
-        _totalSpace = (double) _root.getTotalSpace() / GB_SIZE;
+        _totalSpace = _root.getTotalSpace();
         _systemMemory = _operatingSystemMXBean.getTotalPhysicalMemorySize();
         _tracingFile = config.getString(DodoorConf.METRICS_LOG_FILE, DodoorConf.DEFAULT_METRICS_LOG_FILE);
 
@@ -36,6 +36,7 @@ public class MetricsTrackerService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        _timeline = 0;
     }
 
     private class MetricTrackRunnable implements Runnable {
@@ -44,8 +45,8 @@ public class MetricsTrackerService {
             while (true) {
                 try {
                     Thread.sleep(_trackingInterval);
+                    _timeline += _trackingInterval;
                     logUsage();
-                    logDisk();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -55,15 +56,11 @@ public class MetricsTrackerService {
 
     private void logUsage() {
         double cpuUsage = _operatingSystemMXBean.getSystemCpuLoad();
-        LOG.info("CPU Usage = " + cpuUsage);
         double memoryUsage =
                 (double) (_systemMemory - _operatingSystemMXBean.getFreePhysicalMemorySize()) / _systemMemory;
-        LOG.info("Memory Usage = " + memoryUsage);
-    }
-
-    private void logDisk() {
-        double freeSpace =  (double) _root.getFreeSpace() / GB_SIZE;
-        LOG.info("Disk Usage =" + freeSpace / _totalSpace);
+        double freeSpace =  (double) _root.getFreeSpace() / _totalSpace;
+        LOG.info("Time(MS): " +
+                _timeline + " CPU usage: " + cpuUsage + " Memory usage: " + memoryUsage + " Disk usage: " + freeSpace);
     }
 
     public void start() {

@@ -122,5 +122,5 @@ public abstract class TaskScheduler {
      *
      * -1 signals that the scheduler does not enforce a maximum number of active tasks.
      */
-    abstract int getMaxActiveTasks();
+    abstract int getNumSlots();
 }

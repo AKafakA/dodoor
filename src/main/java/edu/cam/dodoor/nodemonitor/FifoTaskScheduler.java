@@ -89,7 +89,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     }
 
     @Override
-    int getMaxActiveTasks() {
+    int getNumSlots() {
         return _numSlots;
     }
 }
