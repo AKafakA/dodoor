@@ -73,7 +73,6 @@ public class TaskTracePlayer {
         OptionSet options = parser.parse(args);
 
 
-        String traceFile = (String) options.valueOf("c");
         DodoorClient client = new DodoorClient();
         Configuration conf = new PropertiesConfiguration();
 
@@ -86,6 +85,7 @@ public class TaskTracePlayer {
         client.initialize(new InetSocketAddress("localhost", schedulerPort));
         long globalStartTime = System.currentTimeMillis();
 
+        String traceFile = (String) options.valueOf("f");
         List<String> allLines = Files.readAllLines(Paths.get(traceFile));
         for (String line : allLines) {
             String[] parts = line.split(",");
