@@ -64,9 +64,8 @@ public class DataStoreThrift implements DataStoreService.Iface {
         }
 
         DataStoreService.Processor<DataStoreService.Iface> processor = new DataStoreService.Processor<>(this);
-        int dataStorePort = _config.getInt(DodoorConf.DATA_STORE_THRIFT_PORT, DodoorConf.DEFAULT_DATA_STORE_THRIFT_THREADS);
         int threads = _config.getInt(DodoorConf.DATA_STORE_THRIFT_THREADS, DodoorConf.DEFAULT_DATA_STORE_THRIFT_THREADS);
-        TServers.launchThreadedThriftServer(dataStorePort, threads, processor);
+        TServers.launchThreadedThriftServer(port, threads, processor);
     }
 
     @Override
