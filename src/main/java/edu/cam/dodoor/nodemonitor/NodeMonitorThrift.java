@@ -35,7 +35,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
      */
     public void initialize(Configuration conf, int nmPort, int internalPort)
             throws IOException, TException {
-        _nodeMonitor.initialize(conf, internalPort, this);
+        _nodeMonitor.initialize(conf, this);
 
         // Setup application-facing agent service.
         NodeMonitorService.Processor<NodeMonitorService.Iface> processor =

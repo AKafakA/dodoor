@@ -26,13 +26,12 @@ public class NodeMonitorImpl implements NodeMonitor{
     private AtomicInteger _counter;
 
     @Override
-    public void initialize(Configuration config, int internalPort, NodeMonitorThrift nodeMonitorClient) {
+    public void initialize(Configuration config, NodeMonitorThrift nodeMonitorClient) {
         _ipAddress = Network.getIPAddress(config);
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
         // TODO(wda): add more task scheduler
         _taskScheduler = new FifoTaskScheduler(numSlots);
         _taskScheduler.initialize(config);
-        InetSocketAddress nmAddress = new InetSocketAddress(Network.getHostName(config), internalPort);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
         taskLauncherService.initialize(config, _taskScheduler, nodeMonitorClient);
 
