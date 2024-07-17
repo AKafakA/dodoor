@@ -39,8 +39,9 @@ public class TaskLauncherService {
                         task._previousRequestId,
                         task._previousTaskId));
                 try {
-                    executeLaunchTask(task);
+                    Process process = executeLaunchTask(task);
                     Thread.sleep(task._duration);
+                    process.destroy();
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -51,18 +52,15 @@ public class TaskLauncherService {
         }
 
         /** Executes to launch a task */
-        private void executeLaunchTask(TaskSpec task) throws IOException, InterruptedException {
+        private Process executeLaunchTask(TaskSpec task) throws IOException, InterruptedException {
             Runtime rt = Runtime.getRuntime();
             int cpu = task._resourceVector.cores;
             long memory = task._resourceVector.memory;
             long disks = task._resourceVector.disks;
             long duration = task._duration;
-            Process process = rt.exec(
+            return rt.exec(
                     String.format("stress -c %d --vm 1 --vm-bytes %dM -d 1 --hdd-bytes %dM --timeout %d",
                             cpu, memory, disks, duration));
-            int exitCode = process.waitFor();
-            LOG.info("Task " + task._requestId + " for request " + task._requestId +
-                    " exited with code " + exitCode);
         }
     }
 
