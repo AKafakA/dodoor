@@ -34,13 +34,10 @@ public class DataStoreThrift implements DataStoreService.Iface {
     private AtomicInteger _counter;
     private int _batchSize;
 
-    public void initialize(Configuration config)
+    public void initialize(Configuration config, int port)
             throws TException, IOException {
         _dataStore = new BasicDataStoreImpl(new HashMap<>());
         _config = config;
-
-        int port = config.getInt(DodoorConf.DATA_STORE_THRIFT_PORT,
-                DodoorConf.DEFAULT_DATA_STORE_THRIFT_PORT );
 
         String hostname = Network.getHostName(config);
         InetSocketAddress addr = new InetSocketAddress(hostname, port);

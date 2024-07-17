@@ -23,7 +23,7 @@
           <relocations>
             <relocation>
               <pattern>org.apache.thrift</pattern>
-              <shadedPattern>pigeon.org.apache.thrift</shadedPattern>
+              <shadedPattern>org.apache.thrift</shadedPattern>
               <includes>
                 <include>org.apache.thrift.**</include>
               </includes>
@@ -72,12 +72,6 @@
           <groupId>org.hamcrest</groupId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.16</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

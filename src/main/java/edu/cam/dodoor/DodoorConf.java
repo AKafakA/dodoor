@@ -26,19 +26,19 @@ public class DodoorConf {
      */
     public final static String SCHEDULER_TYPE = "scheduler.type";
     /** Current supported scheduling algorithm*/
-    public final static String DODOOR_SCHEDULER = "Dodoor";
-    public final static String SPARROW_SCHEDULER = "Sparrow";
-    public final static String CACHED_SPARROW_SCHEDULER = "CachedSparrowScheduler";
+    public final static String DODOOR_SCHEDULER = "dodoor";
+    public final static String SPARROW_SCHEDULER = "sparrow";
+    public final static String CACHED_SPARROW_SCHEDULER = "cached_sparrow_scheduler";
 
-    public final static String SCHEDULER_THRIFT_PORT = "scheduler.thrift.port";
+    public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20503;
-    public final static String NUM_SCHEDULER =
-            "scheduler.count";
+    public final static String SCHEDULER_THRIFT_THREADS =
+            "scheduler.thrift.threads";
     // Listen port for the state store --> scheduler interface
-    public final static int DEFAULT_NUM_SCHEDULER = 10;
+    public final static int DEFAULT_SCHEDULER_THRIFT_THREADS = 10;
 
     // beta value for 1 + beta process
-    public final static String BETA = "scheduler.beta";
+    public final static String BETA = "dodoor.beta";
     public final static double DEFAULT_BETA = 0.75;
 
 
@@ -46,13 +46,13 @@ public class DodoorConf {
     /**
      * Data Store Config
      */
-    public final static String DATA_STORE_THRIFT_PORT = "datastore.thrift.port";
+    public final static String DATA_STORE_THRIFT_PORTS = "datastore.thrift.ports";
     public final static String DATA_STORE_THRIFT_THREADS =
-            "scheduler.thrift.threads";
+            "datastore.thrift.threads";
 
     public final static int DEFAULT_DATA_STORE_THRIFT_PORT = 20510;
-    public final static int DEFAULT_DATA_STORE_THRIFT_THREADS = 1;
-    public final static String BATCH_SIZE = "static.batch_size";
+    public final static int DEFAULT_DATA_STORE_THRIFT_THREADS = 4;
+    public final static String BATCH_SIZE = "dodoor.batch_size";
     public final static int DEFAULT_BATCH_SIZE = 1024;
 
 
@@ -62,20 +62,20 @@ public class DodoorConf {
     /* List of ports corresponding to node monitors (backend interface) this daemon is
      * supposed to run. In most deployment scenarios this will consist of a single port,
      * or will be left unspecified in favor of the default port. */
-    public final static String NM_THRIFT_PORTS = "agent.thrift.ports";
+    public final static String NM_THRIFT_PORTS = "node.thrift.ports";
     public final static int DEFAULT_NM_THRIFT_PORT = 20501;
-    public final static int DEFAULT_INTERNAL_THRIFT_PORT = 20502;
+    public final static String NM_THRIFT_THREADS = "node.thrift.threads";
+    public final static int DEFAULT_NM_THRIFT_THREADS = 4;
 
     /* List of ports corresponding to node monitors (internal interface) this daemon is
      * supposed to run. In most deployment scenarios this will consist of a single port,
      * or will be left unspecified in favor of the default port. */
-    public final static String INTERNAL_THRIFT_PORTS = "internal_agent.thrift.ports";
+    public final static String INTERNAL_THRIFT_PORTS = "internal.thrift.ports";
+    public final static int DEFAULT_INTERNAL_THRIFT_PORT = 20502;
 
-    public final static String NM_THRIFT_THREADS = "agent.thrift.threads";
-    public final static int DEFAULT_NM_THRIFT_THREADS = 4;
-    public final static int DEFAULT_NM_INTERNAL_THRIFT_THREADS = 8;
     public final static String INTERNAL_THRIFT_THREADS =
-            "internal_agent.thrift.threads";
+            "internal.thrift.threads";
+    public final static int DEFAULT_NM_INTERNAL_THRIFT_THREADS = 1;
 
 
     /** Type of task scheduler to use on node monitor. Values: "fifo," "round_robin, " "priority" to be implemented.

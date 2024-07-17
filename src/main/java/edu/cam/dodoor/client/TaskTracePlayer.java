@@ -80,9 +80,17 @@ public class TaskTracePlayer {
             String configFile = (String) options.valueOf("c");
             conf = new PropertiesConfiguration(configFile);
         }
-        int schedulerPort = conf.getInt(DodoorConf.SCHEDULER_THRIFT_PORT,
-                DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT);
-        client.initialize(new InetSocketAddress("localhost", schedulerPort));
+
+        String[] schedulerPorts = conf.getStringArray(DodoorConf.SCHEDULER_THRIFT_PORTS);
+
+        if (schedulerPorts.length == 0) {
+            schedulerPorts = new String[]{Integer.toString(DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT)};
+        }
+        InetSocketAddress[] schedulerAddresses = new InetSocketAddress[schedulerPorts.length];
+        for (int i = 0; i < schedulerPorts.length; i++) {
+            schedulerAddresses[i] = new InetSocketAddress("localhost", Integer.parseInt(schedulerPorts[i]));
+        }
+        client.initialize(schedulerAddresses);
         long globalStartTime = System.currentTimeMillis();
 
         String traceFile = (String) options.valueOf("f");

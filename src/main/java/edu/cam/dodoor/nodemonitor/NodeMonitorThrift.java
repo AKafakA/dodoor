@@ -19,7 +19,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
     private final static Logger LOG = Logger.getLogger(NodeMonitorThrift.class);
 
     // Defaults if not specified by configuration
-    private final NodeMonitor _nodeMonitor = new NodeMonitorImpl();
+    private NodeMonitor _nodeMonitor;
     private List<InetSocketAddress> _dataStoreAddress;
     private ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
     InetSocketAddress _nmAddress;
@@ -35,6 +35,7 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
      */
     public void initialize(Configuration conf, int nmPort, int internalPort)
             throws IOException, TException {
+        _nodeMonitor = new NodeMonitorImpl();
         _nodeMonitor.initialize(conf, internalPort);
 
         // Setup application-facing agent service.

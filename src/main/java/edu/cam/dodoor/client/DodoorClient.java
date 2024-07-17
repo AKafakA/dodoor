@@ -16,19 +16,15 @@
 
 package edu.cam.dodoor.client;
 
-import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.utils.TClients;
-import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import edu.cam.dodoor.thrift.*;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Thread-safe Java API to Dodoor scheduling service.
  */
 public class DodoorClient {
-    public static boolean _launchedServerAlready = false;
 
     private final static Logger LOG = Logger.getLogger(DodoorClient.class);
     private final static int NUM_CLIENTS = 8;
@@ -51,10 +46,13 @@ public class DodoorClient {
 
     private static TPlacementPreference NO_PREFERENCE = new TPlacementPreference(new ArrayList<>());
 
-    public void initialize(InetSocketAddress schedulerAddr)
+    public void initialize(InetSocketAddress[] schedulerAddresses)
             throws TException, IOException {
 
+        int numSchedulers = schedulerAddresses.length;
+
         for (int i = 0; i < NUM_CLIENTS; i++) {
+            InetSocketAddress schedulerAddr = schedulerAddresses[i % numSchedulers];
             SchedulerService.Client client = TClients.createBlockingSchedulerClient(
                     schedulerAddr.getAddress().getHostAddress(), schedulerAddr.getPort(),
                     60000);
@@ -62,7 +60,7 @@ public class DodoorClient {
         }
     }
 
-    public boolean submitTask(String taskId, int cores, long memory, long disks, long durationInMs)
+    public void submitTask(String taskId, int cores, long memory, long disks, long durationInMs)
             throws TException {
         List<TTaskSpec> tasks = new ArrayList<>();
         TResourceVector resources = new TResourceVector(cores, memory, disks);
@@ -72,12 +70,12 @@ public class DodoorClient {
                 resources,
                 durationInMs);
         tasks.add(task);
-        return submitJob(tasks);
+        submitJob(tasks);
     }
 
-    public boolean submitJob(List<TTaskSpec> tasks)
+    public void submitJob(List<TTaskSpec> tasks)
             throws TException {
-        return submitRequest(new TSchedulingRequest(tasks, DEFAULT_USER, _nextRequestId.getAndIncrement()));
+        submitRequest(new TSchedulingRequest(tasks, DEFAULT_USER, _nextRequestId.getAndIncrement()));
     }
 
     public boolean submitJob(List<TTaskSpec> tasks, TUserGroupInfo user)

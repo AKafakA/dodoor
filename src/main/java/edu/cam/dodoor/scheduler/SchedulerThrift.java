@@ -29,14 +29,12 @@ public class SchedulerThrift implements SchedulerService.Iface{
         _scheduler.registerNodeMonitor(nodeMonitorAddress);
     }
 
-    public void initialize(Configuration config) throws TException, IOException {
+    public void initialize(Configuration config, int port) throws TException, IOException {
         _scheduler = new SchedulerImpl();
         SchedulerService.Processor<SchedulerService.Iface> processor =
                 new SchedulerService.Processor<>(this);
-        int port = config.getInt(DodoorConf.SCHEDULER_THRIFT_PORT,
-                DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT);
-        int threads = config.getInt(DodoorConf.NUM_SCHEDULER,
-                DodoorConf.DEFAULT_NUM_SCHEDULER);
+        int threads = config.getInt(DodoorConf.SCHEDULER_THRIFT_THREADS,
+                DodoorConf.DEFAULT_SCHEDULER_THRIFT_THREADS);
         String hostname = Network.getHostName(config);
         InetSocketAddress addr = new InetSocketAddress(hostname, port);
         _scheduler.initialize(config, addr);

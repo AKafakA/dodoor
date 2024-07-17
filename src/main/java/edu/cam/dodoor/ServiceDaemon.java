@@ -61,10 +61,25 @@ public class ServiceDaemon {
             }
         }
 
-        SchedulerThrift scheduler = new SchedulerThrift();
-        scheduler.initialize(config);
+        String[] schedulerPorts = config.getStringArray(DodoorConf.SCHEDULER_THRIFT_PORTS);
 
-        DataStoreThrift dataStore = new DataStoreThrift();
-        dataStore.initialize(config);
+        if (schedulerPorts.length == 0) {
+            schedulerPorts = new String[]{Integer.toString(DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT)};
+        }
+
+        for (String schedulerPort : schedulerPorts) {
+            SchedulerThrift scheduler = new SchedulerThrift();
+            scheduler.initialize(config, Integer.parseInt(schedulerPort));
+        }
+
+        String[] dataStorePorts = config.getStringArray(DodoorConf.DATA_STORE_THRIFT_PORTS);
+        if (dataStorePorts.length == 0 ) {
+            dataStorePorts = new String[]{Integer.toString(DodoorConf.DEFAULT_DATA_STORE_THRIFT_PORT)};
+        }
+
+        for (String dataStorePort : dataStorePorts) {
+            DataStoreThrift dataStore = new DataStoreThrift();
+            dataStore.initialize(config, Integer.parseInt(dataStorePort));
+        }
     }
 }
