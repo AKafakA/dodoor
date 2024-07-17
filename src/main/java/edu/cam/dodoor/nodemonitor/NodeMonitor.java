@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface NodeMonitor {
 
-    void initialize(Configuration config, int internalPort);
+    void initialize(Configuration config, int internalPort, NodeMonitorThrift nodeMonitorClient);
 
     void taskFinished(TFullTaskId task);
 

@@ -26,7 +26,7 @@ public class NodeMonitorImpl implements NodeMonitor{
     private AtomicInteger _counter;
 
     @Override
-    public void initialize(Configuration config, int internalPort) {
+    public void initialize(Configuration config, int internalPort, NodeMonitorThrift nodeMonitorClient) {
         _ipAddress = Network.getIPAddress(config);
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
         // TODO(wda): add more task scheduler
@@ -34,7 +34,7 @@ public class NodeMonitorImpl implements NodeMonitor{
         _taskScheduler.initialize(config);
         InetSocketAddress nmAddress = new InetSocketAddress(Network.getHostName(config), internalPort);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
-        taskLauncherService.initialize(config, _taskScheduler, nmAddress);
+        taskLauncherService.initialize(config, _taskScheduler, nodeMonitorClient);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_MS,
