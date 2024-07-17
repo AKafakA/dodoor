@@ -1,4 +1,4 @@
-package edu.cam.dodoor.scheduler;
+package edu.cam.dodoor.taskplacer;
 
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;

@@ -2,7 +2,6 @@ package edu.cam.dodoor.scheduler;
 
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
-import edu.cam.dodoor.utils.ConfigUtil;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.TServers;
 import org.apache.commons.configuration.Configuration;

@@ -3,6 +3,7 @@ package edu.cam.dodoor.scheduler;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.taskplacer.TaskPlacer;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;

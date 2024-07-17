@@ -1,15 +1,17 @@
-package edu.cam.dodoor.scheduler;
+package edu.cam.dodoor.taskplacer;
 
 import edu.cam.dodoor.thrift.*;
+import org.apache.thrift.TException;
 
 import java.net.InetSocketAddress;
 import java.util.*;
 
-public class CachedTaskPlacer extends TaskPlacer{
-    private boolean _useLoadScores;
-    public CachedTaskPlacer(double beta, boolean useLoadScores) {
+public class SparrowTaskPlacer extends TaskPlacer{
+    Map<InetSocketAddress, NodeMonitorService.Client> _nodeMonitorClients;
+    public SparrowTaskPlacer(double beta,
+                             Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients) {
         super(beta);
-        _useLoadScores = useLoadScores;
+        _nodeMonitorClients = nodeMonitorClients;
     }
 
     @Override
@@ -25,18 +27,14 @@ public class CachedTaskPlacer extends TaskPlacer{
             int firstIndex = ran.nextInt(loadMaps.size());
             if (flag < _beta) {
                 int secondIndex = ran.nextInt(loadMaps.size());
-                double score1, score2;
-                if (_useLoadScores) {
-                    score1 = getLoadScores(loadMaps.get(nodeAddresses.get(firstIndex)).resourceRequested,
-                            taskResources);
-                    score2 = getLoadScores(loadMaps.get(nodeAddresses.get(secondIndex)).resourceRequested,
-                            taskResources);
-                } else {
-                    score1 = loadMaps.get(nodeAddresses.get(firstIndex)).numTasks;
-                    score2 = loadMaps.get(nodeAddresses.get(secondIndex)).numTasks;
-                }
-                if (score1 > score2) {
-                    firstIndex = secondIndex;
+                try {
+                    int numPendingTasks1 = _nodeMonitorClients.get(nodeAddresses.get(firstIndex)).getNumTasks();
+                    int numPendingTasks2 = _nodeMonitorClients.get(nodeAddresses.get(secondIndex)).getNumTasks();
+                    if (numPendingTasks1 > numPendingTasks2) {
+                        firstIndex = secondIndex;
+                    }
+                } catch (TException e) {
+                    throw new RuntimeException(e);
                 }
             }
             allocations.put(nodeAddresses.get(firstIndex), new TEnqueueTaskReservationsRequest(
@@ -48,10 +46,5 @@ public class CachedTaskPlacer extends TaskPlacer{
             ));
         }
         return allocations;
-    }
-
-    private double getLoadScores(TResourceVector requestedResources, TResourceVector taskResources) {
-        return (double) requestedResources.cores * taskResources.cores + requestedResources.memory * taskResources.memory +
-                requestedResources.disks * taskResources.disks;
     }
 }
