@@ -13,11 +13,15 @@ def parse_args():
     parser.add_option("-o", "--output", default="./config.conf",
                       help="The output path of generated configuration file")
     parser.add_option("--node-ports", default="20501",
-                      help="The port numbers of the node, passing multiple options separated by comma")
+                      help="The port numbers of the node, passing multiple options separated by comma. Different ports "
+                           "will point to a singleton node monitor instances")
     parser.add_option("--scheduler-ports", default="20503",
-                      help="The port numbers of the scheduler, passing multiple options separated by comma")
+                      help="The port numbers of the scheduler, passing multiple options separated by comma. "
+                           "Each port will be used by a individual scheduler. So, the number of ports should be equal "
+                           "to the number of schedulers per host.")
     parser.add_option("--data-store-ports", default="20510",
-                      help="The port number of the data store, passing multiple options separated by comma")
+                      help="The port number of the data store, passing multiple options separated by comma, "
+                           "same as scheduler ports to create multiple data stores instances")
     parser.add_option("--internal-ports", default="20502",
                       help="The port number of the internal service to enqueue and dequeue the tasks")
     parser.add_option("--scheduler-thrift-threads", default=10,
@@ -33,13 +37,15 @@ def parse_args():
     parser.add_option("--tracking-interval", default=1000,
                       help="The interval of tracking the system status")
     parser.add_option("--cores", default=24,
-                      help="The number of available cores in the system")
+                      help="The number of available cores in the system to run the tasks")
     parser.add_option("--memory", default=20480,
-                      help="The amount of memory in Mb in the system")
+                      help="The amount of memory in Mb in the system to run the tasks")
     parser.add_option("--disk", default=40960,
-                      help="The amount of disk in Mb in the system")
+                      help="The amount of disk in Mb in the system to run the tasks")
     parser.add_option("--num-slots", default=4,
-                      help="The number of slots in each node to run the tasks in parallel")
+                      help="The number of slots in each node to run the tasks in parallel. So, "
+                           "the maximal resources can be used by the tasks like cores will be cores / num_slots."
+                           "And the large tasks exceeding the resources will be rejected.")
     parser.add_option("--beta", default=0.6,
                       help="The beta value used for 1 + beta process for random scheduling")
     parser.add_option("--batch-size", default=1024,
