@@ -1,22 +1,25 @@
 package edu.cam.dodoor.nodemonitor;
 
 import edu.cam.dodoor.thrift.*;
-import edu.cam.dodoor.utils.Logging;
-import edu.cam.dodoor.utils.Network;
-import edu.cam.dodoor.utils.Resources;
+import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
+import org.apache.thrift.async.AsyncMethodCallback;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TaskLauncherService {
     private final static Logger LOG = Logger.getLogger(TaskLauncherService.class);
 
-    private THostPort _nodeMonitorInternalAddress;
-
+    /** Thrift client pool for async communicating with node monitors */
+    private final ThriftClientPool<NodeMonitorService.AsyncClient> _nodeMonitorAsyncClientPool =
+            new ThriftClientPool<>(
+                    new ThriftClientPool.NodeMonitorServiceMakerFactory());
     private TaskScheduler _taskScheduler;
+    InetSocketAddress _nmAddress;
 
     /** A runnable that spins in a loop asking for tasks to launch and launching them. */
     private class TaskLaunchRunnable implements Runnable {
@@ -25,19 +28,7 @@ public class TaskLauncherService {
         public void run() {
             while (true) {
                 TaskSpec task = _taskScheduler.getNextTask(); // blocks until task is ready
-                LOG.info(Logging.auditEventString("node_monitor_get_task_complete", task._requestId,
-                        _nodeMonitorInternalAddress.getHost()));
-
-                LOG.debug("Received task for request " + task._requestId + ", task " +
-                        task._requestId);
-
-                // Launch the task on the backend.
-                LOG.info(Logging.auditEventString("node_monitor_task_launch",
-                        task._requestId,
-                        _nodeMonitorInternalAddress.getHost(),
-                        task._requestId,
-                        task._previousRequestId,
-                        task._previousTaskId));
+                LOG.debug("Received task" + task._taskId);
                 try {
                     Process process = executeLaunchTask(task);
                     Thread.sleep(task._duration);
@@ -45,7 +36,13 @@ public class TaskLauncherService {
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                LOG.debug("Launched task " + task._requestId + " for request " + task._requestId +
+                try {
+                    NodeMonitorService.AsyncClient client = _nodeMonitorAsyncClientPool.borrowClient(_nmAddress);
+                    client.tasksFinished(task.getFullTaskId(), new FinishedTaskCallBack(task._taskId, _nmAddress, client));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                LOG.debug("Completed task " + task._taskId +
                         " on application backend at system time " + System.currentTimeMillis());
             }
 
@@ -64,8 +61,7 @@ public class TaskLauncherService {
         }
     }
 
-    public void initialize(Configuration conf, TaskScheduler taskScheduler,
-                           int nodeMonitorPort) {
+    public void initialize(Configuration conf, TaskScheduler taskScheduler, InetSocketAddress nodeMonitorAddress) {
         /* The number of threads used by the service. */
         int _numSlots = taskScheduler.getNumSlots();
         if (_numSlots <= 0) {
@@ -73,11 +69,40 @@ public class TaskLauncherService {
             // threads equal to the number of cores.
             _numSlots = (int) Resources.getSystemCPUCount(conf);
         }
-        this._taskScheduler = taskScheduler;
-        _nodeMonitorInternalAddress = new THostPort(Network.getIPAddress(conf), nodeMonitorPort);
+        _taskScheduler = taskScheduler;
+        _nmAddress = nodeMonitorAddress;
         ExecutorService service = Executors.newFixedThreadPool(_numSlots);
         for (int i = 0; i < _numSlots; i++) {
             service.submit(new TaskLaunchRunnable());
+        }
+    }
+
+
+    private class FinishedTaskCallBack implements AsyncMethodCallback<Void> {
+        String _taskId;
+        InetSocketAddress _nodeMonitorAddress;
+        NodeMonitorService.AsyncClient _client;
+
+        public FinishedTaskCallBack(String taskId, InetSocketAddress nodeMonitorAddress,
+                                    NodeMonitorService.AsyncClient client) {
+            _taskId = taskId;
+            _nodeMonitorAddress = nodeMonitorAddress;
+            _client = client;
+        }
+
+        @Override
+        public void onComplete(Void response) {
+            try {
+                _nodeMonitorAsyncClientPool.returnClient(_nodeMonitorAddress, _client);
+            } catch (Exception e) {
+                LOG.error("Error returning client to node monitor client pool for task executors: " + e);
+            }
+        }
+
+        @Override
+        public void onError(Exception exception) {
+            // Do not return error client to pool
+            LOG.error("Error executing finishTask RPC:" + exception);
         }
     }
 }

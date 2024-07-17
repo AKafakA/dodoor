@@ -38,10 +38,8 @@ struct TResourceVector {
 
 // A fully-specified Task
 struct TFullTaskId {
-  1: string taskId;    // Task ID as reported from the FE
-  2: string requestId; // Scheduling request ID as assigned by the FE
-  3: THostPort schedulerAddress; // Address of the scheduler that scheduled the task.
-  4: TResourceVector resourceRequest;
+  1: string taskId;
+  2: TResourceVector resourceRequest;
 }
 
 struct TUserGroupInfo {

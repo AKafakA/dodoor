@@ -19,7 +19,6 @@ public class MetricsTrackerService {
     private final double _totalSpace;
     private final OperatingSystemMXBean _operatingSystemMXBean;
     private final long _systemMemory;
-    private final String _tracingFile;
     private long _timeline;
 
     public MetricsTrackerService(int trackingInterval, Configuration config) {
@@ -28,7 +27,7 @@ public class MetricsTrackerService {
         _root = new File("/");
         _totalSpace = _root.getTotalSpace();
         _systemMemory = _operatingSystemMXBean.getTotalPhysicalMemorySize();
-        _tracingFile = config.getString(DodoorConf.METRICS_LOG_FILE, DodoorConf.DEFAULT_METRICS_LOG_FILE);
+        String _tracingFile = config.getString(DodoorConf.METRICS_LOG_FILE, DodoorConf.DEFAULT_METRICS_LOG_FILE);
 
         LOG = Logger.getLogger(MetricsTrackerService.class);
         try {

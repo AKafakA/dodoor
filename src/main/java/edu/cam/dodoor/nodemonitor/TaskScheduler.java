@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.List;
 
 public abstract class TaskScheduler {
 
@@ -61,12 +60,12 @@ public abstract class TaskScheduler {
 
     void tasksFinished(TFullTaskId finishedTask) {
         AUDIT_LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
-        handleTaskFinished(finishedTask.getRequestId(), finishedTask.getTaskId());
+        handleTaskFinished(finishedTask.taskId);
     }
 
     protected void makeTaskRunnable(TaskSpec task) {
         try {
-            LOG.debug("Putting reservation for request " + task._requestId + " in runnable queue");
+            LOG.debug("Putting reservation for task " + task._taskId + " in runnable queue");
             _runnableTaskQueue.put(task);
         } catch (InterruptedException e) {
             LOG.fatal("Unable to add task to runnable queue: " + e.getMessage());
@@ -77,9 +76,10 @@ public abstract class TaskScheduler {
         TaskSpec reservation = new TaskSpec(request);
         if (!enoughResourcesToRun(request.resourceRequested)){
             AUDIT_LOG.info(Logging.auditEventString("big_task_failed_enqueued",
-                    reservation._requestId, request.resourceRequested.cores,
+                    reservation._taskId, request.resourceRequested.cores,
                     request.resourceRequested.memory,
                     request.resourceRequested.disks));
+            return;
         }
         int queuedReservations = handleSubmitTaskReservation(reservation);
         AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", _ipAddress, request.taskId,
@@ -103,12 +103,12 @@ public abstract class TaskScheduler {
      * Cancels all task reservations with the given request id. Returns the number of task
      * reservations cancelled.
      */
-    abstract TResourceVector cancelTaskReservations(String requestId);
+    abstract TResourceVector cancelTaskReservations(String taskId);
 
     /**
      * Handles the completion of a task that has finished executing.
      */
-    protected abstract void handleTaskFinished(String requestId, String taskId);
+    protected abstract void handleTaskFinished(String taskId);
 
     /**
      * Handles the case when the node monitor tried to launch a task for a reservation, but

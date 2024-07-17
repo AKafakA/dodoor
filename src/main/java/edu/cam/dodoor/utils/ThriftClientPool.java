@@ -78,6 +78,15 @@ public class ThriftClientPool<T extends TAsyncClient> {
     }
   }
 
+  public static class NodeMonitorServiceMakerFactory
+          implements MakerFactory<NodeMonitorService.AsyncClient> {
+    @Override
+    public NodeMonitorService.AsyncClient create(TNonblockingTransport tr,
+                                              TAsyncClientManager mgr, TProtocolFactory factory) {
+      return new NodeMonitorService.AsyncClient(factory, mgr, tr);
+    }
+  }
+
   private class PoolFactory implements KeyedPoolableObjectFactory<InetSocketAddress, T> {
     // Thrift clients do not expose their underlying transports, so we track them
     // separately here to let us call close() on the transport associated with a

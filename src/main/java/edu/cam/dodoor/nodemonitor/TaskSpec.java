@@ -1,6 +1,7 @@
 package edu.cam.dodoor.nodemonitor;
 
 import edu.cam.dodoor.thrift.TEnqueueTaskReservationsRequest;
+import edu.cam.dodoor.thrift.TFullTaskId;
 import edu.cam.dodoor.thrift.TResourceVector;
 import edu.cam.dodoor.thrift.TUserGroupInfo;
 
@@ -10,7 +11,7 @@ import edu.cam.dodoor.thrift.TUserGroupInfo;
  */
 public class TaskSpec {
     public TUserGroupInfo _user;
-    public String _requestId;
+    public String _taskId;
 
     /**
      * ID of the task that previously ran in the slot this task is using. Used
@@ -18,7 +19,6 @@ public class TaskSpec {
      * immediately, because there were empty slots available on the slave.  Filled in when
      * the task is launched.
      */
-    public String _previousRequestId;
     public String _previousTaskId;
 
     public TResourceVector _resourceVector;
@@ -27,11 +27,14 @@ public class TaskSpec {
 
     public TaskSpec(TEnqueueTaskReservationsRequest request) {
         _user = request.getUser();
-        _requestId = request.taskId;
-        _previousRequestId = "";
+        _taskId = request.taskId;
         _previousTaskId = "";
 
         _resourceVector = request.resourceRequested;
         _duration = request.durationInMs;
+    }
+
+    public TFullTaskId getFullTaskId() {
+        return new TFullTaskId(_taskId, _resourceVector);
     }
 }

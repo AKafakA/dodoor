@@ -7,6 +7,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -31,8 +32,9 @@ public class NodeMonitorImpl implements NodeMonitor{
         // TODO(wda): add more task scheduler
         _taskScheduler = new FifoTaskScheduler(numSlots);
         _taskScheduler.initialize(config);
+        InetSocketAddress nmAddress = new InetSocketAddress(Network.getHostName(config), internalPort);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
-        taskLauncherService.initialize(config, _taskScheduler, internalPort);
+        taskLauncherService.initialize(config, _taskScheduler, nmAddress);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_MS,
@@ -53,7 +55,6 @@ public class NodeMonitorImpl implements NodeMonitor{
         _requested_cores.getAndAdd(-task.resourceRequest.cores);
         _requested_memory.getAndAdd(-task.resourceRequest.memory);
         _requested_disk.getAndAdd(-task.resourceRequest.disks);
-
         _counter.getAndAdd(-1);
     }
 
@@ -77,7 +78,6 @@ public class NodeMonitorImpl implements NodeMonitor{
                 request.taskId);
 
         _taskScheduler.submitTaskReservations(request);
-
         _requested_cores.getAndAdd(request.resourceRequested.cores);
         _requested_memory.getAndAdd(request.resourceRequested.memory);
         _requested_disk.getAndAdd(request.resourceRequested.disks);
