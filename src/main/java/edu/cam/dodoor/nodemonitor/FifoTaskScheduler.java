@@ -2,7 +2,6 @@ package edu.cam.dodoor.nodemonitor;
 
 import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.log4j.Logger;
-
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
