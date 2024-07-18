@@ -30,6 +30,7 @@ public class MetricsTrackerService {
         String _tracingFile = config.getString(DodoorConf.METRICS_LOG_FILE, DodoorConf.DEFAULT_METRICS_LOG_FILE);
 
         LOG = Logger.getLogger(MetricsTrackerService.class);
+        LOG.setAdditivity(false);
         try {
             LOG.addAppender(new FileAppender(new PatternLayout(), _tracingFile));
         } catch (IOException e) {
