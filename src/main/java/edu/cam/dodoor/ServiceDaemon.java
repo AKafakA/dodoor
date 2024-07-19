@@ -1,7 +1,7 @@
 package edu.cam.dodoor;
 
 import edu.cam.dodoor.datastore.DataStoreThrift;
-import edu.cam.dodoor.node.NodeMonitorThrift;
+import edu.cam.dodoor.node.NodeThrift;
 import edu.cam.dodoor.scheduler.SchedulerThrift;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -69,13 +69,13 @@ public class ServiceDaemon {
                         DodoorConf.NODE_ENQUEUE_THRIFT_PORTS + " not of equal length");
             }
             if (nmPorts.length == 0) {
-                (new NodeMonitorThrift()).initialize(config,
+                (new NodeThrift()).initialize(config,
                         DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT,
                         DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORTS);
             }
             else {
                 for (int i = 0; i < nmPorts.length; i++) {
-                    (new NodeMonitorThrift()).initialize(config,
+                    (new NodeThrift()).initialize(config,
                             Integer.parseInt(nmPorts[i]), Integer.parseInt(nePorts[i]));
                 }
             }
