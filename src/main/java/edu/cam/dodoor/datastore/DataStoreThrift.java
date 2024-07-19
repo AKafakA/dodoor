@@ -32,6 +32,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
     List<InetSocketAddress> _schedulerAddress;
     private AtomicInteger _counter;
     private int _batchSize;
+    private int _numTasksPerUpdate;
 
     public void initialize(Configuration config, int port)
             throws TException, IOException {
@@ -80,6 +81,8 @@ public class DataStoreThrift implements DataStoreService.Iface {
         DataStoreService.Processor<DataStoreService.Iface> processor = new DataStoreService.Processor<>(this);
         int threads = _config.getInt(DodoorConf.DATA_STORE_THRIFT_THREADS, DodoorConf.DEFAULT_DATA_STORE_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(port, threads, processor);
+
+        _numTasksPerUpdate = config.getInt(DodoorConf.NUM_TASKS_TO_UPDATE, DodoorConf.DEFAULT_NUM_TASKS_TO_UPDATE);
     }
 
     @Override
@@ -116,7 +119,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         }
         LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddress));
         _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeStates);
-        _counter.getAndAdd(1);
+        _counter.getAndAdd(_numTasksPerUpdate);
 
         if (_counter.get() > _batchSize) {
             for (InetSocketAddress socket : _schedulerAddress) {

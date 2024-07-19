@@ -91,8 +91,9 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     @Override
     public void tasksFinished(TFullTaskId task) throws TException {
         _node.taskFinished(task);
+        int numFinishedTasks = _counter.incrementAndGet();
 
-        if (_counter.incrementAndGet() % _numTasksToUpdate == 0) {
+        if (numFinishedTasks % _numTasksToUpdate == 0) {
             for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
                 DataStoreService.AsyncClient dataStoreClient = null;
                 try {
@@ -106,8 +107,9 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
             }
             LOG.info(Logging.auditEventString("update_node_load_to_datastore",
                     _neAddress.getHostName()));
-            _counter.set(0);
         }
+        LOG.debug(Logging.auditEventString("tasks_finished", task.toString())
+                + " numTasksFinished: " + numFinishedTasks);
     }
 
     @Override
