@@ -96,7 +96,7 @@ public class DodoorConf {
 
     /** The hostname of this machine. */
     public final static String HOSTNAME = "hostname";
-    public final static String STATIC_NODE = "static.nodes";
+    public final static String STATIC_NODE = "static.node";
     public final static String STATIC_SCHEDULER = "static.scheduler";
     public final static String STATIC_DATA_STORE = "static.datastore";
 
