@@ -69,12 +69,12 @@ public class ThriftClientPool<T extends TAsyncClient> {
   }
 
   // MakerFactory implementations for Sparrow interfaces...
-  public static class InternalServiceMakerFactory
-          implements MakerFactory<InternalService.AsyncClient> {
+  public static class NodeEnqueuServiceMakerFactory
+          implements MakerFactory<NodeEnqueueService.AsyncClient> {
     @Override
-    public InternalService.AsyncClient create(TNonblockingTransport tr,
+    public NodeEnqueueService.AsyncClient create(TNonblockingTransport tr,
                                               TAsyncClientManager mgr, TProtocolFactory factory) {
-      return new InternalService.AsyncClient(factory, mgr, tr);
+      return new NodeEnqueueService.AsyncClient(factory, mgr, tr);
     }
   }
 

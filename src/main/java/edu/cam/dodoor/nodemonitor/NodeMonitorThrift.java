@@ -14,7 +14,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalService.Iface {
+public class NodeMonitorThrift implements NodeMonitorService.Iface, NodeEnqueueService.Iface {
 
     private final static Logger LOG = Logger.getLogger(NodeMonitorThrift.class);
 
@@ -46,8 +46,8 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
         TServers.launchThreadedThriftServer(nmPort, threads, processor);
 
         // Setup internal-facing agent service.
-        InternalService.Processor<InternalService.Iface> internalProcessor =
-                new InternalService.Processor<>(this);
+        NodeEnqueueService.Processor<NodeEnqueueService.Iface> internalProcessor =
+                new NodeEnqueueService.Processor<>(this);
         int internalThreads = conf.getInt(
                 DodoorConf.INTERNAL_THRIFT_THREADS,
                 DodoorConf.DEFAULT_NM_INTERNAL_THRIFT_THREADS);
@@ -56,7 +56,8 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _dataStoreAddress = new ArrayList<>();
 
-        for (String dataStoreAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_DATA_STORE)) {
+        for (String dataStoreAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_DATA_STORE,
+                DodoorConf.DATA_STORE_THRIFT_PORTS)) {
             registerDataStore(dataStoreAddress);
         }
 

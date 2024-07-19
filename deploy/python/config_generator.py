@@ -12,7 +12,7 @@ def parse_args():
                       help="Inject the data store ip address into the config file from the data store file")
     parser.add_option("-o", "--output", default="./config.conf",
                       help="The output path of generated configuration file")
-    parser.add_option("--node-ports", default="20501",
+    parser.add_option("--node-monitor-ports", default="20501",
                       help="The port numbers of the node, passing multiple options separated by comma. Different ports "
                            "will point to a singleton node monitor instances")
     parser.add_option("--scheduler-ports", default="20503",
@@ -22,15 +22,15 @@ def parse_args():
     parser.add_option("--data-store-ports", default="20510",
                       help="The port number of the data store, passing multiple options separated by comma, "
                            "same as scheduler ports to create multiple data stores instances")
-    parser.add_option("--internal-ports", default="20502",
+    parser.add_option("--node-enqueue-ports", default="20502",
                       help="The port number of the internal service to enqueue and dequeue the tasks")
     parser.add_option("--scheduler-thrift-threads", default=10,
                       help="The number of threads running in scheduler service to listen to the thrift requests")
-    parser.add_option("--node-thrift-threads", default=4,
+    parser.add_option("--node-monitor-thrift-threads", default=4,
                       help="The number of threads running in node monitor to listen to the thrift requests")
     parser.add_option("--data-store-thrift-threads", default=4,
                       help="The number of threads running in data store to listen to the thrift requests")
-    parser.add_option("--internal-thrift-threads", default=4,
+    parser.add_option("--node-enqueue-thrift-threads", default=4,
                       help="The number of threads running in internal service to listen to the thrift requests")
     parser.add_option("-t", "--trace-file", default=None,
                       help="The trace file to be used in the experiment, None means no tracking enabled")
@@ -63,13 +63,13 @@ def main():
     file = open(config_path, "w")
 
     with open(options.nodes_file, "r") as f:
-        write_ip_port(file, f.readlines(), "static.node_monitors", options.node_ports)
+        write_ip_port(file, f.readlines(), "static.node")
 
     with open(options.scheduler_file, "r") as f:
-        write_ip_port(file, f.readlines(), "static.scheduler", options.scheduler_ports)
+        write_ip_port(file, f.readlines(), "static.scheduler")
 
     with open(options.data_store_file, "r") as f:
-        write_ip_port(file, f.readlines(), "static.data_store", options.data_store_ports)
+        write_ip_port(file, f.readlines(), "static.data_store")
 
     if options.trace_file:
         file.write("tracking.enabled  = true")
@@ -91,24 +91,22 @@ def main():
     file.write("datastore.thrift.ports = {} \n".format(options.data_store_ports))
     file.write("datastore.thrift.threads = {} \n".format(options.data_store_thrift_threads))
 
-    file.write("node.thrift.ports = {} \n".format(options.node_ports))
-    file.write("node.thrift.threads = {} \n".format(options.node_thrift_threads))
+    file.write("node.monitor.thrift.ports = {} \n".format(options.node_monitor_ports))
+    file.write("node.monitor.thrift.threads = {} \n".format(options.node_monitor_thrift_threads))
 
-    file.write("internal.thrift.ports = {} \n".format(options.internal_ports))
-    file.write("internal.thrift.threads = {} \n".format(options.internal_thrift_threads))
+    file.write("node.enqueue.thrift.ports = {} \n".format(options.node_enqueue_ports))
+    file.write("node.enqueue.thrift.threads = {} \n".format(options.node_enqueue_thrift_threads))
     file.close()
 
 
-def write_ip_port(file, lines, prefix, ports):
+def write_ip_port(file, lines, prefix):
     socket_addresses = ""
-    ports = ports.split(",")
     for line in lines:
         tokens = line.strip().split(":")
         if len(tokens) != 2:
             return
         ip = tokens[1]
-        for port in ports:
-            socket_addresses += ip + ":" + port + ","
+        socket_addresses += ip + ","
     socket_addresses = socket_addresses[:-1]
     file.write(prefix + " = " + socket_addresses + "\n")
 

@@ -61,22 +61,22 @@ public class ServiceDaemon {
 
         if (isNode) {
             // Start as many node monitors as specified in config
-            String[] nmPorts = config.getStringArray(DodoorConf.NM_THRIFT_PORTS);
-            String[] inPorts = config.getStringArray(DodoorConf.INTERNAL_THRIFT_PORTS);
+            String[] nmPorts = config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
+            String[] nePorts = config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
 
-            if (nmPorts.length != inPorts.length) {
-                throw new ConfigurationException(DodoorConf.NM_THRIFT_PORTS + " and " +
-                        DodoorConf.INTERNAL_THRIFT_PORTS + " not of equal length");
+            if (nmPorts.length != nePorts.length) {
+                throw new ConfigurationException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
+                        DodoorConf.NODE_ENQUEUE_THRIFT_PORTS + " not of equal length");
             }
             if (nmPorts.length == 0) {
                 (new NodeMonitorThrift()).initialize(config,
-                        DodoorConf.DEFAULT_NM_THRIFT_PORT,
-                        DodoorConf.DEFAULT_INTERNAL_THRIFT_PORT);
+                        DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT,
+                        DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORTS);
             }
             else {
                 for (int i = 0; i < nmPorts.length; i++) {
                     (new NodeMonitorThrift()).initialize(config,
-                            Integer.parseInt(nmPorts[i]), Integer.parseInt(inPorts[i]));
+                            Integer.parseInt(nmPorts[i]), Integer.parseInt(nePorts[i]));
                 }
             }
         }

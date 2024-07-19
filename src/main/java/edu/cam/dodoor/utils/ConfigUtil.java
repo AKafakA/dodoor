@@ -27,17 +27,20 @@ public class ConfigUtil {
    * total resource capacity for that backend.
    */
   public static List<String> parseNodeAddress(
-      Configuration conf, String key) {
+      Configuration conf, String ipKey, String portKey) {
 
     List<String> nodeAddress = new ArrayList<>();
 
-    for (String node: conf.getStringArray(key)) {
-      Optional<InetSocketAddress> addr = Serialization.strToSocket(node);
-      if (!addr.isPresent()) {
-        LOG.warn("Bad backend address: " + node);
-        continue;
+    for (String node: conf.getStringArray(ipKey)) {
+      for (String port: conf.getStringArray(portKey)) {
+        String nodePort = node + ":" + port;
+        Optional<InetSocketAddress> addr = Serialization.strToSocket(nodePort);
+        if (!addr.isPresent()) {
+          LOG.warn("Bad backend address: " + node);
+          continue;
+        }
+        nodeAddress.add(node);
       }
-      nodeAddress.add(node);
     }
 
     return nodeAddress;

@@ -52,11 +52,13 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _nodeMonitorAddress = new ArrayList<>();
 
 
-        for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER)) {
+        for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER,
+                DodoorConf.SCHEDULER_THRIFT_PORTS)) {
             this.registerScheduler(schedulerAddress);
         }
 
-        for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE_MONITORS)) {
+        for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE,
+                DodoorConf.NODE_MONITOR_THRIFT_PORTS)) {
             this.registerNodeMonitor(nodeMonitorAddress);
         }
 

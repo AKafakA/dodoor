@@ -7,7 +7,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -26,14 +25,14 @@ public class NodeMonitorImpl implements NodeMonitor{
     private AtomicInteger _counter;
 
     @Override
-    public void initialize(Configuration config, NodeMonitorThrift nodeMonitorClient) {
+    public void initialize(Configuration config, NodeMonitorThrift nodeMonitorThrift) {
         _ipAddress = Network.getIPAddress(config);
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
         // TODO(wda): add more task scheduler
         _taskScheduler = new FifoTaskScheduler(numSlots);
         _taskScheduler.initialize(config);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
-        taskLauncherService.initialize(config, _taskScheduler, nodeMonitorClient);
+        taskLauncherService.initialize(config, _taskScheduler, nodeMonitorThrift);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_MS,

@@ -62,16 +62,16 @@ public class DodoorConf {
     /* List of ports corresponding to node monitors (backend interface) this daemon is
      * supposed to run. In most deployment scenarios this will consist of a single port,
      * or will be left unspecified in favor of the default port. */
-    public final static String NM_THRIFT_PORTS = "node.thrift.ports";
-    public final static int DEFAULT_NM_THRIFT_PORT = 20501;
-    public final static String NM_THRIFT_THREADS = "node.thrift.threads";
+    public final static String NODE_MONITOR_THRIFT_PORTS = "node.monitor.thrift.ports";
+    public final static int DEFAULT_NODE_MONITOR_THRIFT_PORT = 20501;
+    public final static String NM_THRIFT_THREADS = "node.monitor.thrift.threads";
     public final static int DEFAULT_NM_THRIFT_THREADS = 4;
 
     /* List of ports corresponding to node monitors (internal interface) this daemon is
      * supposed to run. In most deployment scenarios this will consist of a single port,
      * or will be left unspecified in favor of the default port. */
-    public final static String INTERNAL_THRIFT_PORTS = "internal.thrift.ports";
-    public final static int DEFAULT_INTERNAL_THRIFT_PORT = 20502;
+    public final static String NODE_ENQUEUE_THRIFT_PORTS = "node.enqueue.thrift.ports";
+    public final static int DEFAULT_NODE_ENQUEUE_THRIFT_PORTS = 20502;
 
     public final static String INTERNAL_THRIFT_THREADS =
             "internal.thrift.threads";
@@ -96,7 +96,7 @@ public class DodoorConf {
 
     /** The hostname of this machine. */
     public final static String HOSTNAME = "hostname";
-    public final static String STATIC_NODE_MONITORS = "static.node_monitors";
+    public final static String STATIC_NODE = "static.nodes";
     public final static String STATIC_SCHEDULER = "static.scheduler";
     public final static String STATIC_DATA_STORE = "static.datastore";
 

@@ -47,7 +47,7 @@ public class TServers {
    */
   public static void launchThreadedThriftServer(int port, int threads,
       TProcessor processor) throws IOException {
-    LOG.info("Staring async thrift server of type: " + processor.getClass().toString()
+    LOG.info("Staring async thrift server of type: " + processor.getClass()
     		+ " on port " + port);
     TNonblockingServerTransport serverTransport;
     try {

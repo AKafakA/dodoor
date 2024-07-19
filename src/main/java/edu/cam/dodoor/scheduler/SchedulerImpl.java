@@ -28,28 +28,45 @@ public class SchedulerImpl implements Scheduler{
 
 
     /** Thrift client pool for async communicating with node monitors */
-    private final ThriftClientPool<InternalService.AsyncClient> _nodeMonitorAsyncClientPool =
+    private final ThriftClientPool<NodeEnqueueService.AsyncClient> _nodeEnqueueServiceAsyncClientPool =
             new ThriftClientPool<>(
-                    new ThriftClientPool.InternalServiceMakerFactory());
+                    new ThriftClientPool.NodeEnqueuServiceMakerFactory());
     
-    private Map<InetSocketAddress, NodeMonitorService.Client> _nodeMonitorClients;
+    private Map<InetSocketAddress, NodeMonitorService.Client> _nodeEqueueSocketToNodeMonitorClients;
 
-    private ConcurrentMap<InetSocketAddress, TNodeState> _loadMaps;
+    private ConcurrentMap<InetSocketAddress, TNodeState> _mapEqueueSocketToNodeState;
     private THostPort _address;
     private String _schedulingStrategy;
     private double _beta;
     private int _batchSize;
     private TaskPlacer _taskPlacer;
+    private Map<InetSocketAddress, InetSocketAddress> _nodeMonitorSocketToNodeEnqueueSocket;
+    private Map<String, String> _nodeMonitorPortToNodeEnqueuePort;
 
     @Override
     public void initialize(Configuration config, InetSocketAddress socket) throws IOException {
         _address = Network.socketAddressToThrift(socket);
-        _loadMaps = Maps.newConcurrentMap();
+        _mapEqueueSocketToNodeState = Maps.newConcurrentMap();
         _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
-        List<String> nodeMonitorAddresses = ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE_MONITORS);
-        _nodeMonitorClients = Maps.newHashMap();
+        List<String> nodeMonitorAddresses = ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE,
+                DodoorConf.NODE_MONITOR_THRIFT_PORTS);
+
+        _nodeMonitorPortToNodeEnqueuePort = Maps.newHashMap();
+        for (String nmPort : config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)) {
+            for (String inPort : config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)) {
+                _nodeMonitorPortToNodeEnqueuePort.put(nmPort, inPort);
+            }
+        }
+        if (_nodeMonitorPortToNodeEnqueuePort.isEmpty()) {
+            LOG.info("No node ports specified, add default ports");
+            _nodeMonitorPortToNodeEnqueuePort.put(Integer.toString(DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT),
+                    Integer.toString(DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORTS));
+        }
+        _nodeMonitorSocketToNodeEnqueueSocket = Maps.newHashMap();
+        _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
+
         for (String nodeMonitorAddress : nodeMonitorAddresses) {
             try {
                 this.registerNodeMonitor(nodeMonitorAddress);
@@ -58,7 +75,7 @@ public class SchedulerImpl implements Scheduler{
             }
         }
         _taskPlacer = TaskPlacer.createTaskPlacer(_beta,
-                _schedulingStrategy, _nodeMonitorClients);
+                _schedulingStrategy, _nodeEqueueSocketToNodeMonitorClients);
     }
 
 
@@ -100,12 +117,12 @@ public class SchedulerImpl implements Scheduler{
 
         Map<InetSocketAddress, TEnqueueTaskReservationRequest> enqueueTaskReservationRequests;
         enqueueTaskReservationRequests = _taskPlacer.getEnqueueTaskReservationRequests(
-                request, _loadMaps, _address);
+                request, _mapEqueueSocketToNodeState, _address);
 
         for (Map.Entry<InetSocketAddress, TEnqueueTaskReservationRequest> entry :
                 enqueueTaskReservationRequests.entrySet())  {
             try {
-                InternalService.AsyncClient client = _nodeMonitorAsyncClientPool.borrowClient(entry.getKey());
+                NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(entry.getKey());
                 LOG.debug("Launching enqueueTask for request " + request.requestId + "on node: " + entry.getKey());
                 AUDIT_LOG.debug(Logging.auditEventString(
                         "scheduler_launch_enqueue_task", entry.getValue().taskId,
@@ -125,14 +142,15 @@ public class SchedulerImpl implements Scheduler{
     @Override
     public void updateNodeState(Map<String, TNodeState> snapshot) {
         for (Map.Entry<String, TNodeState> entry : snapshot.entrySet()) {
-            Optional<InetSocketAddress> address = Serialization.strToSocket(entry.getKey());
-            if (address.isPresent()) {
-                if (_loadMaps.containsKey(address.get())) {
-                    LOG.debug("Updating load for node: " + entry.getKey());
+            Optional<InetSocketAddress> nmAddress = Serialization.strToSocket(entry.getKey());
+            if (nmAddress.isPresent()) {
+                InetSocketAddress nodeEnqueueSocket = _nodeMonitorSocketToNodeEnqueueSocket.get(nmAddress.get());
+                if (_mapEqueueSocketToNodeState.containsKey(nodeEnqueueSocket)) {
+                    LOG.debug("Updating load for node: " + nodeEnqueueSocket.getAddress());
                 } else {
                     LOG.error("Adding load for unregistered node: " + entry.getKey());
                 }
-                _loadMaps.put(address.get(), entry.getValue());
+                _mapEqueueSocketToNodeState.put(nodeEnqueueSocket, entry.getValue());
             } else {
                 LOG.error("Invalid address: " + entry.getKey());
             }
@@ -144,10 +162,20 @@ public class SchedulerImpl implements Scheduler{
         LOG.info("Registering node monitor at " + nodeMonitorAddress);
         Optional<InetSocketAddress> address = Serialization.strToSocket(nodeMonitorAddress);
         if (address.isPresent()) {
-            InetSocketAddress socket = address.get();
-            _loadMaps.put(socket, new TNodeState(new TResourceVector(0, 0, 0), 0));
+            InetSocketAddress nmSocket = address.get();
+            String port = Integer.toString(nmSocket.getPort());
+            String nodeEnqueueSocketStr = nmSocket.getAddress().getHostAddress() + ":" +
+                    _nodeMonitorPortToNodeEnqueuePort.get(port);
+            Optional<InetSocketAddress> internalSocket = Serialization.strToSocket(nodeEnqueueSocketStr);
+            if (!internalSocket.isPresent()) {
+                throw new TException("Invalid internal address: " + nodeEnqueueSocketStr);
+            }
+            _mapEqueueSocketToNodeState.put(internalSocket.get(), new TNodeState(
+                    new TResourceVector(0, 0, 0), 0));
+            _nodeMonitorSocketToNodeEnqueueSocket.put(nmSocket, internalSocket.get());
             try {
-                _nodeMonitorClients.put(address.get(), TClients.createBlockingNodeMonitorClient(socket));
+                _nodeEqueueSocketToNodeMonitorClients.put(internalSocket.get(),
+                        TClients.createBlockingNodeMonitorClient(nmSocket));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -160,10 +188,10 @@ public class SchedulerImpl implements Scheduler{
         String _taskId;
         InetSocketAddress _nodeMonitorAddress;
         long _startTimeMillis;
-        InternalService.AsyncClient _client;
+        NodeEnqueueService.AsyncClient _client;
 
         public EnqueueTaskReservationCallback(String taskId, InetSocketAddress nodeMonitorAddress,
-                                               InternalService.AsyncClient client) {
+                                              NodeEnqueueService.AsyncClient client) {
             _taskId = taskId;
             _nodeMonitorAddress = nodeMonitorAddress;
             _startTimeMillis = System.currentTimeMillis();
@@ -182,7 +210,7 @@ public class SchedulerImpl implements Scheduler{
             LOG.debug("Enqueue Task RPC to " + _nodeMonitorAddress.getAddress().getHostAddress() +
                     " for request " + _taskId + " completed in " + totalTime + "ms");
             try {
-                _nodeMonitorAsyncClientPool.returnClient(_nodeMonitorAddress, _client);
+                _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeMonitorAddress, _client);
             } catch (Exception e) {
                 LOG.error("Error returning client to node monitor client pool: " + e);
             }

@@ -18,8 +18,7 @@ include 'types.thrift'
 
 namespace java edu.cam.dodoor.thrift
 
-# SchedulerService is used by application frontends to communicate with Dodoor
-# and place jobs.
+# SchedulerService for scheduling tasks
 service SchedulerService {
   # Submit a job composed of a list of individual tasks.
   void submitJob(1: types.TSchedulingRequest req) throws (1: types.IncompleteRequestException e);
@@ -27,6 +26,7 @@ service SchedulerService {
   void registerNodeMonitor(1: string nodeMonitorAddress);
 }
 
+# DataStoreService for storing the state of the nodes
 service DataStoreService {
   # Register a scheduler with the given socket address (IP: Port)
   void registerScheduler(1: string schedulerAddress);
@@ -35,18 +35,18 @@ service DataStoreService {
   map<string, types.TNodeState> getNodeStates();
 }
 
-# A service worked as worker nodes to communicate with scheduler
+
+# Service of the node exposed for querying state and registering with the DataStore
+# Two services are exposed to the node: NodeMonitorService and NodeEnqueueService
+# which allow the nodes to be queried synchronously for realtime probing and request asynchronously for cached based approach
 service NodeMonitorService {
   void registerDataStore(1: string dataStoreAddress);
-  # Inform the NodeMonitor that a particular task has finished
-  void tasksFinished(1: types.TFullTaskId task);
+  # called by the scheduler to get the number of tasks running on the node for sparrow test
   i32 getNumTasks();
 }
 
-
-service InternalService {
-  # Enqueues a reservation to launch the given number of tasks. The NodeMonitor sends
-  # a GetTask() RPC to the given schedulerAddress when it is ready to launch a task, for each
-  # enqueued task reservation. Returns whether or not the task was successfully enqueued.
+# Service of the node exposed to the scheduler to enqueue tasks
+service NodeEnqueueService {
   bool enqueueTaskReservation(1: types.TEnqueueTaskReservationRequest request);
+  void tasksFinished(1: types.TFullTaskId task);
 }
