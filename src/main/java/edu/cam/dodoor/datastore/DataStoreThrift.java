@@ -55,16 +55,20 @@ public class DataStoreThrift implements DataStoreService.Iface {
             this.registerScheduler(schedulerAddress);
         }
 
-        String[] nmPorts = config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
-        String[] nePorts = config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
+        List<String> nmPorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)));
+        List<String> nePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)));
 
-        if (nmPorts.length != nePorts.length) {
+        if (nmPorts.size() != nePorts.size()) {
             throw new IllegalArgumentException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
                     DodoorConf.NODE_ENQUEUE_THRIFT_PORTS + " not of equal length");
         }
+        if (nmPorts.isEmpty()) {
+            nmPorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT));
+            nePorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT));
+        }
         for (String nodeIp : config.getStringArray(DodoorConf.STATIC_NODE)) {
-            for (int i = 0; i < nmPorts.length; i++) {
-                String nodeFullAddress = nodeIp + ":" + nmPorts[i] + ":" + nePorts[i];
+            for (int i = 0; i < nmPorts.size(); i++) {
+                String nodeFullAddress = nodeIp + ":" + nmPorts.get(i) + ":" + nePorts.get(i);
                 try {
                     this.registerNode(nodeFullAddress);
                 } catch (TException e) {

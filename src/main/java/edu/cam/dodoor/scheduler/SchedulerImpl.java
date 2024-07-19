@@ -14,6 +14,7 @@ import org.apache.thrift.async.AsyncMethodCallback;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -37,8 +38,6 @@ public class SchedulerImpl implements Scheduler{
 
     private ConcurrentMap<InetSocketAddress, TNodeState> _mapEqueueSocketToNodeState;
     private THostPort _address;
-    private String _schedulingStrategy;
-    private double _beta;
     private int _batchSize;
     private TaskPlacer _taskPlacer;
 
@@ -46,22 +45,25 @@ public class SchedulerImpl implements Scheduler{
     public void initialize(Configuration config, InetSocketAddress socket) throws IOException {
         _address = Network.socketAddressToThrift(socket);
         _mapEqueueSocketToNodeState = Maps.newConcurrentMap();
-        _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
-        _beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
+        String schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
+        double beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
-        String[] nodesIpAddress = config.getStringArray(DodoorConf.STATIC_NODE);
         _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
 
-        String[] nmPorts = config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
-        String[] nePorts = config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
+        List<String> nmPorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)));
+        List<String> nePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)));
 
-        if (nmPorts.length != nePorts.length) {
+        if (nmPorts.size() != nePorts.size()) {
             throw new IllegalArgumentException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
                     DodoorConf.NODE_ENQUEUE_THRIFT_PORTS + " not of equal length");
         }
-        for (String nodeIp : nodesIpAddress) {
-            for (int i = 0; i < nmPorts.length; i++) {
-                String nodeFullAddress = nodeIp + ":" + nmPorts[i] + ":" + nePorts[i];
+        if (nmPorts.isEmpty()) {
+            nmPorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT));
+            nePorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT));
+        }
+        for (String nodeIp : config.getStringArray(DodoorConf.STATIC_NODE)) {
+            for (int i = 0; i < nmPorts.size(); i++) {
+                String nodeFullAddress = nodeIp + ":" + nmPorts.get(i) + ":" + nePorts.get(i);
                 try {
                     this.registerNode(nodeFullAddress);
                 } catch (TException e) {
@@ -70,8 +72,8 @@ public class SchedulerImpl implements Scheduler{
             }
         }
 
-        _taskPlacer = TaskPlacer.createTaskPlacer(_beta,
-                _schedulingStrategy, _nodeEqueueSocketToNodeMonitorClients);
+        _taskPlacer = TaskPlacer.createTaskPlacer(beta,
+                schedulingStrategy, _nodeEqueueSocketToNodeMonitorClients);
     }
 
 

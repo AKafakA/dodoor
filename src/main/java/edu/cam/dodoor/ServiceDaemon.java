@@ -71,7 +71,7 @@ public class ServiceDaemon {
             if (nmPorts.length == 0) {
                 (new NodeThrift()).initialize(config,
                         DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT,
-                        DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORTS);
+                        DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT);
             }
             else {
                 for (int i = 0; i < nmPorts.length; i++) {

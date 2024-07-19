@@ -71,7 +71,7 @@ public class DodoorConf {
      * supposed to run. In most deployment scenarios this will consist of a single port,
      * or will be left unspecified in favor of the default port. */
     public final static String NODE_ENQUEUE_THRIFT_PORTS = "node.enqueue.thrift.ports";
-    public final static int DEFAULT_NODE_ENQUEUE_THRIFT_PORTS = 20502;
+    public final static int DEFAULT_NODE_ENQUEUE_THRIFT_PORT = 20502;
 
     public final static String INTERNAL_THRIFT_THREADS =
             "internal.thrift.threads";
