@@ -43,3 +43,4 @@ requestInfo.txt
 src/main/gen-java/
 .idea/
 logs/
+target/
