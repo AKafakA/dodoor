@@ -14,5 +14,5 @@ public interface Scheduler {
     void submitJob(TSchedulingRequest request) throws TException;
     void handleJobSubmission(TSchedulingRequest request) throws TException;
     void updateNodeState(Map<String, TNodeState> snapshot);
-    void registerNodeMonitor(String nodeMonitorAddress) throws TException;
+    void registerNode(String nodeAddress) throws TException;
 }

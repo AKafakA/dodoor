@@ -7,6 +7,7 @@ import edu.cam.dodoor.scheduler.taskplacer.TaskPlacer;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -40,8 +41,6 @@ public class SchedulerImpl implements Scheduler{
     private double _beta;
     private int _batchSize;
     private TaskPlacer _taskPlacer;
-    private Map<InetSocketAddress, InetSocketAddress> _nodeMonitorSocketToNodeEnqueueSocket;
-    private Map<String, String> _nodeMonitorPortToNodeEnqueuePort;
 
     @Override
     public void initialize(Configuration config, InetSocketAddress socket) throws IOException {
@@ -50,30 +49,27 @@ public class SchedulerImpl implements Scheduler{
         _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
-        List<String> nodeMonitorAddresses = ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE,
-                DodoorConf.NODE_MONITOR_THRIFT_PORTS);
-
-        _nodeMonitorPortToNodeEnqueuePort = Maps.newHashMap();
-        for (String nmPort : config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)) {
-            for (String inPort : config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)) {
-                _nodeMonitorPortToNodeEnqueuePort.put(nmPort, inPort);
-            }
-        }
-        if (_nodeMonitorPortToNodeEnqueuePort.isEmpty()) {
-            LOG.info("No node ports specified, add default ports");
-            _nodeMonitorPortToNodeEnqueuePort.put(Integer.toString(DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT),
-                    Integer.toString(DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORTS));
-        }
-        _nodeMonitorSocketToNodeEnqueueSocket = Maps.newHashMap();
+        String[] nodesIpAddress = config.getStringArray(DodoorConf.STATIC_NODE);
         _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
 
-        for (String nodeMonitorAddress : nodeMonitorAddresses) {
-            try {
-                this.registerNodeMonitor(nodeMonitorAddress);
-            } catch (TException e) {
-                throw new RuntimeException(e);
+        String[] nmPorts = config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
+        String[] nePorts = config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
+
+        if (nmPorts.length != nePorts.length) {
+            throw new IllegalArgumentException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
+                    DodoorConf.NODE_ENQUEUE_THRIFT_PORTS + " not of equal length");
+        }
+        for (String nodeIp : nodesIpAddress) {
+            for (int i = 0; i < nmPorts.length; i++) {
+                String nodeFullAddress = nodeIp + ":" + nmPorts[i] + ":" + nePorts[i];
+                try {
+                    this.registerNode(nodeFullAddress);
+                } catch (TException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
+
         _taskPlacer = TaskPlacer.createTaskPlacer(_beta,
                 _schedulingStrategy, _nodeEqueueSocketToNodeMonitorClients);
     }
@@ -142,9 +138,9 @@ public class SchedulerImpl implements Scheduler{
     @Override
     public void updateNodeState(Map<String, TNodeState> snapshot) {
         for (Map.Entry<String, TNodeState> entry : snapshot.entrySet()) {
-            Optional<InetSocketAddress> nmAddress = Serialization.strToSocket(entry.getKey());
-            if (nmAddress.isPresent()) {
-                InetSocketAddress nodeEnqueueSocket = _nodeMonitorSocketToNodeEnqueueSocket.get(nmAddress.get());
+            Optional<InetSocketAddress> neAddressOptional = Serialization.strToSocket(entry.getKey());
+            if (neAddressOptional.isPresent()) {
+                InetSocketAddress nodeEnqueueSocket = neAddressOptional.get();
                 if (_mapEqueueSocketToNodeState.containsKey(nodeEnqueueSocket)) {
                     LOG.debug("Updating load for node: " + nodeEnqueueSocket.getAddress());
                 } else {
@@ -158,23 +154,26 @@ public class SchedulerImpl implements Scheduler{
     }
 
     @Override
-    public void registerNodeMonitor(String nodeMonitorAddress) throws TException {
-        LOG.info("Registering node monitor at " + nodeMonitorAddress);
-        Optional<InetSocketAddress> address = Serialization.strToSocket(nodeMonitorAddress);
-        if (address.isPresent()) {
-            InetSocketAddress nmSocket = address.get();
-            String port = Integer.toString(nmSocket.getPort());
-            String nodeEnqueueSocketStr = nmSocket.getAddress().getHostAddress() + ":" +
-                    _nodeMonitorPortToNodeEnqueuePort.get(port);
-            Optional<InetSocketAddress> internalSocket = Serialization.strToSocket(nodeEnqueueSocketStr);
-            if (!internalSocket.isPresent()) {
-                throw new TException("Invalid internal address: " + nodeEnqueueSocketStr);
-            }
-            _mapEqueueSocketToNodeState.put(internalSocket.get(), new TNodeState(
+    public void registerNode(String nodeAddress) throws TException {
+        LOG.info("Registering node monitor at " + nodeAddress);
+        String[] nodeAddressParts = nodeAddress.split(":");
+        if (nodeAddressParts.length != 3) {
+            throw new TException("Invalid address: " + nodeAddress);
+        }
+        String nodeIp = nodeAddressParts[0];
+        String nodeMonitorPort = nodeAddressParts[1];
+        String nodeEnqueuePort = nodeAddressParts[2];
+        String nodeMonitorAddress = nodeIp + ":" + nodeMonitorPort;
+        Optional<InetSocketAddress> nmAddress = Serialization.strToSocket(nodeMonitorAddress);
+        String nodeEnqueueAddress = nodeIp + ":" + nodeEnqueuePort;
+        Optional<InetSocketAddress> neAddress = Serialization.strToSocket(nodeEnqueueAddress);
+        if (nmAddress.isPresent() && neAddress.isPresent()) {
+            InetSocketAddress nmSocket = nmAddress.get();
+            InetSocketAddress neSocket = neAddress.get();
+            _mapEqueueSocketToNodeState.put(neSocket, new TNodeState(
                     new TResourceVector(0, 0, 0), 0));
-            _nodeMonitorSocketToNodeEnqueueSocket.put(nmSocket, internalSocket.get());
             try {
-                _nodeEqueueSocketToNodeMonitorClients.put(internalSocket.get(),
+                _nodeEqueueSocketToNodeMonitorClients.put(neSocket,
                         TClients.createBlockingNodeMonitorClient(nmSocket));
             } catch (IOException e) {
                 throw new RuntimeException(e);

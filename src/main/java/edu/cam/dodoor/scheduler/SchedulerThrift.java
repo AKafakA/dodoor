@@ -25,8 +25,8 @@ public class SchedulerThrift implements SchedulerService.Iface{
     }
 
     @Override
-    public void registerNodeMonitor(String nodeMonitorAddress) throws TException {
-        _scheduler.registerNodeMonitor(nodeMonitorAddress);
+    public void registerNode(String nodeAddress) throws TException {
+        _scheduler.registerNode(nodeAddress);
     }
 
     public void initialize(Configuration config, int port) throws TException, IOException {

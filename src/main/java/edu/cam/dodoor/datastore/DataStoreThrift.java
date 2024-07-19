@@ -30,7 +30,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
     THostPort _networkPort;
     private ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool;
     List<InetSocketAddress> _schedulerAddress;
-    List<InetSocketAddress> _nodeMonitorAddress;
     private AtomicInteger _counter;
     private int _batchSize;
 
@@ -49,7 +48,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
 
         _schedulerAddress = new ArrayList<>();
-        _nodeMonitorAddress = new ArrayList<>();
 
 
         for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER,
@@ -57,9 +55,22 @@ public class DataStoreThrift implements DataStoreService.Iface {
             this.registerScheduler(schedulerAddress);
         }
 
-        for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE,
-                DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)) {
-            this.registerNodeMonitor(nodeMonitorAddress);
+        String[] nmPorts = config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
+        String[] nePorts = config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
+
+        if (nmPorts.length != nePorts.length) {
+            throw new IllegalArgumentException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
+                    DodoorConf.NODE_ENQUEUE_THRIFT_PORTS + " not of equal length");
+        }
+        for (String nodeIp : config.getStringArray(DodoorConf.STATIC_NODE)) {
+            for (int i = 0; i < nmPorts.length; i++) {
+                String nodeFullAddress = nodeIp + ":" + nmPorts[i] + ":" + nePorts[i];
+                try {
+                    this.registerNode(nodeFullAddress);
+                } catch (TException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         DataStoreService.Processor<DataStoreService.Iface> processor = new DataStoreService.Processor<>(this);
@@ -78,10 +89,16 @@ public class DataStoreThrift implements DataStoreService.Iface {
     }
 
     @Override
-    public void registerNodeMonitor(String nodeEnqueueAddress) throws TException {
-        Optional<InetSocketAddress> nodeMonitorAddressOptional = Serialization.strToSocket(nodeEnqueueAddress);
-        if (nodeMonitorAddressOptional.isPresent()) {
-            _nodeMonitorAddress.add(nodeMonitorAddressOptional.get());
+    public void registerNode(String nodeFullAddress) throws TException {
+        String[] nodeAddressParts = nodeFullAddress.split(":");
+        if (nodeAddressParts.length != 3) {
+            throw new TException("Invalid address: " + nodeFullAddress);
+        }
+        String nodeIp = nodeAddressParts[0];
+        String nodeEnqueuePort = nodeAddressParts[2];
+        String nodeEnqueueAddress = nodeIp + ":" + nodeEnqueuePort;
+        Optional<InetSocketAddress> neAddress = Serialization.strToSocket(nodeEnqueueAddress);
+        if (neAddress.isPresent()) {
             _dataStore.updateNodeLoad(nodeEnqueueAddress, new TNodeState());
         } else {
             throw new TException("Node monitor address " + nodeEnqueueAddress + " not found");

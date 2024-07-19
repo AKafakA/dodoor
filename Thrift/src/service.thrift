@@ -22,16 +22,20 @@ namespace java edu.cam.dodoor.thrift
 service SchedulerService {
   # Submit a job composed of a list of individual tasks.
   void submitJob(1: types.TSchedulingRequest req) throws (1: types.IncompleteRequestException e);
+  # Update the state of the nodes for scheduling decisions
   void updateNodeState(1: map<string, types.TNodeState> snapshot);
-  void registerNodeMonitor(1: string nodeMonitorAddress);
+  # Register a node with the given socket address for enqueue and monitoring (IP: nmPort:nePort)
+  void registerNode(1: string nodeFullAddress);
 }
 
 # DataStoreService for storing the state of the nodes
 service DataStoreService {
   # Register a scheduler with the given socket address (IP: Port)
   void registerScheduler(1: string schedulerAddress);
-  void registerNodeMonitor(1: string nodeMonitorAddress);
-  void updateNodeLoad(1:string nodeMonitorAddress, 2:types.TNodeState nodeStates);
+  # Register a node with the given socket address for enqueue and monitoring (IP: nmPort:nePort)
+  void registerNode(1: string nodeFullAddress);
+  # Update the state of the nodes for scheduling decisions by given the node enqueue socket address and the node state
+  void updateNodeLoad(1:string nodeEnqueueAddress, 2:types.TNodeState nodeStates);
   map<string, types.TNodeState> getNodeStates();
 }
 
@@ -40,6 +44,7 @@ service DataStoreService {
 # Two services are exposed to the node: NodeMonitorService and NodeEnqueueService
 # which allow the nodes to be queried synchronously for realtime probing and request asynchronously for cached based approach
 service NodeMonitorService {
+    # Register a datastore with the given socket address (IP: Port)
   void registerDataStore(1: string dataStoreAddress);
   # called by the scheduler to get the number of tasks running on the node for sparrow test
   i32 getNumTasks();
