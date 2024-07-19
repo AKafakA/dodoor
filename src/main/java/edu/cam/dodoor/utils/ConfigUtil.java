@@ -37,9 +37,9 @@ public class ConfigUtil {
         Optional<InetSocketAddress> addr = Serialization.strToSocket(nodePort);
         if (!addr.isPresent()) {
           LOG.warn("Bad backend address: " + node);
-          continue;
+        } else {
+          nodeAddress.add(nodePort);
         }
-        nodeAddress.add(node);
       }
     }
 
