@@ -23,7 +23,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     private static final Node _node = new NodeImpl();
     private List<InetSocketAddress> _dataStoreAddress;
     private ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
-    InetSocketAddress _neAddress;
+    String _neAddress;
     private int _numTasksToUpdate;
     private AtomicInteger _counter;
 
@@ -69,8 +69,8 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
             registerDataStore(dataStoreAddress);
         }
 
-        String hostname = Network.getHostName(conf);
-        _neAddress = new InetSocketAddress(hostname, nePort);
+        String ipAddress = Network.getIPAddress(conf);
+        _neAddress = ipAddress + ":" + nePort;
     }
 
     @Override
@@ -102,11 +102,11 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
                     throw new RuntimeException(e);
                 }
                 TNodeState nodeState = new TNodeState(_node.getRequestedResourceVector(), _node.getNumTasks());
-                dataStoreClient.updateNodeLoad(_neAddress.toString(), nodeState,
+                dataStoreClient.updateNodeLoad(_neAddress, nodeState,
                         new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
+                LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
+                        dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
             }
-            LOG.info(Logging.auditEventString("update_node_load_to_datastore",
-                    _neAddress.getHostName()));
         }
         LOG.debug(Logging.auditEventString("tasks_finished", task.toString())
                 + " numTasksFinished: " + numFinishedTasks);
