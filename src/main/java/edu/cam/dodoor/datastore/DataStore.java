@@ -9,9 +9,9 @@ public interface DataStore {
 
     void initialize(Configuration config);
 
-    void updateNodeLoad(String nodeMonitorAddress, TNodeState nodeStates);
+    void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates);
 
     Map<String, TNodeState> getNodeStates();
 
-    boolean containsNode(String nodeMonitorAddress);
+    boolean containsNode(String nodeEnqueueAddress);
 }

@@ -1,4 +1,4 @@
-package edu.cam.dodoor.nodemonitor;
+package edu.cam.dodoor.node;
 
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
@@ -10,8 +10,8 @@ import org.apache.thrift.TException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class NodeMonitorImpl implements NodeMonitor{
-    private final static Logger LOG = Logger.getLogger(NodeMonitorImpl.class);
+public class NodeImpl implements Node{
+    private final static Logger LOG = Logger.getLogger(NodeImpl.class);
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(TaskScheduler.class);
 
     private TaskScheduler _taskScheduler;
@@ -25,14 +25,14 @@ public class NodeMonitorImpl implements NodeMonitor{
     private AtomicInteger _counter;
 
     @Override
-    public void initialize(Configuration config, NodeMonitorThrift nodeMonitorThrift) {
+    public void initialize(Configuration config, NodeThrift nodeThrift) {
         _ipAddress = Network.getIPAddress(config);
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
         // TODO(wda): add more task scheduler
         _taskScheduler = new FifoTaskScheduler(numSlots);
         _taskScheduler.initialize(config);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
-        taskLauncherService.initialize(config, _taskScheduler, nodeMonitorThrift);
+        taskLauncherService.initialize(config, _taskScheduler, nodeThrift);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_MS,

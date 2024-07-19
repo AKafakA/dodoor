@@ -1,7 +1,7 @@
 package edu.cam.dodoor;
 
 import edu.cam.dodoor.datastore.DataStoreThrift;
-import edu.cam.dodoor.nodemonitor.NodeMonitorThrift;
+import edu.cam.dodoor.node.NodeMonitorThrift;
 import edu.cam.dodoor.scheduler.SchedulerThrift;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;

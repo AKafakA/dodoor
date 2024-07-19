@@ -1,4 +1,4 @@
-package edu.cam.dodoor.nodemonitor;
+package edu.cam.dodoor.node;
 
 
 import edu.cam.dodoor.thrift.*;

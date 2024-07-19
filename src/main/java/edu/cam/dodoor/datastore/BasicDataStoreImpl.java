@@ -20,8 +20,8 @@ public class BasicDataStoreImpl implements DataStore{
     }
 
     @Override
-    public void updateNodeLoad(String nodeMonitorAddress, TNodeState nodeStates) {
-        _nodeStates.put(nodeMonitorAddress, nodeStates);
+    public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) {
+        _nodeStates.put(nodeEnqueueAddress, nodeStates);
     }
 
     @Override
@@ -30,8 +30,8 @@ public class BasicDataStoreImpl implements DataStore{
     }
 
     @Override
-    public boolean containsNode(String nodeMonitorAddress) {
-        return _nodeStates.containsKey(nodeMonitorAddress);
+    public boolean containsNode(String nodeEnqueueAddress) {
+        return _nodeStates.containsKey(nodeEnqueueAddress);
     }
 
 }

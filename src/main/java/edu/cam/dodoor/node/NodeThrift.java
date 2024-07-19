@@ -1,4 +1,4 @@
-package edu.cam.dodoor.nodemonitor;
+package edu.cam.dodoor.node;
 
 import com.google.common.base.Optional;
 import edu.cam.dodoor.DodoorConf;
@@ -13,16 +13,20 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class NodeMonitorThrift implements NodeMonitorService.Iface, NodeEnqueueService.Iface {
+public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.Iface {
 
-    private final static Logger LOG = Logger.getLogger(NodeMonitorThrift.class);
+    private final static Logger LOG = Logger.getLogger(NodeThrift.class);
 
     // Defaults if not specified by configuration
-    private static final NodeMonitor _nodeMonitor = new NodeMonitorImpl();
+    private static final Node _node = new NodeImpl();
     private List<InetSocketAddress> _dataStoreAddress;
     private ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
-    InetSocketAddress _nmAddress;
+    InetSocketAddress _neAddress;
+    private int _numTasksToUpdate;
+    private AtomicInteger _counter;
+
     /**
      * Initialize this thrift service.
      *
@@ -33,9 +37,13 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, NodeEnqueueS
      * within this class under certain configurations (e.g. a config file specifies
      * multiple NodeMonitors).
      */
-    public void initialize(Configuration conf, int nmPort, int internalPort)
+    public void initialize(Configuration conf, int nmPort, int nePort)
             throws IOException, TException {
-        _nodeMonitor.initialize(conf, this);
+        _node.initialize(conf, this);
+        _counter = new AtomicInteger(0);
+
+        _numTasksToUpdate = conf.getInt(DodoorConf.NUM_TASKS_TO_UPDATE,
+                DodoorConf.DEFAULT_NUM_TASKS_TO_UPDATE);
 
         // Setup application-facing agent service.
         NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
@@ -46,12 +54,12 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, NodeEnqueueS
         TServers.launchThreadedThriftServer(nmPort, threads, processor);
 
         // Setup internal-facing agent service.
-        NodeEnqueueService.Processor<NodeEnqueueService.Iface> internalProcessor =
+        NodeEnqueueService.Processor<NodeEnqueueService.Iface> nodeEnqueueProcessor =
                 new NodeEnqueueService.Processor<>(this);
-        int internalThreads = conf.getInt(
+        int neThreads = conf.getInt(
                 DodoorConf.INTERNAL_THRIFT_THREADS,
                 DodoorConf.DEFAULT_NM_INTERNAL_THRIFT_THREADS);
-        TServers.launchThreadedThriftServer(internalPort, internalThreads, internalProcessor);
+        TServers.launchThreadedThriftServer(nePort,neThreads, nodeEnqueueProcessor);
 
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _dataStoreAddress = new ArrayList<>();
@@ -62,12 +70,12 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, NodeEnqueueS
         }
 
         String hostname = Network.getHostName(conf);
-        _nmAddress = new InetSocketAddress(hostname, nmPort);
+        _neAddress = new InetSocketAddress(hostname, nePort);
     }
 
     @Override
     public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
-        return _nodeMonitor.enqueueTaskReservation(request);
+        return _node.enqueueTaskReservation(request);
     }
 
     @Override
@@ -82,28 +90,34 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, NodeEnqueueS
 
     @Override
     public void tasksFinished(TFullTaskId task) throws TException {
-        _nodeMonitor.taskFinished(task);
-        for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
-            DataStoreService.AsyncClient dataStoreClient = null;
-            try {
-                dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+        _node.taskFinished(task);
+
+        if (_counter.incrementAndGet() % _numTasksToUpdate == 0) {
+            for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
+                DataStoreService.AsyncClient dataStoreClient = null;
+                try {
+                    dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                TNodeState nodeState = new TNodeState(_node.getRequestedResourceVector(), _node.getNumTasks());
+                dataStoreClient.updateNodeLoad(_neAddress.toString(), nodeState,
+                        new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
             }
-            TNodeState nodeState = new TNodeState(_nodeMonitor.getRequestedResourceVector(), _nodeMonitor.getNumTasks());
-            dataStoreClient.updateNodeLoad(_nmAddress.toString(), nodeState,
-                    new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
+            LOG.info(Logging.auditEventString("update_node_load_to_datastore",
+                    _neAddress.getHostName()));
+            _counter.set(0);
         }
     }
 
     @Override
     public int getNumTasks() throws TException {
-        return _nodeMonitor.getNumTasks();
+        return _node.getNumTasks();
     }
 
     private class UpdateNodeLoadCallBack implements AsyncMethodCallback<Void> {
-        private DataStoreService.AsyncClient _client;
-        private InetSocketAddress _address;
+        private final DataStoreService.AsyncClient _client;
+        private final InetSocketAddress _address;
 
         public UpdateNodeLoadCallBack(InetSocketAddress address, DataStoreService.AsyncClient client) {
             _client = client;

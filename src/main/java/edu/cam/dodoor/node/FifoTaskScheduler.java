@@ -1,4 +1,4 @@
-package edu.cam.dodoor.nodemonitor;
+package edu.cam.dodoor.node;
 
 import org.apache.log4j.Logger;
 import java.util.concurrent.LinkedBlockingQueue;

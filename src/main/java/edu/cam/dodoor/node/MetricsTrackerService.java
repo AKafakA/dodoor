@@ -1,4 +1,4 @@
-package edu.cam.dodoor.nodemonitor;
+package edu.cam.dodoor.node;
 
 import edu.cam.dodoor.DodoorConf;
 import org.apache.commons.configuration.Configuration;

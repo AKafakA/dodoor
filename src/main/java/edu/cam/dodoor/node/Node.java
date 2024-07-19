@@ -1,4 +1,4 @@
-package edu.cam.dodoor.nodemonitor;
+package edu.cam.dodoor.node;
 
 import edu.cam.dodoor.thrift.TEnqueueTaskReservationRequest;
 import edu.cam.dodoor.thrift.TFullTaskId;
@@ -6,11 +6,9 @@ import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
 
-import java.util.List;
+public interface Node {
 
-public interface NodeMonitor {
-
-    void initialize(Configuration config, NodeMonitorThrift nodeMonitorClient);
+    void initialize(Configuration config, NodeThrift nodeMonitorClient);
 
     void taskFinished(TFullTaskId task);
 

@@ -58,7 +58,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         }
 
         for (String nodeMonitorAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_NODE,
-                DodoorConf.NODE_MONITOR_THRIFT_PORTS)) {
+                DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)) {
             this.registerNodeMonitor(nodeMonitorAddress);
         }
 
@@ -78,22 +78,22 @@ public class DataStoreThrift implements DataStoreService.Iface {
     }
 
     @Override
-    public void registerNodeMonitor(String nodeMonitorAddress) throws TException {
-        Optional<InetSocketAddress> nodeMonitorAddressOptional = Serialization.strToSocket(nodeMonitorAddress);
+    public void registerNodeMonitor(String nodeEnqueueAddress) throws TException {
+        Optional<InetSocketAddress> nodeMonitorAddressOptional = Serialization.strToSocket(nodeEnqueueAddress);
         if (nodeMonitorAddressOptional.isPresent()) {
             _nodeMonitorAddress.add(nodeMonitorAddressOptional.get());
-            _dataStore.updateNodeLoad(nodeMonitorAddress, new TNodeState());
+            _dataStore.updateNodeLoad(nodeEnqueueAddress, new TNodeState());
         } else {
-            throw new TException("Node monitor address " + nodeMonitorAddress + " not found");
+            throw new TException("Node monitor address " + nodeEnqueueAddress + " not found");
         }
     }
 
     @Override
-    public void updateNodeLoad(String nodeMonitorAddress, TNodeState nodeStates) throws TException{
-        if (!_dataStore.containsNode(nodeMonitorAddress)) {
-            LOG.error("Received updated loads from unregistered nodes" + nodeMonitorAddress);
+    public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) throws TException{
+        if (!_dataStore.containsNode(nodeEnqueueAddress)) {
+            LOG.error("Received updated loads from unregistered nodes" + nodeEnqueueAddress);
         }
-        _dataStore.updateNodeLoad(nodeMonitorAddress, nodeStates);
+        _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeStates);
         _counter.getAndAdd(1);
 
         if (_counter.get() > _batchSize) {

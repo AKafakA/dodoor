@@ -109,4 +109,7 @@ public class DodoorConf {
 
     public final static String METRICS_LOG_FILE = "metrics.log.file";
     public final static String DEFAULT_METRICS_LOG_FILE = "dodoor_metrics.log";
+
+    public final static String NUM_TASKS_TO_UPDATE = "node.num_tasks_to_update";
+    public final static int  DEFAULT_NUM_TASKS_TO_UPDATE = 1;
 }
