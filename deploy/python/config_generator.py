@@ -109,7 +109,7 @@ def write_ip_port(file, lines, prefix, ports):
         ip = tokens[1]
         for port in ports:
             socket_addresses += ip + ":" + port + ","
-        socket_addresses = socket_addresses[:-1]
+    socket_addresses = socket_addresses[:-1]
     file.write(prefix + " = " + socket_addresses + "\n")
 
 
