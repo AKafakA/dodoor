@@ -1,4 +1,4 @@
-package edu.cam.dodoor.nodemonitor;
+package edu.cam.dodoor.node;
 
 
 import edu.cam.dodoor.thrift.*;
@@ -6,10 +6,8 @@ import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.List;
 
 public abstract class TaskScheduler {
 
@@ -35,13 +33,13 @@ public abstract class TaskScheduler {
 
     /** Initialize the task scheduler, passing it the current available resources
      *  on the machine. */
-    void initialize(Configuration config, int nodeMonitorPort) {
+    void initialize(Configuration config) {
         _conf = config;
         _ipAddress = Network.getIPAddress(config);
 
         _cores_per_slots = Resources.getSystemCPUCount(config) / _numSlots;
         _memory_per_slots = Resources.getSystemMemoryMb(config) / _numSlots;
-        _disk_per_slots = Resources.getSystemDiskMb(config) / _numSlots;
+        _disk_per_slots = Resources.getSystemDiskGb(config) / _numSlots;
     }
 
     TaskSpec getNextTask() {
@@ -60,39 +58,38 @@ public abstract class TaskScheduler {
         return _runnableTaskQueue.size();
     }
 
-    void tasksFinished(List<TFullTaskId> finishedTasks) {
-        for (TFullTaskId t : finishedTasks) {
-            AUDIT_LOG.info(Logging.auditEventString("task_completed", t.getRequestId(), t.getTaskId()));
-            handleTaskFinished(t.getRequestId(), t.getTaskId());
-        }
-    }
-
-    void noTaskForReservation(TaskSpec taskReservation) {
-        AUDIT_LOG.info(Logging.auditEventString("node_monitor_get_task_no_task",
-                taskReservation._requestId,
-                taskReservation._previousRequestId,
-                taskReservation._previousTaskId));
-        handleNoTaskForReservation(taskReservation);
+    void tasksFinished(TFullTaskId finishedTask) {
+        AUDIT_LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
+        handleTaskFinished(finishedTask.taskId);
     }
 
     protected void makeTaskRunnable(TaskSpec task) {
         try {
-            LOG.debug("Putting reservation for request " + task._requestId + " in runnable queue");
+            LOG.debug("Putting reservation for task " + task._taskId + " in runnable queue");
             _runnableTaskQueue.put(task);
         } catch (InterruptedException e) {
             LOG.fatal("Unable to add task to runnable queue: " + e.getMessage());
         }
     }
 
-    public synchronized void submitTaskReservations(TEnqueueTaskReservationsRequest request,
-                                                    InetSocketAddress appBackendAddress) {
-        for (int i = 0; i < request.getNumTasks(); ++i) {
-            LOG.debug("Creating reservation " + i + " for request " + request.getRequestId());
-            TaskSpec reservation = new TaskSpec(request, appBackendAddress);
-            int queuedReservations = handleSubmitTaskReservation(reservation);
-            AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", _ipAddress, request.requestId,
-                    queuedReservations));
+    public synchronized void submitTaskReservation(TEnqueueTaskReservationRequest request) {
+        TaskSpec reservation = new TaskSpec(request);
+        if (!enoughResourcesToRun(request.resourceRequested)){
+            AUDIT_LOG.info(Logging.auditEventString("big_task_failed_enqueued",
+                    reservation._taskId, request.resourceRequested.cores,
+                    request.resourceRequested.memory,
+                    request.resourceRequested.disks));
+            return;
         }
+        int queuedReservations = handleSubmitTaskReservation(reservation);
+        AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", _ipAddress, request.taskId,
+                queuedReservations));
+    }
+
+    boolean enoughResourcesToRun(TResourceVector requestedResources) {
+        return requestedResources.cores <= _cores_per_slots
+                && requestedResources.memory <= _memory_per_slots
+                && requestedResources.disks <= _disk_per_slots;
     }
 
     // TASK SCHEDULERS MUST IMPLEMENT THE FOLLOWING.
@@ -102,28 +99,16 @@ public abstract class TaskScheduler {
      */
     abstract int handleSubmitTaskReservation(TaskSpec taskReservation);
 
-    /**
-     * Cancels all task reservations with the given request id. Returns the number of task
-     * reservations cancelled.
-     */
-    abstract int cancelTaskReservations(String requestId);
 
     /**
      * Handles the completion of a task that has finished executing.
      */
-    protected abstract void handleTaskFinished(String requestId, String taskId);
-
-    /**
-     * Handles the case when the node monitor tried to launch a task for a reservation, but
-     * the corresponding scheduler didn't return a task (typically because all of the corresponding
-     * job's tasks have been launched).
-     */
-    protected abstract void handleNoTaskForReservation(TaskSpec taskSpec);
+    protected abstract void handleTaskFinished(String taskId);
 
     /**
      * Returns the maximum number of active tasks allowed (the number of slots).
      *
      * -1 signals that the scheduler does not enforce a maximum number of active tasks.
      */
-    abstract int getMaxActiveTasks();
+    abstract int getNumSlots();
 }

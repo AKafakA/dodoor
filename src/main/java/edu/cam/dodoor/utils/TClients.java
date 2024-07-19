@@ -17,6 +17,23 @@ import org.apache.thrift.transport.TTransportException;
 public class TClients {
   private final static Logger LOG = Logger.getLogger(TClients.class);
 
+
+  public static NodeMonitorService.Client createBlockingNodeMonitorClient(
+          InetSocketAddress socket) throws IOException, TTransportException {
+    return createBlockingNodeMonitorClient(socket.getAddress().getHostAddress(), socket.getPort());
+  }
+
+  public static NodeMonitorService.Client createBlockingNodeMonitorClient(
+          String host, int port) throws IOException, TTransportException {
+    return createBlockingNodeMonitorClient(host, port, 0);
+  }
+
+  public static NodeMonitorService.Client createBlockingNodeMonitorClient(
+          String host, int port, int timeout) throws IOException, TTransportException {
+    return new NodeMonitorService.Client(getProtocol(host, port, timeout));
+  }
+
+
   public static SchedulerService.Client createBlockingSchedulerClient(
       InetSocketAddress socket) throws IOException, TTransportException {
     return createBlockingSchedulerClient(socket.getAddress().getHostAddress(), socket.getPort());
@@ -30,41 +47,6 @@ public class TClients {
   public static SchedulerService.Client createBlockingSchedulerClient(
       String host, int port, int timeout) throws IOException, TTransportException {
     return new SchedulerService.Client(getProtocol(host, port, timeout));
-  }
-
-  public static GetTaskService.Client createBlockingGetTaskClient(
-          InetSocketAddress socket) throws IOException, TTransportException {
-    return createBlockingGetTaskClient(socket.getAddress().getHostAddress(), socket.getPort());
-  }
-
-  public static GetTaskService.Client createBlockingGetTaskClient(
-          String host, int port) throws IOException, TTransportException {
-    return createBlockingGetTaskClient(host, port, 0);
-  }
-
-  public static GetTaskService.Client createBlockingGetTaskClient(
-          String host, int port, int timeout) throws IOException, TTransportException {
-    return new GetTaskService.Client(getProtocol(host, port, timeout));
-  }
-
-  public static BackendService.Client createBlockingBackendClient(
-          InetSocketAddress socket) throws IOException, TTransportException {
-    return createBlockingBackendClient(socket.getAddress().getHostAddress(), socket.getPort());
-  }
-
-  public static BackendService.Client createBlockingBackendClient(
-          String host, int port) throws IOException, TTransportException {
-    return new BackendService.Client(getProtocol(host, port, 0));
-  }
-
-  public static FrontendService.Client createBlockingFrontendClient(
-          InetSocketAddress socket) throws IOException, TTransportException {
-    return createBlockingFrontendClient(socket.getAddress().getHostAddress(), socket.getPort());
-  }
-
-  public static FrontendService.Client createBlockingFrontendClient(
-          String host, int port) throws IOException, TTransportException {
-    return new FrontendService.Client(getProtocol(host, port, 0));
   }
 
   private static TBinaryProtocol getProtocol(String host, int port, int timeout) throws TTransportException, IOException {

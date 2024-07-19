@@ -1,7 +1,9 @@
 package edu.cam.dodoor.utils;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.configuration.Configuration;
@@ -24,20 +26,23 @@ public class ConfigUtil {
    * Returns a map of address of backends to a {@link TResourceVector} describing the
    * total resource capacity for that backend.
    */
-  public static Set<InetSocketAddress> parseBackends(
-      Configuration conf) {
+  public static List<String> parseNodeAddress(
+      Configuration conf, String ipKey, String portKey) {
 
-    Set<InetSocketAddress> backends = new HashSet<InetSocketAddress>();
+    List<String> nodeAddress = new ArrayList<>();
 
-    for (String node: conf.getStringArray(DodoorConf.STATIC_NODE_MONITORS)) {
-      Optional<InetSocketAddress> addr = Serialization.strToSocket(node);
-      if (!addr.isPresent()) {
-        LOG.warn("Bad backend address: " + node);
-        continue;
+    for (String node: conf.getStringArray(ipKey)) {
+      for (String port: conf.getStringArray(portKey)) {
+        String nodePort = node + ":" + port;
+        Optional<InetSocketAddress> addr = Serialization.strToSocket(nodePort);
+        if (!addr.isPresent()) {
+          LOG.warn("Bad backend address: " + node);
+        } else {
+          nodeAddress.add(nodePort);
+        }
       }
-      backends.add(addr.get());
     }
 
-    return backends;
+    return nodeAddress;
   }
 }

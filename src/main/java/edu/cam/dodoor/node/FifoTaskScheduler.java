@@ -1,8 +1,6 @@
-package edu.cam.dodoor.nodemonitor;
+package edu.cam.dodoor.node;
 
 import org.apache.log4j.Logger;
-
-import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class FifoTaskScheduler extends TaskScheduler {
@@ -27,14 +25,14 @@ public class FifoTaskScheduler extends TaskScheduler {
             }
             makeTaskRunnable(taskReservation);
             ++_activeTasks;
-            LOG.debug("Making task for request " + taskReservation._requestId + " runnable (" +
+            LOG.debug("Making task for task " + taskReservation._taskId + " runnable (" +
                     _activeTasks + " of " + _numSlots + " task slots currently filled)");
             return 0;
         }
         LOG.debug("All " + _numSlots + " task slots filled.");
         int queuedReservations = _taskReservations.size();
         try {
-            LOG.debug("Enqueueing task reservation with request id " + taskReservation._requestId +
+            LOG.debug("Enqueueing task reservation with task id " + taskReservation._taskId +
                     " because all task slots filled. " + queuedReservations +
                     " already enqueued reservations.");
             _taskReservations.put(taskReservation);
@@ -45,41 +43,20 @@ public class FifoTaskScheduler extends TaskScheduler {
     }
 
     @Override
-    synchronized int cancelTaskReservations(String requestId) {
-        int numReservationsCancelled = 0;
-        Iterator<TaskSpec> reservationsIterator = _taskReservations.iterator();
-        while (reservationsIterator.hasNext()) {
-            TaskSpec reservation = reservationsIterator.next();
-            if (reservation._requestId.equals(requestId)) {
-                reservationsIterator.remove();
-                ++numReservationsCancelled;
-            }
-        }
-        return numReservationsCancelled;
-    }
-
-    @Override
-    protected void handleTaskFinished(String requestId, String taskId) {
-        attemptTaskLaunch(requestId, taskId);
-    }
-
-    @Override
-    protected void handleNoTaskForReservation(TaskSpec taskSpec) {
-        attemptTaskLaunch(taskSpec._previousRequestId, taskSpec._previousTaskId);
+    protected void handleTaskFinished(String taskId) {
+        attemptTaskLaunch(taskId);
     }
 
     /**
      * Attempts to launch a new task.
      *
-     * The parameters {@code lastExecutedRequestId} and {@code lastExecutedTaskId} are used purely
+     * The parameters {@code lastExecutedTaskId} are used purely
      * for logging purposes, to determine how long the node monitor spends trying to find a new
      * task to execute. This method needs to be synchronized to prevent a race condition.
      */
-    private synchronized void attemptTaskLaunch(
-            String lastExecutedRequestId, String lastExecutedTaskId) {
+    private synchronized void attemptTaskLaunch( String lastExecutedTaskId) {
         TaskSpec reservation = _taskReservations.poll();
         if (reservation != null) {
-            reservation._previousRequestId = lastExecutedRequestId;
             reservation._previousTaskId = lastExecutedTaskId;
             makeTaskRunnable(reservation);
         } else {
@@ -88,7 +65,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     }
 
     @Override
-    int getMaxActiveTasks() {
+    int getNumSlots() {
         return _numSlots;
     }
 }

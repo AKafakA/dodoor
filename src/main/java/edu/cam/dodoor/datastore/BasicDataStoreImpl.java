@@ -1,13 +1,7 @@
 package edu.cam.dodoor.datastore;
 
 import edu.cam.dodoor.thrift.TNodeState;
-import edu.cam.dodoor.utils.ConfigUtil;
 import org.apache.commons.configuration.Configuration;
-import org.apache.thrift.TException;
-
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,7 +9,6 @@ import java.util.Map;
  */
 public class BasicDataStoreImpl implements DataStore{
     private final Map<String, TNodeState> _nodeStates;
-    List<InetSocketAddress> _backendAddress;
 
 
     public BasicDataStoreImpl(Map<String, TNodeState> nodeStates){
@@ -23,17 +16,22 @@ public class BasicDataStoreImpl implements DataStore{
     }
 
     @Override
-    public void initialize(Configuration config) throws TException {
-        _backendAddress = new ArrayList<>(ConfigUtil.parseBackends(config));
+    public void initialize(Configuration config) {
     }
 
     @Override
-    public void updateNodeLoad(String nodeMonitorAddress, TNodeState nodeStates) throws TException {
-        _nodeStates.put(nodeMonitorAddress, nodeStates);
+    public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) {
+        _nodeStates.put(nodeEnqueueAddress, nodeStates);
     }
 
     @Override
-    public Map<String, TNodeState> getNodeStates() throws TException {
+    public Map<String, TNodeState> getNodeStates() {
         return _nodeStates;
     }
+
+    @Override
+    public boolean containsNode(String nodeEnqueueAddress) {
+        return _nodeStates.containsKey(nodeEnqueueAddress);
+    }
+
 }
