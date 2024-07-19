@@ -98,19 +98,19 @@ public class SchedulerImpl implements Scheduler{
                 _address.getPort(),
                 user, description));
 
-        Map<InetSocketAddress, TEnqueueTaskReservationsRequest> enqueueTaskReservationsRequests;
-        enqueueTaskReservationsRequests = _taskPlacer.getEnqueueTaskReservationsRequests(
+        Map<InetSocketAddress, TEnqueueTaskReservationRequest> enqueueTaskReservationRequests;
+        enqueueTaskReservationRequests = _taskPlacer.getEnqueueTaskReservationRequests(
                 request, _loadMaps, _address);
 
-        for (Map.Entry<InetSocketAddress, TEnqueueTaskReservationsRequest> entry :
-                enqueueTaskReservationsRequests.entrySet())  {
+        for (Map.Entry<InetSocketAddress, TEnqueueTaskReservationRequest> entry :
+                enqueueTaskReservationRequests.entrySet())  {
             try {
                 InternalService.AsyncClient client = _nodeMonitorAsyncClientPool.borrowClient(entry.getKey());
                 LOG.debug("Launching enqueueTask for request " + request.requestId + "on node: " + entry.getKey());
                 AUDIT_LOG.debug(Logging.auditEventString(
                         "scheduler_launch_enqueue_task", entry.getValue().taskId,
                         entry.getKey().getAddress().getHostAddress()));
-                client.enqueueTaskReservations(entry.getValue(), new EnqueueTaskReservationsCallback(
+                client.enqueueTaskReservation(entry.getValue(), new EnqueueTaskReservationCallback(
                         entry.getValue().taskId, entry.getKey(), client));
             } catch (Exception e) {
                 LOG.error("Error enqueuing task on node " + entry.getKey().toString() + ":" + e);
@@ -156,13 +156,13 @@ public class SchedulerImpl implements Scheduler{
         }
     }
 
-    private class EnqueueTaskReservationsCallback implements AsyncMethodCallback<Boolean> {
+    private class EnqueueTaskReservationCallback implements AsyncMethodCallback<Boolean> {
         String _taskId;
         InetSocketAddress _nodeMonitorAddress;
         long _startTimeMillis;
         InternalService.AsyncClient _client;
 
-        public EnqueueTaskReservationsCallback(String taskId, InetSocketAddress nodeMonitorAddress,
+        public EnqueueTaskReservationCallback(String taskId, InetSocketAddress nodeMonitorAddress,
                                                InternalService.AsyncClient client) {
             _taskId = taskId;
             _nodeMonitorAddress = nodeMonitorAddress;

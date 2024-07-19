@@ -48,5 +48,5 @@ service InternalService {
   # Enqueues a reservation to launch the given number of tasks. The NodeMonitor sends
   # a GetTask() RPC to the given schedulerAddress when it is ready to launch a task, for each
   # enqueued task reservation. Returns whether or not the task was successfully enqueued.
-  bool enqueueTaskReservations(1: types.TEnqueueTaskReservationsRequest request);
+  bool enqueueTaskReservation(1: types.TEnqueueTaskReservationRequest request);
 }

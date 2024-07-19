@@ -12,7 +12,7 @@
         <targetPath>${project.build.directory}</targetPath>
         <directory>src/main/resources</directory>
         <includes>
-          <include>log4j.properties</include>
+          <include>log4j2.xml</include>
         </includes>
       </resource>
     </resources>

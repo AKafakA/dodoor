@@ -78,14 +78,10 @@ exception ServerNotReadyException {
     1: string message; # Thrown when master has less than one HW/LW
 }
 
-struct TEnqueueTaskReservationsRequest {
+struct TEnqueueTaskReservationRequest {
   1: TUserGroupInfo user;
   2: string taskId;
   3: THostPort schedulerAddress;
   4: TResourceVector resourceRequested;
   5: i64 durationInMs;
-}
-
-struct TCancelTaskReservationsRequest {
-  1: string requestId;
 }

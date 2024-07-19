@@ -1,7 +1,6 @@
 package edu.cam.dodoor.nodemonitor;
 
-import edu.cam.dodoor.thrift.TCancelTaskReservationsRequest;
-import edu.cam.dodoor.thrift.TEnqueueTaskReservationsRequest;
+import edu.cam.dodoor.thrift.TEnqueueTaskReservationRequest;
 import edu.cam.dodoor.thrift.TFullTaskId;
 import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.commons.configuration.Configuration;
@@ -15,7 +14,7 @@ public interface NodeMonitor {
 
     void taskFinished(TFullTaskId task);
 
-    boolean enqueueTaskReservations(TEnqueueTaskReservationsRequest request) throws TException;
+    boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException;
 
     TResourceVector getRequestedResourceVector();
 

@@ -69,14 +69,14 @@ public class NodeMonitorImpl implements NodeMonitor{
     }
 
     @Override
-    public boolean enqueueTaskReservations(TEnqueueTaskReservationsRequest request) throws TException {
+    public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
         LOG.debug(Logging.functionCall(request));
         AUDIT_LOG.info(Logging.auditEventString("node_monitor_enqueue_task_reservation",
                 _ipAddress, request.taskId));
         LOG.info("Received enqueue task reservation request from " + _ipAddress + " for request " +
                 request.taskId);
 
-        _taskScheduler.submitTaskReservations(request);
+        _taskScheduler.submitTaskReservation(request);
         _requested_cores.getAndAdd(request.resourceRequested.cores);
         _requested_memory.getAndAdd(request.resourceRequested.memory);
         _requested_disk.getAndAdd(request.resourceRequested.disks);

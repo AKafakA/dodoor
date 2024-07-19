@@ -1,6 +1,6 @@
 package edu.cam.dodoor.nodemonitor;
 
-import edu.cam.dodoor.thrift.TEnqueueTaskReservationsRequest;
+import edu.cam.dodoor.thrift.TEnqueueTaskReservationRequest;
 import edu.cam.dodoor.thrift.TFullTaskId;
 import edu.cam.dodoor.thrift.TResourceVector;
 import edu.cam.dodoor.thrift.TUserGroupInfo;
@@ -25,7 +25,7 @@ public class TaskSpec {
     public long _duration;
 
 
-    public TaskSpec(TEnqueueTaskReservationsRequest request) {
+    public TaskSpec(TEnqueueTaskReservationRequest request) {
         _user = request.getUser();
         _taskId = request.taskId;
         _previousTaskId = "";

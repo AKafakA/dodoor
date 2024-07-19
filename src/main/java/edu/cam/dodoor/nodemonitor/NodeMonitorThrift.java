@@ -65,8 +65,8 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface, InternalServ
     }
 
     @Override
-    public boolean enqueueTaskReservations(TEnqueueTaskReservationsRequest request) throws TException {
-        return _nodeMonitor.enqueueTaskReservations(request);
+    public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
+        return _nodeMonitor.enqueueTaskReservation(request);
     }
 
     @Override

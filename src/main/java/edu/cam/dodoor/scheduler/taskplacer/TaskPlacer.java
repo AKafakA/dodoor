@@ -13,7 +13,7 @@ public abstract class TaskPlacer {
         _beta = beta;
     }
 
-    public Map<InetSocketAddress, TEnqueueTaskReservationsRequest> getEnqueueTaskReservationsRequests(
+    public Map<InetSocketAddress, TEnqueueTaskReservationRequest> getEnqueueTaskReservationRequests(
             TSchedulingRequest schedulingRequest,
             Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress) {
         return null;

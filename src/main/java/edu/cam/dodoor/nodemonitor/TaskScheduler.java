@@ -72,7 +72,7 @@ public abstract class TaskScheduler {
         }
     }
 
-    public synchronized void submitTaskReservations(TEnqueueTaskReservationsRequest request) {
+    public synchronized void submitTaskReservation(TEnqueueTaskReservationRequest request) {
         TaskSpec reservation = new TaskSpec(request);
         if (!enoughResourcesToRun(request.resourceRequested)){
             AUDIT_LOG.info(Logging.auditEventString("big_task_failed_enqueued",
@@ -99,23 +99,11 @@ public abstract class TaskScheduler {
      */
     abstract int handleSubmitTaskReservation(TaskSpec taskReservation);
 
-    /**
-     * Cancels all task reservations with the given request id. Returns the number of task
-     * reservations cancelled.
-     */
-    abstract TResourceVector cancelTaskReservations(String taskId);
 
     /**
      * Handles the completion of a task that has finished executing.
      */
     protected abstract void handleTaskFinished(String taskId);
-
-    /**
-     * Handles the case when the node monitor tried to launch a task for a reservation, but
-     * the corresponding scheduler didn't return a task (typically because all of the corresponding
-     * job's tasks have been launched).
-     */
-    protected abstract void handleNoTaskForReservation(TaskSpec taskSpec);
 
     /**
      * Returns the maximum number of active tasks allowed (the number of slots).

@@ -15,10 +15,10 @@ public class SparrowTaskPlacer extends TaskPlacer{
     }
 
     @Override
-    public Map<InetSocketAddress, TEnqueueTaskReservationsRequest> getEnqueueTaskReservationsRequests(
+    public Map<InetSocketAddress, TEnqueueTaskReservationRequest> getEnqueueTaskReservationRequests(
             TSchedulingRequest schedulingRequest,
             Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress) {
-        Map<InetSocketAddress, TEnqueueTaskReservationsRequest> allocations = new HashMap<>();
+        Map<InetSocketAddress, TEnqueueTaskReservationRequest> allocations = new HashMap<>();
         for (TTaskSpec taskSpec : schedulingRequest.tasks) {
             TResourceVector taskResources = taskSpec.resourceRequest;
             List<InetSocketAddress> nodeAddresses = new ArrayList<>(loadMaps.keySet());
@@ -37,7 +37,7 @@ public class SparrowTaskPlacer extends TaskPlacer{
                     throw new RuntimeException(e);
                 }
             }
-            allocations.put(nodeAddresses.get(firstIndex), new TEnqueueTaskReservationsRequest(
+            allocations.put(nodeAddresses.get(firstIndex), new TEnqueueTaskReservationRequest(
                     schedulingRequest.user,
                     taskSpec.taskId,
                     schedulerAddress,
