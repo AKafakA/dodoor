@@ -101,6 +101,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         if (nodeAddressParts.length != 3) {
             throw new TException("Invalid address: " + nodeFullAddress);
         }
+        LOG.debug(Logging.auditEventString("register_node", nodeFullAddress));
         String nodeIp = nodeAddressParts[0];
         String nodeEnqueuePort = nodeAddressParts[2];
         String nodeEnqueueAddress = nodeIp + ":" + nodeEnqueuePort;

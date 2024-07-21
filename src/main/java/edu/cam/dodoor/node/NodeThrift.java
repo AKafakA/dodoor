@@ -71,6 +71,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
 
         String ipAddress = Network.getIPAddress(conf);
         _neAddress = ipAddress + ":" + nePort;
+        LOG.debug(Logging.auditEventString("initialize_node_thrift", _neAddress));
     }
 
     @Override
