@@ -69,7 +69,7 @@ def main():
         write_ip_port(file, f.readlines(), "static.scheduler")
 
     with open(options.data_store_file, "r") as f:
-        write_ip_port(file, f.readlines(), "static.data_store")
+        write_ip_port(file, f.readlines(), "static.datastore")
 
     if options.trace_file:
         file.write("tracking.enabled  = true")
