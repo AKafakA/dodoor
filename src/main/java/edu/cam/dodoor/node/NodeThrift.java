@@ -66,7 +66,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
 
         for (String dataStoreAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_DATA_STORE,
                 DodoorConf.DATA_STORE_THRIFT_PORTS)) {
-            registerDataStore(dataStoreAddress);
+            this.registerDataStore(dataStoreAddress);
         }
 
         String ipAddress = Network.getIPAddress(conf);
@@ -83,6 +83,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         Optional<InetSocketAddress> dataStoreAddressOptional = Serialization.strToSocket(dataStoreAddress);
         if (dataStoreAddressOptional.isPresent()) {
             _dataStoreAddress.add(dataStoreAddressOptional.get());
+            LOG.debug(Logging.auditEventString("register_datastore", dataStoreAddress));
         } else {
             throw new TException("Data store address " + dataStoreAddress + " not found");
         }
