@@ -6,7 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 
 public class CachedTaskPlacer extends TaskPlacer{
-    private boolean _useLoadScores;
+    private final boolean _useLoadScores;
     
     public CachedTaskPlacer(double beta, boolean useLoadScores) {
         super(beta);

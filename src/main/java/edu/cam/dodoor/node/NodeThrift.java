@@ -88,7 +88,8 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         Optional<InetSocketAddress> dataStoreAddressOptional = Serialization.strToSocket(dataStoreAddress);
         if (dataStoreAddressOptional.isPresent()) {
             _dataStoreAddress.add(dataStoreAddressOptional.get());
-            LOG.debug(Logging.auditEventString("register_datastore", dataStoreAddress));
+            LOG.debug(Logging.auditEventString("register_datastore",
+                    dataStoreAddressOptional.get().getHostName()));
         } else {
             throw new TException("Data store address " + dataStoreAddress + " not found");
         }

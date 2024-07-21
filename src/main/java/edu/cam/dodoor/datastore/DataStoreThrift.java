@@ -90,6 +90,8 @@ public class DataStoreThrift implements DataStoreService.Iface {
         Optional<InetSocketAddress> schedulerAddressOptional = Serialization.strToSocket(schedulerAddress);
         if (schedulerAddressOptional.isPresent()) {
             _schedulerAddress.add(schedulerAddressOptional.get());
+            LOG.debug(Logging.auditEventString("register_scheduler",
+                    schedulerAddressOptional.get().getHostName()));
         } else {
             throw new TException("Scheduler address " + schedulerAddress + " not found");
         }
@@ -101,12 +103,12 @@ public class DataStoreThrift implements DataStoreService.Iface {
         if (nodeAddressParts.length != 3) {
             throw new TException("Invalid address: " + nodeFullAddress);
         }
-        LOG.debug(Logging.auditEventString("register_node", nodeFullAddress));
         String nodeIp = nodeAddressParts[0];
         String nodeEnqueuePort = nodeAddressParts[2];
         String nodeEnqueueAddress = nodeIp + ":" + nodeEnqueuePort;
         Optional<InetSocketAddress> neAddress = Serialization.strToSocket(nodeEnqueueAddress);
         if (neAddress.isPresent()) {
+            LOG.debug(Logging.auditEventString("register_node", neAddress.get().getHostName()));
             _dataStore.updateNodeLoad(nodeEnqueueAddress, new TNodeState());
         } else {
             throw new TException("Node monitor address " + nodeEnqueueAddress + " not found");
@@ -114,8 +116,13 @@ public class DataStoreThrift implements DataStoreService.Iface {
     }
 
     @Override
-    public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) throws TException{
-        LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddress));
+    public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) throws TException {
+        Optional<InetSocketAddress> nodeEnqueueAddressSocket = Serialization.strToSocket(nodeEnqueueAddress);
+        if (!nodeEnqueueAddressSocket.isPresent()) {
+            throw new TException("Invalid address: " + nodeEnqueueAddress);
+        }
+        InetSocketAddress nodeEnqueueAddressInet = nodeEnqueueAddressSocket.get();
+        LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddressInet.getHostName());
         _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeStates);
         _counter.getAndAdd(_numTasksPerUpdate);
 
