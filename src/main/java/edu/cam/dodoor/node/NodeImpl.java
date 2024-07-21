@@ -15,7 +15,6 @@ public class NodeImpl implements Node{
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(TaskScheduler.class);
 
     private TaskScheduler _taskScheduler;
-    private String _ipAddress;
     TResourceVector _requestedResources;
     private AtomicInteger _requested_cores;
     private AtomicLong _requested_memory;
@@ -26,7 +25,6 @@ public class NodeImpl implements Node{
 
     @Override
     public void initialize(Configuration config, NodeThrift nodeThrift) {
-        _ipAddress = Network.getIPAddress(config);
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
         // TODO(wda): add more task scheduler
         _taskScheduler = new FifoTaskScheduler(numSlots);
@@ -70,10 +68,7 @@ public class NodeImpl implements Node{
     @Override
     public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
         LOG.debug(Logging.functionCall(request));
-        AUDIT_LOG.info(Logging.auditEventString("node_monitor_enqueue_task_reservation",
-                _ipAddress, request.taskId));
-        LOG.info("Received enqueue task reservation request from " + _ipAddress + " for request " +
-                request.taskId);
+        AUDIT_LOG.info(Logging.auditEventString("node_monitor_enqueue_task_reservation", request.taskId));
 
         _taskScheduler.submitTaskReservation(request);
         _requested_cores.getAndAdd(request.resourceRequested.cores);

@@ -13,7 +13,6 @@ public abstract class TaskScheduler {
 
     private final static Logger LOG = Logger.getLogger(TaskScheduler.class);
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(TaskScheduler.class);
-    private String _ipAddress;
 
     int _numSlots;
     int _activeTasks;
@@ -35,7 +34,6 @@ public abstract class TaskScheduler {
      *  on the machine. */
     void initialize(Configuration config) {
         _conf = config;
-        _ipAddress = Network.getIPAddress(config);
 
         _cores_per_slots = Resources.getSystemCPUCount(config) / _numSlots;
         _memory_per_slots = Resources.getSystemMemoryMb(config) / _numSlots;
@@ -82,7 +80,7 @@ public abstract class TaskScheduler {
             return;
         }
         int queuedReservations = handleSubmitTaskReservation(reservation);
-        AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", _ipAddress, request.taskId,
+        AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", request.taskId,
                 queuedReservations));
     }
 

@@ -115,9 +115,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
     @Override
     public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) throws TException{
-        if (!_dataStore.containsNode(nodeEnqueueAddress)) {
-            LOG.error("Received updated loads from unregistered nodes" + nodeEnqueueAddress);
-        }
         LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddress));
         _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeStates);
         _counter.getAndAdd(_numTasksPerUpdate);
