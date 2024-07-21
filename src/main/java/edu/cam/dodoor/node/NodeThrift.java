@@ -69,13 +69,17 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
             this.registerDataStore(dataStoreAddress);
         }
 
-        String ipAddress = Network.getIPAddress(conf);
-        _neAddress = ipAddress + ":" + nePort;
-        LOG.debug(Logging.auditEventString("initialize_node_thrift", Network.getHostName(conf), nmPort, nePort));
+        _neAddress = null;
     }
 
     @Override
     public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
+        if (_neAddress == null) {
+            _neAddress = request.nodeEnqueueAddress;
+            LOG.info(Logging.auditEventString("register_ne_address_local_host", _neAddress));
+        } else if (!_neAddress.equals(request.nodeEnqueueAddress)) {
+            throw new TException("Node enqueue address mismatch: " + _neAddress + " vs " + request.nodeEnqueueAddress);
+        }
         return _node.enqueueTaskReservation(request);
     }
 

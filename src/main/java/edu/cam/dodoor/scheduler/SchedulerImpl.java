@@ -113,9 +113,8 @@ public class SchedulerImpl implements Scheduler{
                 _address.getPort(),
                 user, description));
 
-        Map<InetSocketAddress, TEnqueueTaskReservationRequest> enqueueTaskReservationRequests;
-        enqueueTaskReservationRequests = _taskPlacer.getEnqueueTaskReservationRequests(
-                request, _mapEqueueSocketToNodeState, _address);
+        Map<InetSocketAddress, TEnqueueTaskReservationRequest> enqueueTaskReservationRequests
+                = _taskPlacer.getEnqueueTaskReservationRequests(request, _mapEqueueSocketToNodeState, _address);
 
         for (Map.Entry<InetSocketAddress, TEnqueueTaskReservationRequest> entry :
                 enqueueTaskReservationRequests.entrySet())  {
