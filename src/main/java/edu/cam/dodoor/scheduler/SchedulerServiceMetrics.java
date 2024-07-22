@@ -9,8 +9,8 @@ import edu.cam.dodoor.DodoorConf;
 public class SchedulerServiceMetrics {
 
     private final Histogram _endToEndLatencyHistogram;
-    private Meter _tasksRate;
-    private Meter _loadUpdateRate;
+    private final Meter _tasksRate;
+    private final Meter _loadUpdateRate;
 
     public SchedulerServiceMetrics(MetricRegistry metrics) {
         _endToEndLatencyHistogram = metrics.histogram(DodoorConf.SCHEDULER_END_TO_END_TASK_LATENCY );

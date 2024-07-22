@@ -46,9 +46,9 @@ public class SchedulerImpl implements Scheduler{
     private SchedulerServiceMetrics _schedulerServiceMetrics;
 
     @Override
-    public void initialize(Configuration config, InetSocketAddress socket) throws IOException {
-        _schedulerServiceMetrics = new SchedulerServiceMetrics(
-                SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY));
+    public void initialize(Configuration config, InetSocketAddress socket,
+                           SchedulerServiceMetrics schedulerServiceMetrics) throws IOException {
+        _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = Network.socketAddressToThrift(socket);
         _mapEqueueSocketToNodeState = Maps.newConcurrentMap();
         String schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);

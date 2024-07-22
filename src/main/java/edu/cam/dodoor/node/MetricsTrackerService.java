@@ -24,7 +24,7 @@ public class MetricsTrackerService {
     private final OperatingSystemMXBean _operatingSystemMXBean;
     private final long _systemMemory;
     private long _timelineInSeconds;
-    private Slf4jReporter _slf4jReporter;
+    private final Slf4jReporter _slf4jReporter;
 
     public MetricsTrackerService(int trackingInterval, Configuration config, NodeServiceMetrics nodeServiceMetrics) {
         _operatingSystemMXBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
@@ -32,11 +32,11 @@ public class MetricsTrackerService {
         _root = new File("/");
         _totalSpace = _root.getTotalSpace();
         _systemMemory = _operatingSystemMXBean.getTotalMemorySize();
-        String _tracingFile = config.getString(DodoorConf.NODE_METRICS_LOG_FILE, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE);
+        String tracingFile = config.getString(DodoorConf.NODE_METRICS_LOG_FILE, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE);
         org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
         logger.setAdditivity(false);
         try {
-            logger.addAppender(new FileAppender(new PatternLayout(), _tracingFile));
+            logger.addAppender(new FileAppender(new PatternLayout(), tracingFile));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -103,7 +103,7 @@ public class DodoorConf {
 
     /** Config for tracing and monitoring. */
     public final static String TRACKING_ENABLED = "tracking.enabled";
-    public final static boolean DEFAULT_TRACKING_ENABLED = false;
+    public final static boolean DEFAULT_TRACKING_ENABLED = true;
     public final static String TRACKING_INTERVAL_IN_SECONDS = "tracking.interval.seconds";
     public final static int DEFAULT_TRACKING_INTERVAL = 10;
 

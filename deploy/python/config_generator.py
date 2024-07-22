@@ -77,7 +77,7 @@ def main():
         write_ip_port(file, f.readlines(), "static.datastore")
 
     if options.trace_enabled:
-        file.write("tracking.enabled  = true")
+        file.write("tracking.enabled = true \n")
         file.write("tracking.interval.seconds = " + options.tracking_interval + "\n")
         file.write("node.metrics.log.file = " + options.node_trace_file + "\n")
         file.write("datastore.metrics.log.file = " + options.datastore_trace_file + "\n")

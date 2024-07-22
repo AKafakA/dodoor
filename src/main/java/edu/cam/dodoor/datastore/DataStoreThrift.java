@@ -3,7 +3,6 @@ package edu.cam.dodoor.datastore;
 import com.codahale.metrics.*;
 import com.google.common.base.Optional;
 import edu.cam.dodoor.DodoorConf;
-import edu.cam.dodoor.node.MetricsTrackerService;
 import edu.cam.dodoor.thrift.DataStoreService;
 import edu.cam.dodoor.thrift.SchedulerService;
 import edu.cam.dodoor.thrift.THostPort;
@@ -17,10 +16,7 @@ import org.apache.thrift.async.AsyncMethodCallback;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 
 public class DataStoreThrift implements DataStoreService.Iface {
-    private final static Logger LOG = LoggerFactory.getLogger(DataStoreThrift.class);
+    private static Logger LOG;
     DataStore _dataStore;
     Configuration _config;
     THostPort _networkPort;
@@ -62,7 +58,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
 
         _schedulerAddress = new ArrayList<>();
-
+        LOG = LoggerFactory.getLogger(DataStoreThrift.class);
 
         for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER,
                 DodoorConf.SCHEDULER_THRIFT_PORTS)) {
@@ -97,11 +93,10 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
         _numTasksPerUpdate = config.getInt(DodoorConf.NUM_TASKS_TO_UPDATE, DodoorConf.DEFAULT_NUM_TASKS_TO_UPDATE);
 
-        if (config.getBoolean(DodoorConf.TRACKING_ENABLED)) {
-
+        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             String datastoreLogPath = config.getString(DodoorConf.DATA_STORE_METRICS_LOG_FILE,
                     DodoorConf.DEFAULT_DATA_STORE_METRICS_LOG_FILE);
-            org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
+            org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(DataStoreThrift.class);
             logger.setAdditivity(false);
             try {
                 logger.addAppender(new FileAppender(new PatternLayout(), datastoreLogPath));

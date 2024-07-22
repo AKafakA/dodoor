@@ -5,7 +5,6 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Slf4jReporter;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.datastore.DataStoreThrift;
-import edu.cam.dodoor.node.MetricsTrackerService;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.TServers;
@@ -23,8 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 
 public class SchedulerThrift implements SchedulerService.Iface{
-    Scheduler _scheduler;
-    MetricRegistry _metrics;
+    private Scheduler _scheduler;
 
 
     @Override
@@ -49,14 +47,15 @@ public class SchedulerThrift implements SchedulerService.Iface{
                 DodoorConf.DEFAULT_SCHEDULER_THRIFT_THREADS);
         String hostname = Network.getHostName(config);
         InetSocketAddress addr = new InetSocketAddress(hostname, port);
-        _scheduler.initialize(config, addr);
+        MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
+        SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics);
+        _scheduler.initialize(config, addr, schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
-        _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
 
-        if (config.getBoolean(DodoorConf.TRACKING_ENABLED)) {
+        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             String schedulerLogPath = config.getString(DodoorConf.SCHEDULER_METRICS_LOG_FILE,
                     DodoorConf.DEFAULT_SCHEDULER_METRICS_LOG_FILE);
-            org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
+            org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(SchedulerThrift.class);
             logger.setAdditivity(false);
             try {
                 logger.addAppender(new FileAppender(new PatternLayout(), schedulerLogPath));
@@ -64,8 +63,8 @@ public class SchedulerThrift implements SchedulerService.Iface{
                 throw new RuntimeException(e);
             }
 
-            final Slf4jReporter reporter = Slf4jReporter.forRegistry(_metrics)
-                    .outputTo(LoggerFactory.getLogger(DataStoreThrift.class))
+            final Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
+                    .outputTo(LoggerFactory.getLogger(SchedulerThrift.class))
                     .convertRatesTo(TimeUnit.SECONDS)
                     .convertDurationsTo(TimeUnit.MILLISECONDS)
                     .build();
