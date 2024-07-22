@@ -21,14 +21,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.log4j.Logger;
 
 import edu.cam.dodoor.utils.ConfigUtil;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class DataStoreThrift implements DataStoreService.Iface {
-    private final static Logger LOG = Logger.getLogger(DataStoreThrift.class);
+    private final static Logger LOG = LoggerFactory.getLogger(DataStoreThrift.class);
     DataStore _dataStore;
     Configuration _config;
     THostPort _networkPort;

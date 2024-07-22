@@ -9,9 +9,10 @@ import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -21,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.Iface {
 
-    private final static Logger LOG = Logger.getLogger(NodeThrift.class);
+    private final static Logger LOG = LoggerFactory.getLogger(NodeThrift.class);
 
     // Defaults if not specified by configuration
     private static final Node _node = new NodeImpl();
@@ -30,7 +31,6 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     String _neAddress;
     private int _numTasksToUpdate;
     private AtomicInteger _counter;
-    private MetricRegistry _metrics;
     NodeServiceMetrics _nodeServiceMetrics;
 
 
@@ -46,7 +46,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
      */
     public void initialize(Configuration conf, int nmPort, int nePort)
             throws IOException, TException {
-        _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
+        MetricRegistry _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
         _nodeServiceMetrics = new NodeServiceMetrics(_metrics);
         _node.initialize(conf, this);
         _counter = new AtomicInteger(0);
@@ -125,8 +125,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
                         dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
             }
         }
-        LOG.debug(Logging.auditEventString("tasks_finished", task.toString())
-                + " numTasksFinished: " + numFinishedTasks);
+        LOG.debug("{} numTasksFinished: {}", Logging.auditEventString("tasks_finished", task.toString()), numFinishedTasks);
     }
 
     @Override

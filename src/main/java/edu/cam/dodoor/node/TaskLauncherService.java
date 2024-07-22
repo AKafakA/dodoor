@@ -2,15 +2,16 @@ package edu.cam.dodoor.node;
 
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TaskLauncherService {
-    private final static Logger LOG = Logger.getLogger(TaskLauncherService.class);
+    private final static Logger LOG = LoggerFactory.getLogger(TaskLauncherService.class);
 
     private TaskScheduler _taskScheduler;
     private NodeThrift _nodeThrift;
@@ -25,7 +26,7 @@ public class TaskLauncherService {
             while (true) {
                 TaskSpec task = _taskScheduler.getNextTask(); // blocks until task is ready
                 _nodeServiceMetrics.taskLaunched();
-                LOG.debug("Received task" + task._taskId);
+                LOG.debug("Received task{}", task._taskId);
                 try {
                     Process process = executeLaunchTask(task);
                     Thread.sleep(task._duration);
@@ -39,8 +40,7 @@ public class TaskLauncherService {
                     throw new RuntimeException(e);
                 }
                 _nodeServiceMetrics.taskFinished();
-                LOG.debug("Completed task " + task._taskId +
-                        " on application backend at system time " + System.currentTimeMillis());
+                LOG.debug("Completed task {} on application backend at system time {}", task._taskId, System.currentTimeMillis());
             }
 
         }

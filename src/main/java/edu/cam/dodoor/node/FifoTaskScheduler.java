@@ -1,10 +1,12 @@
 package edu.cam.dodoor.node;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class FifoTaskScheduler extends TaskScheduler {
-    private final static Logger LOG = Logger.getLogger(FifoTaskScheduler.class);
+    private final static Logger LOG = LoggerFactory.getLogger(FifoTaskScheduler.class);
     public LinkedBlockingQueue<TaskSpec> _taskReservations =
             new LinkedBlockingQueue<>();
 
@@ -25,19 +27,16 @@ public class FifoTaskScheduler extends TaskScheduler {
             }
             makeTaskRunnable(taskReservation);
             ++_activeTasks;
-            LOG.debug("Making task for task " + taskReservation._taskId + " runnable (" +
-                    _activeTasks + " of " + _numSlots + " task slots currently filled)");
+            LOG.debug("Making task for task {} runnable ({} of {} task slots currently filled)", new Object[]{taskReservation._taskId, _activeTasks, _numSlots});
             return 0;
         }
-        LOG.debug("All " + _numSlots + " task slots filled.");
+        LOG.debug("All {} task slots filled.", _numSlots);
         int queuedReservations = _taskReservations.size();
         try {
-            LOG.debug("Enqueueing task reservation with task id " + taskReservation._taskId +
-                    " because all task slots filled. " + queuedReservations +
-                    " already enqueued reservations.");
+            LOG.debug("Enqueueing task reservation with task id {} because all task slots filled. {} already enqueued reservations.", taskReservation._taskId, queuedReservations);
             _taskReservations.put(taskReservation);
         } catch (InterruptedException e) {
-            LOG.fatal(e);
+            LOG.error("Interrupted while trying to enqueue task reservation with task id {}.", taskReservation._taskId);
         }
         return queuedReservations;
     }

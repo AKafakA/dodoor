@@ -2,7 +2,8 @@ package edu.cam.dodoor.datastore;
 
 import edu.cam.dodoor.thrift.TNodeState;
 import org.apache.commons.configuration.Configuration;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -11,7 +12,7 @@ import java.util.Map;
  */
 public class BasicDataStoreImpl implements DataStore{
 
-    private static final Logger LOG = Logger.getLogger(BasicDataStoreImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BasicDataStoreImpl.class);
     private final Map<String, TNodeState> _nodeStates;
 
 
@@ -25,7 +26,7 @@ public class BasicDataStoreImpl implements DataStore{
 
     @Override
     public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) {
-        LOG.debug("Updating node load for " + nodeEnqueueAddress);
+        LOG.debug("Updating node load for {}", nodeEnqueueAddress);
         _nodeStates.put(nodeEnqueueAddress, nodeStates);
     }
 

@@ -4,15 +4,15 @@ import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class NodeImpl implements Node{
-    private final static Logger LOG = Logger.getLogger(NodeImpl.class);
-    private final static Logger AUDIT_LOG = Logging.getAuditLogger(TaskScheduler.class);
+    private final static Logger LOG = LoggerFactory.getLogger(NodeImpl.class);
 
     private TaskScheduler _taskScheduler;
     TResourceVector _requestedResources;
@@ -70,7 +70,7 @@ public class NodeImpl implements Node{
     @Override
     public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
         LOG.debug(Logging.functionCall(request));
-        AUDIT_LOG.info(Logging.auditEventString("node_monitor_enqueue_task_reservation", request.taskId));
+        LOG.info(Logging.auditEventString("node_monitor_enqueue_task_reservation", request.taskId));
 
         _taskScheduler.submitTaskReservation(request);
         _requested_cores.getAndAdd(request.resourceRequested.cores);

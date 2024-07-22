@@ -4,15 +4,15 @@ package edu.cam.dodoor.node;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class TaskScheduler {
 
-    private final static Logger LOG = Logger.getLogger(TaskScheduler.class);
-    private final static Logger AUDIT_LOG = Logging.getAuditLogger(TaskScheduler.class);
+    private final static Logger LOG = LoggerFactory.getLogger(TaskScheduler.class);;
 
     int _numSlots;
     int _activeTasks;
@@ -45,7 +45,7 @@ public abstract class TaskScheduler {
         try {
             task = _runnableTaskQueue.take();
         } catch (InterruptedException e) {
-            LOG.fatal(e);
+            LOG.error("Interrupted while trying to get next task.");
         }
         return task;
     }
@@ -57,30 +57,30 @@ public abstract class TaskScheduler {
     }
 
     void tasksFinished(TFullTaskId finishedTask) {
-        AUDIT_LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
+        LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
         handleTaskFinished(finishedTask.taskId);
     }
 
     protected void makeTaskRunnable(TaskSpec task) {
         try {
-            LOG.debug("Putting reservation for task " + task._taskId + " in runnable queue");
+            LOG.debug("Putting reservation for task {} in runnable queue", task._taskId);
             _runnableTaskQueue.put(task);
         } catch (InterruptedException e) {
-            LOG.fatal("Unable to add task to runnable queue: " + e.getMessage());
+            LOG.error("Unable to add task to runnable queue: {}", e.getMessage());
         }
     }
 
     public synchronized void submitTaskReservation(TEnqueueTaskReservationRequest request) {
         TaskSpec reservation = new TaskSpec(request);
         if (!enoughResourcesToRun(request.resourceRequested)){
-            AUDIT_LOG.info(Logging.auditEventString("big_task_failed_enqueued",
+            LOG.info(Logging.auditEventString("big_task_failed_enqueued",
                     reservation._taskId, request.resourceRequested.cores,
                     request.resourceRequested.memory,
                     request.resourceRequested.disks));
             return;
         }
         int queuedReservations = handleSubmitTaskReservation(reservation);
-        AUDIT_LOG.info(Logging.auditEventString("reservation_enqueued", request.taskId,
+        LOG.info(Logging.auditEventString("reservation_enqueued", request.taskId,
                 queuedReservations));
     }
 

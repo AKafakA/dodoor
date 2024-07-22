@@ -7,10 +7,10 @@ import edu.cam.dodoor.scheduler.taskplacer.TaskPlacer;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SchedulerImpl implements Scheduler{
 
-    private final static Logger LOG = Logger.getLogger(SchedulerImpl.class);
-    private final static Logger AUDIT_LOG = Logging.getAuditLogger(SchedulerImpl.class);
+    private final static Logger LOG = LoggerFactory.getLogger(SchedulerImpl.class);
 
     /** Used to uniquely identify requests arriving at this scheduler. */
     private final AtomicInteger _counter = new AtomicInteger(0);
@@ -85,7 +84,7 @@ public class SchedulerImpl implements Scheduler{
         handleJobSubmission(request);
         _counter.getAndAdd(request.tasks.size());
         if (_counter.get() / _batchSize == 0) {
-            LOG.info(_counter.get() + " tasks scheduled.");
+            LOG.info("{} tasks scheduled.", _counter.get());
         }
     }
 
@@ -106,7 +105,7 @@ public class SchedulerImpl implements Scheduler{
         }
 
 
-        AUDIT_LOG.info(Logging.auditEventString("arrived",
+        LOG.info(Logging.auditEventString("arrived",
                 request.requestId,
                 request.getTasks().size(),
                 _address.getHost(),
@@ -120,15 +119,11 @@ public class SchedulerImpl implements Scheduler{
                 enqueueTaskReservationRequests.entrySet())  {
             try {
                 NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(entry.getKey());
-                LOG.debug("Launching enqueueTask for request " + request.requestId + "on node: " +
-                        entry.getKey().getHostName());
-                AUDIT_LOG.debug(Logging.auditEventString(
-                        "scheduler_launch_enqueue_task", entry.getValue().taskId,
-                        entry.getKey().getHostName()));
+                LOG.debug("Launching enqueueTask for request {}on node: {}", request.requestId, entry.getKey().getHostName());
                 client.enqueueTaskReservation(entry.getValue(), new EnqueueTaskReservationCallback(
                         entry.getValue().taskId, entry.getKey(), client));
             } catch (Exception e) {
-                LOG.error("Error enqueuing task on node " + entry.getKey().getHostName()+ ":" + e);
+                LOG.error("Error enqueuing task on node {}", entry.getKey().getHostName(), e);
             }
         }
         long end = System.currentTimeMillis();
@@ -144,13 +139,13 @@ public class SchedulerImpl implements Scheduler{
             if (neAddressOptional.isPresent()) {
                 InetSocketAddress nodeEnqueueSocket = neAddressOptional.get();
                 if (_mapEqueueSocketToNodeState.containsKey(nodeEnqueueSocket)) {
-                    LOG.debug("Updating load for node: " + nodeEnqueueSocket.getHostName());
+                    LOG.debug("Updating load for node: {}", nodeEnqueueSocket.getHostName());
                 } else {
-                    LOG.error("Adding load for unregistered node: " + nodeEnqueueSocket.getHostName());
+                    LOG.error("Adding load for unregistered node: {}", nodeEnqueueSocket.getHostName());
                 }
                 _mapEqueueSocketToNodeState.put(nodeEnqueueSocket, entry.getValue());
             } else {
-                LOG.error("Invalid address: " + entry.getKey());
+                LOG.error("Invalid address: {}", entry.getKey());
             }
         }
     }
@@ -179,7 +174,7 @@ public class SchedulerImpl implements Scheduler{
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            LOG.info("Registering node monitor at " + nmAddress.get().getHostName());
+            LOG.info("Registering node monitor at {}", nmAddress.get().getHostName());
         } else {
             throw new TException("Invalid address: " + nodeMonitorAddress);
         }
@@ -202,25 +197,21 @@ public class SchedulerImpl implements Scheduler{
         @Override
         public void onComplete(Boolean aBoolean) {
             if (!aBoolean) {
-                LOG.error("Error enqueuing task on node " + _nodeMonitorAddress.getHostName());
+                LOG.error("Error enqueuing task on node {}", _nodeMonitorAddress.getHostName());
             }
-            AUDIT_LOG.debug(Logging.auditEventString(
-                    "scheduler_complete_enqueue_task", _taskId,
-                    _nodeMonitorAddress.getHostName()));
             long totalTime = System.currentTimeMillis() - _startTimeMillis;
-            LOG.debug("Enqueue Task RPC to " + _nodeMonitorAddress.getHostName() +
-                    " for request " + _taskId + " completed in " + totalTime + "ms");
+            LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms", new Object[]{_nodeMonitorAddress.getHostName(), _taskId, totalTime});
             try {
                 _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeMonitorAddress, _client);
             } catch (Exception e) {
-                LOG.error("Error returning client to node monitor client pool: " + e);
+                LOG.error("Error returning client to node monitor client pool: {}", e.getMessage());
             }
         }
 
         @Override
         public void onError(Exception exception) {
             // Do not return error client to pool
-            LOG.error("Error executing enqueueTaskReservation RPC:" + exception);
+            LOG.error("Error executing enqueueTaskReservation RPC:{}", exception.getMessage());
         }
     }
 }

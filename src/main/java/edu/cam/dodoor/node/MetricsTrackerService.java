@@ -4,6 +4,7 @@ import com.codahale.metrics.Slf4jReporter;
 import edu.cam.dodoor.DodoorConf;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.*;
+import org.slf4j.Logger;
 
 import java.io.File;
 import com.sun.management.OperatingSystemMXBean;
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MetricsTrackerService {
 
-    private final Logger LOG;
+    private final org.slf4j.Logger LOG;
 
     private final int _trackingInterval;
     private final File _root;
@@ -33,17 +34,18 @@ public class MetricsTrackerService {
         _systemMemory = _operatingSystemMXBean.getTotalMemorySize();
         String _tracingFile = config.getString(DodoorConf.METRICS_LOG_FILE, DodoorConf.DEFAULT_METRICS_LOG_FILE);
 
-        LOG = Logger.getLogger(MetricsTrackerService.class);
-        LOG.setAdditivity(false);
+        org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
+        logger.setAdditivity(false);
         try {
-            LOG.addAppender(new FileAppender(new PatternLayout(), _tracingFile));
+            logger.addAppender(new FileAppender(new PatternLayout(), _tracingFile));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         _timelineInSeconds = 0;
+        LOG = LoggerFactory.getLogger(MetricsTrackerService.class);
 
         _slf4jReporter = Slf4jReporter.forRegistry(nodeServiceMetrics._metrics)
-                .outputTo(LoggerFactory.getLogger(MetricsTrackerService.class))
+                .outputTo(LOG)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .build();
@@ -69,8 +71,7 @@ public class MetricsTrackerService {
         double memoryUsage =
                 (double) (_systemMemory - _operatingSystemMXBean.getFreeMemorySize()) / _systemMemory;
         double freeSpace =  (double) _root.getFreeSpace() / _totalSpace;
-        LOG.info("Time(in Seconds): " +
-                _timelineInSeconds + " CPU usage: " + cpuUsage + " Memory usage: " + memoryUsage + " Disk usage: " + freeSpace);
+        LOG.info("Time(in Seconds): {} CPU usage: {} Memory usage: {} Disk usage: {}", new Object[]{_timelineInSeconds, cpuUsage, memoryUsage, freeSpace});
     }
 
     public void start() {
