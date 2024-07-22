@@ -15,6 +15,8 @@ public class TaskLauncherService {
     private TaskScheduler _taskScheduler;
     private NodeThrift _nodeThrift;
 
+    private NodeServiceMetrics _nodeServiceMetrics;
+
     /** A runnable that spins in a loop asking for tasks to launch and launching them. */
     private class TaskLaunchRunnable implements Runnable {
 
@@ -22,6 +24,7 @@ public class TaskLauncherService {
         public void run() {
             while (true) {
                 TaskSpec task = _taskScheduler.getNextTask(); // blocks until task is ready
+                _nodeServiceMetrics.taskLaunched();
                 LOG.debug("Received task" + task._taskId);
                 try {
                     Process process = executeLaunchTask(task);
@@ -35,6 +38,7 @@ public class TaskLauncherService {
                 } catch (TException e) {
                     throw new RuntimeException(e);
                 }
+                _nodeServiceMetrics.taskFinished();
                 LOG.debug("Completed task " + task._taskId +
                         " on application backend at system time " + System.currentTimeMillis());
             }
@@ -64,6 +68,7 @@ public class TaskLauncherService {
         }
         _taskScheduler = taskScheduler;
         _nodeThrift = nodeThrift;
+        _nodeServiceMetrics = _nodeThrift._nodeServiceMetrics;
         ExecutorService service = Executors.newFixedThreadPool(_numSlots);
         for (int i = 0; i < _numSlots; i++) {
             service.submit(new TaskLaunchRunnable());

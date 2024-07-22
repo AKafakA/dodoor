@@ -1,5 +1,8 @@
 package edu.cam.dodoor.datastore;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Optional;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.DataStoreService;
@@ -23,6 +26,7 @@ import org.apache.log4j.Logger;
 import edu.cam.dodoor.utils.ConfigUtil;
 
 
+
 public class DataStoreThrift implements DataStoreService.Iface {
     private final static Logger LOG = Logger.getLogger(DataStoreThrift.class);
     DataStore _dataStore;
@@ -33,9 +37,16 @@ public class DataStoreThrift implements DataStoreService.Iface {
     private AtomicInteger _counter;
     private int _batchSize;
     private int _numTasksPerUpdate;
+    MetricRegistry _metrics;
+    private Meter _updateRequestsRate;
+    private Meter _getRequestsRate;
 
     public void initialize(Configuration config, int port)
             throws TException, IOException {
+        _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.DATA_STORE_METRICS_REGISTRY);
+        _updateRequestsRate = _metrics.meter("data.store.update.request.rate");
+        _getRequestsRate = _metrics.meter("data.store.get.request.rate");
+
         _dataStore = new BasicDataStoreImpl(new HashMap<>());
         _config = config;
 
@@ -122,9 +133,10 @@ public class DataStoreThrift implements DataStoreService.Iface {
             throw new TException("Invalid address: " + nodeEnqueueAddress);
         }
         InetSocketAddress nodeEnqueueAddressInet = nodeEnqueueAddressSocket.get();
-        LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddressInet.getHostName());
+        LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddressInet.getHostName()));
         _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeStates);
         _counter.getAndAdd(_numTasksPerUpdate);
+        _updateRequestsRate.mark();
 
         if (_counter.get() > _batchSize) {
             for (InetSocketAddress socket : _schedulerAddress) {
@@ -142,6 +154,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
     @Override
     public Map<String, TNodeState> getNodeStates() {
+        _getRequestsRate.mark();
         return _dataStore.getNodeStates();
     }
 

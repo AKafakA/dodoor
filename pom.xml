@@ -110,6 +110,11 @@
         <artifactId>commons-math</artifactId>
         <version>2.2</version>
     </dependency>
+    <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>4.2.26</version>
+    </dependency>
 </dependencies>
 <build>
     <plugins>
@@ -144,8 +149,8 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <version>2.5.1</version>
             <configuration>
-                <source>9</source>
-                <target>9</target>
+                <source>14</source>
+                <target>14</target>
             </configuration>
         </plugin>
         <plugin>

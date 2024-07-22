@@ -23,6 +23,7 @@ public class NodeImpl implements Node{
     // count number of enqueued tasks
     private AtomicInteger _counter;
 
+
     @Override
     public void initialize(Configuration config, NodeThrift nodeThrift) {
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
@@ -33,9 +34,10 @@ public class NodeImpl implements Node{
         taskLauncherService.initialize(config, _taskScheduler, nodeThrift);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
-            int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_MS,
+            int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,
                     DodoorConf.DEFAULT_TRACKING_INTERVAL);
-            MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval, config);
+            MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval, config,
+                    nodeThrift._nodeServiceMetrics);
             metricsTrackerService.start();
         }
 

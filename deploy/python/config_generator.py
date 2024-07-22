@@ -34,8 +34,8 @@ def parse_args():
                       help="The number of threads running in internal service to listen to the thrift requests")
     parser.add_option("-t", "--trace-file", default=None,
                       help="The trace file to be used in the experiment, None means no tracking enabled")
-    parser.add_option("--tracking-interval", default=1000,
-                      help="The interval of tracking the system status")
+    parser.add_option("--tracking-interval", default=10,
+                      help="The interval in seconds of tracking the system status")
     parser.add_option("--cores", default=24,
                       help="The number of available cores in the system to run the tasks")
     parser.add_option("--memory", default=20480,
@@ -73,7 +73,7 @@ def main():
 
     if options.trace_file:
         file.write("tracking.enabled  = true")
-        file.write("tracking.interval = " + options.tracking_interval + "\n")
+        file.write("tracking.interval.seconds = " + options.tracking_interval + "\n")
         file.write("metrics.log.file = " + options.trace_file + "\n")
 
     file.write("system.cores = {} \n".format(options.cores))

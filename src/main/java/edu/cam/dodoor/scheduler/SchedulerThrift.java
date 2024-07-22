@@ -12,8 +12,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
+
 public class SchedulerThrift implements SchedulerService.Iface{
     Scheduler _scheduler;
+
 
     @Override
     public void submitJob(TSchedulingRequest req) throws TException {

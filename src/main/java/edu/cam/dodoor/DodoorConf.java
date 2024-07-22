@@ -104,12 +104,27 @@ public class DodoorConf {
     /** Config for tracing and monitoring. */
     public final static String TRACKING_ENABLED = "tracking.enabled";
     public final static boolean DEFAULT_TRACKING_ENABLED = false;
-    public final static String TRACKING_INTERVAL_IN_MS = "tracking.interval";
-    public final static int DEFAULT_TRACKING_INTERVAL = 10000;
+    public final static String TRACKING_INTERVAL_IN_SECONDS = "tracking.interval.seconds";
+    public final static int DEFAULT_TRACKING_INTERVAL = 10;
 
     public final static String METRICS_LOG_FILE = "metrics.log.file";
     public final static String DEFAULT_METRICS_LOG_FILE = "dodoor_metrics.log";
 
     public final static String NUM_TASKS_TO_UPDATE = "node.num_tasks_to_update";
     public final static int  DEFAULT_NUM_TASKS_TO_UPDATE = 1;
+
+    public final static String DATA_STORE_METRICS_REGISTRY = "datastore.metrics.registry";
+    public final static String SCHEDULER_METRICS_REGISTRY = "scheduler.metrics.registry";
+
+
+    /**
+     * Node Monitor Config
+     */
+    public final static String NODE_METRICS_REGISTRY = "node.metrics.registry";
+    public final static String NODE_METRICS_WAITING_TASKS = "node.metrics.tasks.waiting.count";
+    public final static String NODE_METRICS_RUNNING_TASKS = "node.metrics.tasks.running.count";
+    public final static String NODE_METRICS_FINISHED_TASKS = "node.metrics.tasks.finished.count";
+    public final static String NODE_METRICS_TASKS_RATE = "node.metrics.tasks.rate";
+    public final static String NODE_METRICS_FINISHED_TASKS_WAITING_TIME_HISTOGRAMS =
+            "node.metrics.tasks.finished.waiting.time.histograms";
 }

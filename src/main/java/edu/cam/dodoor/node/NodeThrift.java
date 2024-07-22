@@ -1,5 +1,9 @@
 package edu.cam.dodoor.node;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Optional;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
@@ -26,6 +30,9 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     String _neAddress;
     private int _numTasksToUpdate;
     private AtomicInteger _counter;
+    private MetricRegistry _metrics;
+    NodeServiceMetrics _nodeServiceMetrics;
+
 
     /**
      * Initialize this thrift service.
@@ -39,6 +46,8 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
      */
     public void initialize(Configuration conf, int nmPort, int nePort)
             throws IOException, TException {
+        _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
+        _nodeServiceMetrics = new NodeServiceMetrics(_metrics);
         _node.initialize(conf, this);
         _counter = new AtomicInteger(0);
 
@@ -80,6 +89,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         } else if (!_neAddress.equals(request.nodeEnqueueAddress)) {
             throw new TException("Node enqueue address mismatch: " + _neAddress + " vs " + request.nodeEnqueueAddress);
         }
+        _nodeServiceMetrics.taskEnqueued();
         return _node.enqueueTaskReservation(request);
     }
 
