@@ -78,6 +78,9 @@ public class DodoorClient {
         submitRequest(new TSchedulingRequest(tasks, DEFAULT_USER, _nextRequestId.getAndIncrement()));
     }
 
+    /**
+     * Can be used in the future from another trace player (e.g JobTracePlayer) to submit a job with set of requests instead
+     */
     public boolean submitJob(List<TTaskSpec> tasks, TUserGroupInfo user)
             throws TException {
         return submitRequest(new TSchedulingRequest(tasks, user, _nextRequestId.getAndIncrement()));

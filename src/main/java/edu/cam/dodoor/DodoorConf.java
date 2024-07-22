@@ -107,20 +107,27 @@ public class DodoorConf {
     public final static String TRACKING_INTERVAL_IN_SECONDS = "tracking.interval.seconds";
     public final static int DEFAULT_TRACKING_INTERVAL = 10;
 
-    public final static String METRICS_LOG_FILE = "metrics.log.file";
-    public final static String DEFAULT_METRICS_LOG_FILE = "dodoor_metrics.log";
-
     public final static String NUM_TASKS_TO_UPDATE = "node.num_tasks_to_update";
     public final static int  DEFAULT_NUM_TASKS_TO_UPDATE = 1;
 
     public final static String DATA_STORE_METRICS_REGISTRY = "datastore.metrics.registry";
-    public final static String SCHEDULER_METRICS_REGISTRY = "scheduler.metrics.registry";
+    public final static String DATA_STORE_METRICS_LOG_FILE = "datastore.metrics.log.file";
+    public final static String DEFAULT_DATA_STORE_METRICS_LOG_FILE = "dodoor_datastore_metrics.log";
 
+
+    public final static String SCHEDULER_METRICS_REGISTRY = "scheduler.metrics.registry";
+    public final static String SCHEDULER_METRICS_LOG_FILE = "scheduler.metrics.log.file";
+    public final static String DEFAULT_SCHEDULER_METRICS_LOG_FILE = "dodoor_scheduler_metrics.log";
+    public final static String SCHEDULER_END_TO_END_TASK_LATENCY = "scheduler.metrics.tasks.e2e.latency";
+    public final static String SCHEDULER_TASK_RATE = "scheduler.metrics.tasks.rate";
+    public final static String SCHEDULER_LOAD_UPDATE_RATE = "scheduler.metrics.load.update.rate";
 
     /**
      * Node Monitor Config
      */
     public final static String NODE_METRICS_REGISTRY = "node.metrics.registry";
+    public final static String NODE_METRICS_LOG_FILE = "node.metrics.log.file";
+    public final static String DEFAULT_NODE_METRICS_LOG_FILE = "dodoor_node_metrics.log";
     public final static String NODE_METRICS_WAITING_TASKS = "node.metrics.tasks.waiting.count";
     public final static String NODE_METRICS_RUNNING_TASKS = "node.metrics.tasks.running.count";
     public final static String NODE_METRICS_FINISHED_TASKS = "node.metrics.tasks.finished.count";

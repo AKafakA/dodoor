@@ -1,5 +1,7 @@
 package edu.cam.dodoor.scheduler;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import edu.cam.dodoor.DodoorConf;
@@ -24,6 +26,8 @@ public class SchedulerImpl implements Scheduler{
 
     private final static Logger LOG = LoggerFactory.getLogger(SchedulerImpl.class);
 
+    MetricRegistry _metrics;
+
     /** Used to uniquely identify requests arriving at this scheduler. */
     private final AtomicInteger _counter = new AtomicInteger(0);
 
@@ -39,9 +43,12 @@ public class SchedulerImpl implements Scheduler{
     private THostPort _address;
     private int _batchSize;
     private TaskPlacer _taskPlacer;
+    private SchedulerServiceMetrics _schedulerServiceMetrics;
 
     @Override
     public void initialize(Configuration config, InetSocketAddress socket) throws IOException {
+        _schedulerServiceMetrics = new SchedulerServiceMetrics(
+                SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY));
         _address = Network.socketAddressToThrift(socket);
         _mapEqueueSocketToNodeState = Maps.newConcurrentMap();
         String schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
@@ -83,6 +90,7 @@ public class SchedulerImpl implements Scheduler{
         }
         handleJobSubmission(request);
         _counter.getAndAdd(request.tasks.size());
+        _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
         if (_counter.get() / _batchSize == 0) {
             LOG.info("{} tasks scheduled.", _counter.get());
         }
@@ -121,19 +129,19 @@ public class SchedulerImpl implements Scheduler{
                 NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(entry.getKey());
                 LOG.debug("Launching enqueueTask for request {}on node: {}", request.requestId, entry.getKey().getHostName());
                 client.enqueueTaskReservation(entry.getValue(), new EnqueueTaskReservationCallback(
-                        entry.getValue().taskId, entry.getKey(), client));
+                        entry.getValue().taskId, entry.getKey(), client, _schedulerServiceMetrics));
             } catch (Exception e) {
                 LOG.error("Error enqueuing task on node {}", entry.getKey().getHostName(), e);
             }
         }
         long end = System.currentTimeMillis();
-        LOG.debug("All tasks enqueued for request " + request.requestId + "; returning. Total time: " +
-                (end - start) + " milliseconds");
+        LOG.debug("All tasks enqueued for request {}; returning. Total time: {} milliseconds", request.requestId, end - start);
     }
 
 
     @Override
     public void updateNodeState(Map<String, TNodeState> snapshot) {
+        _schedulerServiceMetrics.loadUpdated();
         for (Map.Entry<String, TNodeState> entry : snapshot.entrySet()) {
             Optional<InetSocketAddress> neAddressOptional = Serialization.strToSocket(entry.getKey());
             if (neAddressOptional.isPresent()) {
@@ -185,13 +193,16 @@ public class SchedulerImpl implements Scheduler{
         InetSocketAddress _nodeMonitorAddress;
         long _startTimeMillis;
         NodeEnqueueService.AsyncClient _client;
+        SchedulerServiceMetrics _schedulerServiceMetrics;
 
         public EnqueueTaskReservationCallback(String taskId, InetSocketAddress nodeMonitorAddress,
-                                              NodeEnqueueService.AsyncClient client) {
+                                              NodeEnqueueService.AsyncClient client,
+                                              SchedulerServiceMetrics schedulerServiceMetrics) {
             _taskId = taskId;
             _nodeMonitorAddress = nodeMonitorAddress;
             _startTimeMillis = System.currentTimeMillis();
             _client = client;
+            _schedulerServiceMetrics = schedulerServiceMetrics;
         }
 
         @Override
@@ -200,7 +211,9 @@ public class SchedulerImpl implements Scheduler{
                 LOG.error("Error enqueuing task on node {}", _nodeMonitorAddress.getHostName());
             }
             long totalTime = System.currentTimeMillis() - _startTimeMillis;
-            LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms", new Object[]{_nodeMonitorAddress.getHostName(), _taskId, totalTime});
+            _schedulerServiceMetrics.taskFinished(totalTime);
+            LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
+                    new Object[]{_nodeMonitorAddress.getHostName(), _taskId, totalTime});
             try {
                 _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeMonitorAddress, _client);
             } catch (Exception e) {

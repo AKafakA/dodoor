@@ -1,16 +1,17 @@
 package edu.cam.dodoor.datastore;
 
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.*;
 import com.google.common.base.Optional;
 import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.node.MetricsTrackerService;
 import edu.cam.dodoor.thrift.DataStoreService;
 import edu.cam.dodoor.thrift.SchedulerService;
 import edu.cam.dodoor.thrift.THostPort;
 import edu.cam.dodoor.thrift.TNodeState;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.PatternLayout;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
 
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.cam.dodoor.utils.ConfigUtil;
@@ -94,6 +96,27 @@ public class DataStoreThrift implements DataStoreService.Iface {
         TServers.launchThreadedThriftServer(port, threads, processor);
 
         _numTasksPerUpdate = config.getInt(DodoorConf.NUM_TASKS_TO_UPDATE, DodoorConf.DEFAULT_NUM_TASKS_TO_UPDATE);
+
+        if (config.getBoolean(DodoorConf.TRACKING_ENABLED)) {
+
+            String datastoreLogPath = config.getString(DodoorConf.DATA_STORE_METRICS_LOG_FILE,
+                    DodoorConf.DEFAULT_DATA_STORE_METRICS_LOG_FILE);
+            org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
+            logger.setAdditivity(false);
+            try {
+                logger.addAppender(new FileAppender(new PatternLayout(), datastoreLogPath));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            final Slf4jReporter reporter = Slf4jReporter.forRegistry(_metrics)
+                    .outputTo(LoggerFactory.getLogger(DataStoreThrift.class))
+                    .convertRatesTo(TimeUnit.SECONDS)
+                    .convertDurationsTo(TimeUnit.MILLISECONDS)
+                    .build();
+            reporter.start(config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS, DodoorConf.DEFAULT_TRACKING_INTERVAL),
+                    TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -136,7 +159,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddressInet.getHostName()));
         _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeStates);
         _counter.getAndAdd(_numTasksPerUpdate);
-        _updateRequestsRate.mark();
+        _updateRequestsRate.mark(_numTasksPerUpdate);
 
         if (_counter.get() > _batchSize) {
             for (InetSocketAddress socket : _schedulerAddress) {

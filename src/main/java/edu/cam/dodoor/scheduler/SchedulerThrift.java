@@ -1,20 +1,30 @@
 package edu.cam.dodoor.scheduler;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Slf4jReporter;
 import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.datastore.DataStoreThrift;
+import edu.cam.dodoor.node.MetricsTrackerService;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.TServers;
 import org.apache.commons.configuration.Configuration;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.PatternLayout;
 import org.apache.thrift.TException;
+import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 public class SchedulerThrift implements SchedulerService.Iface{
     Scheduler _scheduler;
+    MetricRegistry _metrics;
 
 
     @Override
@@ -41,5 +51,26 @@ public class SchedulerThrift implements SchedulerService.Iface{
         InetSocketAddress addr = new InetSocketAddress(hostname, port);
         _scheduler.initialize(config, addr);
         TServers.launchThreadedThriftServer(port, threads, processor);
+        _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
+
+        if (config.getBoolean(DodoorConf.TRACKING_ENABLED)) {
+            String schedulerLogPath = config.getString(DodoorConf.SCHEDULER_METRICS_LOG_FILE,
+                    DodoorConf.DEFAULT_SCHEDULER_METRICS_LOG_FILE);
+            org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
+            logger.setAdditivity(false);
+            try {
+                logger.addAppender(new FileAppender(new PatternLayout(), schedulerLogPath));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            final Slf4jReporter reporter = Slf4jReporter.forRegistry(_metrics)
+                    .outputTo(LoggerFactory.getLogger(DataStoreThrift.class))
+                    .convertRatesTo(TimeUnit.SECONDS)
+                    .convertDurationsTo(TimeUnit.MILLISECONDS)
+                    .build();
+            reporter.start(config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS, DodoorConf.DEFAULT_TRACKING_INTERVAL),
+                    TimeUnit.SECONDS);
+        }
     }
 }

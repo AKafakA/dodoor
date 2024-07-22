@@ -32,8 +32,14 @@ def parse_args():
                       help="The number of threads running in data store to listen to the thrift requests")
     parser.add_option("--node-enqueue-thrift-threads", default=4,
                       help="The number of threads running in internal service to listen to the thrift requests")
-    parser.add_option("-t", "--trace-file", default=None,
-                      help="The trace file to be used in the experiment, None means no tracking enabled")
+    parser.add_option("-t", "--trace-enabled",
+                      default=True, help="whether to enable the trace of the system status")
+    parser.add_option("--node_trace-file", default="dodoor_node_metrics.log",
+                      help="The trace file of node service to be used in the experiment")
+    parser.add_option("--datastore_trace-file", default="dodoor_datastore_metrics.log",
+                      help="The trace file of datastore service to be used in the experiment")
+    parser.add_option("--scheduler_trace-file", default="dodoor_scheduler_metrics.log",
+                      help="The trace file of scheduler service to be used in the experiment")
     parser.add_option("--tracking-interval", default=10,
                       help="The interval in seconds of tracking the system status")
     parser.add_option("--cores", default=24,
@@ -51,7 +57,6 @@ def parse_args():
     parser.add_option("--batch-size", default=1024,
                       help="The batch size of the tasks to be scheduled by dodoor scheduler")
     return parser.parse_args()
-
 
 # adding options
 def main():
@@ -71,10 +76,12 @@ def main():
     with open(options.data_store_file, "r") as f:
         write_ip_port(file, f.readlines(), "static.datastore")
 
-    if options.trace_file:
+    if options.trace_enabled:
         file.write("tracking.enabled  = true")
         file.write("tracking.interval.seconds = " + options.tracking_interval + "\n")
-        file.write("metrics.log.file = " + options.trace_file + "\n")
+        file.write("node.metrics.log.file = " + options.node_trace_file + "\n")
+        file.write("datastore.metrics.log.file = " + options.datastore_trace_file + "\n")
+        file.write("scheduler.metrics.log.file = " + options.scheduler_trace_file + "\n")
 
     file.write("system.cores = {} \n".format(options.cores))
 
