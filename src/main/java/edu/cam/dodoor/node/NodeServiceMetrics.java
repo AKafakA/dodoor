@@ -17,6 +17,7 @@ public class NodeServiceMetrics {
         _waitingTasksCounter = _metrics.counter("node.waiting.tasks");
         _finishedTasksCounter = _metrics.counter("node.finished.tasks");
     }
+
     public void taskEnqueued() {
         _waitingTasksCounter.inc();
         _tasksRate.mark();

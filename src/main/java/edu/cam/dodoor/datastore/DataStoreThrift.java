@@ -38,12 +38,16 @@ public class DataStoreThrift implements DataStoreService.Iface {
     MetricRegistry _metrics;
     private Meter _updateRequestsRate;
     private Meter _getRequestsRate;
+    private Counter _numMessages;
+    private boolean _cachedEnabled;
 
     public void initialize(Configuration config, int port)
             throws TException, IOException {
         _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.DATA_STORE_METRICS_REGISTRY);
         _updateRequestsRate = _metrics.meter("data.store.update.request.rate");
         _getRequestsRate = _metrics.meter("data.store.get.request.rate");
+        _numMessages = _metrics.counter("data.store.num.messages");
+        _cachedEnabled = SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
         _dataStore = new BasicDataStoreImpl(new HashMap<>());
         _config = config;
@@ -60,10 +64,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _schedulerAddress = new ArrayList<>();
         LOG = LoggerFactory.getLogger(DataStoreThrift.class);
 
-        for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER,
-                DodoorConf.SCHEDULER_THRIFT_PORTS)) {
-            this.registerScheduler(schedulerAddress);
-        }
 
         List<String> nmPorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)));
         List<String> nePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)));
@@ -76,13 +76,21 @@ public class DataStoreThrift implements DataStoreService.Iface {
             nmPorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT));
             nePorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT));
         }
-        for (String nodeIp : config.getStringArray(DodoorConf.STATIC_NODE)) {
-            for (int i = 0; i < nmPorts.size(); i++) {
-                String nodeFullAddress = nodeIp + ":" + nmPorts.get(i) + ":" + nePorts.get(i);
-                try {
-                    this.registerNode(nodeFullAddress);
-                } catch (TException e) {
-                    throw new RuntimeException(e);
+
+        if (_cachedEnabled) {
+            for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER,
+                    DodoorConf.SCHEDULER_THRIFT_PORTS)) {
+                this.handleRegisterScheduler(schedulerAddress);
+            }
+
+            for (String nodeIp : config.getStringArray(DodoorConf.STATIC_NODE)) {
+                for (int i = 0; i < nmPorts.size(); i++) {
+                    String nodeFullAddress = nodeIp + ":" + nmPorts.get(i) + ":" + nePorts.get(i);
+                    try {
+                        this.handleRegisterNode(nodeFullAddress);
+                    } catch (TException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
@@ -116,6 +124,11 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
     @Override
     public void registerScheduler(String schedulerAddress) throws TException {
+        _numMessages.inc();
+        handleRegisterScheduler(schedulerAddress);
+    }
+
+    private void handleRegisterScheduler(String schedulerAddress) throws TException {
         Optional<InetSocketAddress> schedulerAddressOptional = Serialization.strToSocket(schedulerAddress);
         if (schedulerAddressOptional.isPresent()) {
             _schedulerAddress.add(schedulerAddressOptional.get());
@@ -128,6 +141,11 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
     @Override
     public void registerNode(String nodeFullAddress) throws TException {
+        _numMessages.inc();
+        handleRegisterNode(nodeFullAddress);
+    }
+
+    private void handleRegisterNode(String nodeFullAddress) throws TException {
         String[] nodeAddressParts = nodeFullAddress.split(":");
         if (nodeAddressParts.length != 3) {
             throw new TException("Invalid address: " + nodeFullAddress);
@@ -146,6 +164,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
     @Override
     public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) throws TException {
+        _numMessages.inc();
         Optional<InetSocketAddress> nodeEnqueueAddressSocket = Serialization.strToSocket(nodeEnqueueAddress);
         if (!nodeEnqueueAddressSocket.isPresent()) {
             throw new TException("Invalid address: " + nodeEnqueueAddress);
@@ -172,6 +191,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
     @Override
     public Map<String, TNodeState> getNodeStates() {
+        _numMessages.inc();
         _getRequestsRate.mark();
         return _dataStore.getNodeStates();
     }

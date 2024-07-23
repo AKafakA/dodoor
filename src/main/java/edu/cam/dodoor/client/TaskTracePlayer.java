@@ -74,14 +74,14 @@ public class TaskTracePlayer {
 
 
         DodoorClient client = new DodoorClient();
-        Configuration conf = new PropertiesConfiguration();
+        Configuration config = new PropertiesConfiguration();
 
         if (options.has("c")) {
             String configFile = (String) options.valueOf("c");
-            conf = new PropertiesConfiguration(configFile);
+            config = new PropertiesConfiguration(configFile);
         }
 
-        String[] schedulerPorts = conf.getStringArray(DodoorConf.SCHEDULER_THRIFT_PORTS);
+        String[] schedulerPorts = config.getStringArray(DodoorConf.SCHEDULER_THRIFT_PORTS);
 
         if (schedulerPorts.length == 0) {
             schedulerPorts = new String[]{Integer.toString(DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT)};
@@ -90,7 +90,7 @@ public class TaskTracePlayer {
         for (int i = 0; i < schedulerPorts.length; i++) {
             schedulerAddresses[i] = new InetSocketAddress("localhost", Integer.parseInt(schedulerPorts[i]));
         }
-        client.initialize(schedulerAddresses);
+        client.initialize(schedulerAddresses, config);
         long globalStartTime = System.currentTimeMillis();
 
         String traceFile = (String) options.valueOf("f");

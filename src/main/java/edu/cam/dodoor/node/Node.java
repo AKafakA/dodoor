@@ -10,11 +10,11 @@ public interface Node {
 
     void initialize(Configuration config, NodeThrift nodeMonitorClient);
 
-    void taskFinished(TFullTaskId task);
+    void taskFinished(TFullTaskId task) throws TException;
 
     boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException;
 
     TResourceVector getRequestedResourceVector();
 
-    int getNumTasks() throws TException;
+    int getNumTasks();
 }

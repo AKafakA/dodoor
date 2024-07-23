@@ -14,8 +14,7 @@ public class TaskLauncherService {
     private final static Logger LOG = LoggerFactory.getLogger(TaskLauncherService.class);
 
     private TaskScheduler _taskScheduler;
-    private NodeThrift _nodeThrift;
-
+    private Node _node;
     private NodeServiceMetrics _nodeServiceMetrics;
 
     /** A runnable that spins in a loop asking for tasks to launch and launching them. */
@@ -35,7 +34,7 @@ public class TaskLauncherService {
                     throw new RuntimeException(e);
                 }
                 try {
-                    _nodeThrift.tasksFinished(task.getFullTaskId());
+                    _node.taskFinished(task.getFullTaskId());
                 } catch (TException e) {
                     throw new RuntimeException(e);
                 }
@@ -67,8 +66,8 @@ public class TaskLauncherService {
             _numSlots = (int) Resources.getSystemCPUCount(conf);
         }
         _taskScheduler = taskScheduler;
-        _nodeThrift = nodeThrift;
-        _nodeServiceMetrics = _nodeThrift._nodeServiceMetrics;
+        _node = nodeThrift._node;
+        _nodeServiceMetrics = nodeThrift._nodeServiceMetrics;
         ExecutorService service = Executors.newFixedThreadPool(_numSlots);
         for (int i = 0; i < _numSlots; i++) {
             service.submit(new TaskLaunchRunnable());

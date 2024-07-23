@@ -134,4 +134,9 @@ public class DodoorConf {
     public final static String NODE_METRICS_TASKS_RATE = "node.metrics.tasks.rate";
     public final static String NODE_METRICS_FINISHED_TASKS_WAITING_TIME_HISTOGRAMS =
             "node.metrics.tasks.finished.waiting.time.histograms";
+
+
+
+    public final static String DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT = "dodoor.scheduler.clients.count";
+    public final static int DEFAULT_DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT = 8;
 }

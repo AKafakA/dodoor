@@ -1,10 +1,10 @@
 package edu.cam.dodoor.scheduler;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Slf4jReporter;
 import edu.cam.dodoor.DodoorConf;
-import edu.cam.dodoor.datastore.DataStoreThrift;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.TServers;
@@ -23,19 +23,24 @@ import java.util.concurrent.TimeUnit;
 
 public class SchedulerThrift implements SchedulerService.Iface{
     private Scheduler _scheduler;
+    private Counter _numMessages;
 
 
     @Override
     public void submitJob(TSchedulingRequest req) throws TException {
+        _numMessages.inc();
         _scheduler.submitJob(req);
     }
+
     @Override
     public void updateNodeState(Map<String, TNodeState> snapshot) {
+        _numMessages.inc();
         _scheduler.updateNodeState(snapshot);
     }
 
     @Override
     public void registerNode(String nodeAddress) throws TException {
+        _numMessages.inc();
         _scheduler.registerNode(nodeAddress);
     }
 
@@ -49,6 +54,7 @@ public class SchedulerThrift implements SchedulerService.Iface{
         InetSocketAddress addr = new InetSocketAddress(hostname, port);
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
         SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics);
+        _numMessages = metrics.counter("scheduler.num.messages");
         _scheduler.initialize(config, addr, schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
 

@@ -5,9 +5,12 @@ import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
+import org.apache.thrift.async.AsyncMethodCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -21,8 +24,12 @@ public class NodeImpl implements Node{
     private AtomicLong _requested_disk;
 
     // count number of enqueued tasks
-    private AtomicInteger _counter;
-
+    private AtomicInteger _waitingOrRunningTasksCounter;
+    private AtomicInteger _finishedTasksCounter;
+    ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
+    private int _numTasksToUpdate;
+    List<InetSocketAddress> _dataStoreAddress;
+    private String _neAddress;
 
     @Override
     public void initialize(Configuration config, NodeThrift nodeThrift) {
@@ -44,16 +51,42 @@ public class NodeImpl implements Node{
         _requested_cores = new AtomicInteger();
         _requested_memory = new AtomicLong();
         _requested_disk = new AtomicLong();
-        _counter = new AtomicInteger(0);
+        _waitingOrRunningTasksCounter = new AtomicInteger(0);
+        _finishedTasksCounter = new AtomicInteger(0);
+        _dataStoreClientPool = nodeThrift._dataStoreClientPool;
+
+        _numTasksToUpdate = config.getInt(DodoorConf.NUM_TASKS_TO_UPDATE,
+                DodoorConf.DEFAULT_NUM_TASKS_TO_UPDATE);
+        _dataStoreAddress = nodeThrift._dataStoreAddress;
+        _neAddress = nodeThrift._neAddress;
     }
 
     @Override
-    public void taskFinished(TFullTaskId task) {
+    public void taskFinished(TFullTaskId task) throws TException {
         _taskScheduler.tasksFinished(task);
         _requested_cores.getAndAdd(-task.resourceRequest.cores);
         _requested_memory.getAndAdd(-task.resourceRequest.memory);
         _requested_disk.getAndAdd(-task.resourceRequest.disks);
-        _counter.getAndAdd(-1);
+
+        _waitingOrRunningTasksCounter.getAndAdd(-1);
+
+        int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
+
+        if (numFinishedTasks % _numTasksToUpdate == 0) {
+            for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
+                DataStoreService.AsyncClient dataStoreClient = null;
+                try {
+                    dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
+                dataStoreClient.updateNodeLoad(_neAddress, nodeState,
+                        new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
+                LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
+                        dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
+            }
+        }
     }
 
 
@@ -63,8 +96,8 @@ public class NodeImpl implements Node{
     }
 
     @Override
-    public int getNumTasks() throws TException {
-        return _counter.get();
+    public int getNumTasks() {
+        return _waitingOrRunningTasksCounter.get();
     }
 
     @Override
@@ -77,7 +110,35 @@ public class NodeImpl implements Node{
         _requested_memory.getAndAdd(request.resourceRequested.memory);
         _requested_disk.getAndAdd(request.resourceRequested.disks);
 
-        _counter.getAndAdd(1);
+        _waitingOrRunningTasksCounter.getAndAdd(1);
         return true;
+    }
+
+    private class UpdateNodeLoadCallBack implements AsyncMethodCallback<Void> {
+        private final DataStoreService.AsyncClient _client;
+        private final InetSocketAddress _address;
+
+        public UpdateNodeLoadCallBack(InetSocketAddress address, DataStoreService.AsyncClient client) {
+            _client = client;
+            _address = address;
+        }
+
+        @Override
+        public void onComplete(Void unused) {
+            LOG.info(Logging.auditEventString("deliver_nodes_load_to_scheduler",
+                    _address.getHostName()));
+            try {
+                _dataStoreClientPool.returnClient(_address, _client);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void onError(Exception e) {
+            LOG.warn(Logging.auditEventString("failed_deliver_nodes_load_to_scheduler",
+                    _address.getHostName()));
+        }
+
     }
 }

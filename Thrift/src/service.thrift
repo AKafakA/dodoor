@@ -53,5 +53,5 @@ service NodeMonitorService {
 # Service of the node exposed to the scheduler to enqueue tasks
 service NodeEnqueueService {
   bool enqueueTaskReservation(1: types.TEnqueueTaskReservationRequest request);
-  void tasksFinished(1: types.TFullTaskId task);
+  void taskFinished(1: types.TFullTaskId task);
 }
