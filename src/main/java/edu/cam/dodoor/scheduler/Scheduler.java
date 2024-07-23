@@ -10,7 +10,8 @@ import java.util.Map;
 
 public interface Scheduler {
 
-    void initialize(Configuration conf, InetSocketAddress socket) throws IOException;
+    void initialize(Configuration conf, InetSocketAddress socket,
+                    SchedulerServiceMetrics schedulerServiceMetrics) throws IOException;
     void submitJob(TSchedulingRequest request) throws TException;
     void handleJobSubmission(TSchedulingRequest request) throws TException;
     void updateNodeState(Map<String, TNodeState> snapshot);

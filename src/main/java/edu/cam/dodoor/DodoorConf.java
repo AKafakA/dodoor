@@ -103,13 +103,43 @@ public class DodoorConf {
 
     /** Config for tracing and monitoring. */
     public final static String TRACKING_ENABLED = "tracking.enabled";
-    public final static boolean DEFAULT_TRACKING_ENABLED = false;
-    public final static String TRACKING_INTERVAL_IN_MS = "tracking.interval";
-    public final static int DEFAULT_TRACKING_INTERVAL = 10000;
-
-    public final static String METRICS_LOG_FILE = "metrics.log.file";
-    public final static String DEFAULT_METRICS_LOG_FILE = "dodoor_metrics.log";
+    public final static boolean DEFAULT_TRACKING_ENABLED = true;
+    public final static String TRACKING_INTERVAL_IN_SECONDS = "tracking.interval.seconds";
+    public final static int DEFAULT_TRACKING_INTERVAL = 10;
 
     public final static String NUM_TASKS_TO_UPDATE = "node.num_tasks_to_update";
     public final static int  DEFAULT_NUM_TASKS_TO_UPDATE = 1;
+
+    public final static String DATA_STORE_METRICS_REGISTRY = "datastore.metrics.registry";
+    public final static String DATA_STORE_METRICS_LOG_FILE = "datastore.metrics.log.file";
+    public final static String DEFAULT_DATA_STORE_METRICS_LOG_FILE = "dodoor_datastore_metrics.log";
+    public final static String DATA_STORE_METRICS_NUM_MESSAGES = "datastore.metrics.num.messages";
+    public final static String DATA_STORE_METRICS_GET_REQUEST_RATE = "datastore.metrics.request.get.rate";
+    public final static String DATA_STORE_METRICS_UPDATE_REQUEST_RATE = "datastore.metrics.request.update.rate";
+
+
+    public final static String SCHEDULER_METRICS_REGISTRY = "scheduler.metrics.registry";
+    public final static String SCHEDULER_METRICS_LOG_FILE = "scheduler.metrics.log.file";
+    public final static String DEFAULT_SCHEDULER_METRICS_LOG_FILE = "dodoor_scheduler_metrics.log";
+    public final static String SCHEDULER_METRICS_END_TO_END_TASK_LATENCY_HISTOGRAMS =
+            "scheduler.metrics.tasks.e2e.latency.histograms";
+    public final static String SCHEDULER_METRICS_TASK_RATE = "scheduler.metrics.tasks.rate";
+    public final static String SCHEDULER_METRICS_LOAD_UPDATE_RATE = "scheduler.metrics.load.update.rate";
+    public final static String SCHEDULER_METRICS_NUM_MESSAGES = "scheduler.metrics.num.messages";
+
+    /**
+     * Node Monitor Config
+     */
+    public final static String NODE_METRICS_REGISTRY = "node.metrics.registry";
+    public final static String NODE_METRICS_LOG_FILE = "node.metrics.log.file";
+    public final static String DEFAULT_NODE_METRICS_LOG_FILE = "dodoor_node_metrics.log";
+    public final static String NODE_METRICS_WAITING_TASKS = "node.metrics.tasks.waiting.count";
+    public final static String NODE_METRICS_FINISHED_TASKS = "node.metrics.tasks.finished.count";
+    public final static String NODE_METRICS_TASKS_RATE = "node.metrics.tasks.rate";
+    public final static String NODE_METRICS_NUM_MESSAGES = "node.metrics.num.messages";
+
+
+
+    public final static String DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT = "dodoor.scheduler.clients.count";
+    public final static int DEFAULT_DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT = 8;
 }

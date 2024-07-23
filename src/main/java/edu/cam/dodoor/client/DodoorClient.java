@@ -16,7 +16,9 @@
 
 package edu.cam.dodoor.client;
 
+import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.utils.TClients;
+import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import edu.cam.dodoor.thrift.*;
@@ -35,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DodoorClient {
 
     private final static Logger LOG = Logger.getLogger(DodoorClient.class);
-    private final static int NUM_CLIENTS = 8;
+    private int _numClients;
 
     BlockingQueue<SchedulerService.Client> _clients =
             new LinkedBlockingQueue<>();
@@ -46,12 +48,14 @@ public class DodoorClient {
 
     private static TPlacementPreference NO_PREFERENCE = new TPlacementPreference(new ArrayList<>());
 
-    public void initialize(InetSocketAddress[] schedulerAddresses)
+    public void initialize(InetSocketAddress[] schedulerAddresses, Configuration config)
             throws TException, IOException {
 
         int numSchedulers = schedulerAddresses.length;
+        _numClients = config.getInt(DodoorConf.DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT,
+                DodoorConf.DEFAULT_DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT);
 
-        for (int i = 0; i < NUM_CLIENTS; i++) {
+        for (int i = 0; i < _numClients; i++) {
             InetSocketAddress schedulerAddr = schedulerAddresses[i % numSchedulers];
             SchedulerService.Client client = TClients.createBlockingSchedulerClient(
                     schedulerAddr.getAddress().getHostAddress(), schedulerAddr.getPort(),
@@ -78,6 +82,9 @@ public class DodoorClient {
         submitRequest(new TSchedulingRequest(tasks, DEFAULT_USER, _nextRequestId.getAndIncrement()));
     }
 
+    /**
+     * Can be used in the future from another trace player (e.g JobTracePlayer) to submit a job with set of requests instead
+     */
     public boolean submitJob(List<TTaskSpec> tasks, TUserGroupInfo user)
             throws TException {
         return submitRequest(new TSchedulingRequest(tasks, user, _nextRequestId.getAndIncrement()));

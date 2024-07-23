@@ -31,7 +31,7 @@ public class Network {
    * Return the IP address of this machine, as determined from the hostname
    * specified in configuration or from querying the machine.
    */
-  public static String getIPAddress(Configuration conf) {
+  public static String getLocalIPAddress(Configuration conf) {
     String hostname = getHostName(conf);
     try {
       return InetAddress.getByName(hostname).getHostAddress();

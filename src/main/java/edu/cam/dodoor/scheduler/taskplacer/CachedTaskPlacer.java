@@ -6,7 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 
 public class CachedTaskPlacer extends TaskPlacer{
-    private boolean _useLoadScores;
+    private final boolean _useLoadScores;
     
     public CachedTaskPlacer(double beta, boolean useLoadScores) {
         super(beta);
@@ -20,7 +20,7 @@ public class CachedTaskPlacer extends TaskPlacer{
         Map<InetSocketAddress, TEnqueueTaskReservationRequest> allocations = new HashMap<>();
         for (TTaskSpec taskSpec : schedulingRequest.tasks) {
             TResourceVector taskResources = taskSpec.resourceRequest;
-            List<InetSocketAddress> internalAddresses = new ArrayList<>(loadMaps.keySet());
+            List<InetSocketAddress> nodeAddresses = new ArrayList<>(loadMaps.keySet());
             Random ran = new Random();
             double flag = ran.nextFloat();
             int firstIndex = ran.nextInt(loadMaps.size());
@@ -28,25 +28,20 @@ public class CachedTaskPlacer extends TaskPlacer{
                 int secondIndex = ran.nextInt(loadMaps.size());
                 double score1, score2;
                 if (_useLoadScores) {
-                    score1 = getLoadScores(loadMaps.get(internalAddresses.get(firstIndex)).resourceRequested,
+                    score1 = getLoadScores(loadMaps.get(nodeAddresses.get(firstIndex)).resourceRequested,
                             taskResources);
-                    score2 = getLoadScores(loadMaps.get(internalAddresses.get(secondIndex)).resourceRequested,
+                    score2 = getLoadScores(loadMaps.get(nodeAddresses.get(secondIndex)).resourceRequested,
                             taskResources);
                 } else {
-                    score1 = loadMaps.get(internalAddresses.get(firstIndex)).numTasks;
-                    score2 = loadMaps.get(internalAddresses.get(secondIndex)).numTasks;
+                    score1 = loadMaps.get(nodeAddresses.get(firstIndex)).numTasks;
+                    score2 = loadMaps.get(nodeAddresses.get(secondIndex)).numTasks;
                 }
                 if (score1 > score2) {
                     firstIndex = secondIndex;
                 }
             }
-            allocations.put(internalAddresses.get(firstIndex), new TEnqueueTaskReservationRequest(
-                    schedulingRequest.user,
-                    taskSpec.taskId,
-                    schedulerAddress,
-                    taskResources,
-                    taskSpec.durationInMs
-            ));
+            updateSchedulingResults(allocations, nodeAddresses.get(firstIndex),
+                    schedulingRequest, taskSpec, schedulerAddress, taskResources);
         }
         return allocations;
     }

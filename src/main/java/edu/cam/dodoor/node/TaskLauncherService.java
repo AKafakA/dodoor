@@ -2,18 +2,20 @@ package edu.cam.dodoor.node;
 
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TaskLauncherService {
-    private final static Logger LOG = Logger.getLogger(TaskLauncherService.class);
+    private final static Logger LOG = LoggerFactory.getLogger(TaskLauncherService.class);
 
     private TaskScheduler _taskScheduler;
-    private NodeThrift _nodeThrift;
+    private Node _node;
+    private NodeServiceMetrics _nodeServiceMetrics;
 
     /** A runnable that spins in a loop asking for tasks to launch and launching them. */
     private class TaskLaunchRunnable implements Runnable {
@@ -22,7 +24,8 @@ public class TaskLauncherService {
         public void run() {
             while (true) {
                 TaskSpec task = _taskScheduler.getNextTask(); // blocks until task is ready
-                LOG.debug("Received task" + task._taskId);
+                _nodeServiceMetrics.taskLaunched();
+                LOG.debug("Received task{}", task._taskId);
                 try {
                     Process process = executeLaunchTask(task);
                     Thread.sleep(task._duration);
@@ -31,12 +34,12 @@ public class TaskLauncherService {
                     throw new RuntimeException(e);
                 }
                 try {
-                    _nodeThrift.tasksFinished(task.getFullTaskId());
+                    _node.taskFinished(task.getFullTaskId());
                 } catch (TException e) {
                     throw new RuntimeException(e);
                 }
-                LOG.debug("Completed task " + task._taskId +
-                        " on application backend at system time " + System.currentTimeMillis());
+                _nodeServiceMetrics.taskFinished();
+                LOG.debug("Completed task {} on application backend at system time {}", task._taskId, System.currentTimeMillis());
             }
 
         }
@@ -63,7 +66,8 @@ public class TaskLauncherService {
             _numSlots = (int) Resources.getSystemCPUCount(conf);
         }
         _taskScheduler = taskScheduler;
-        _nodeThrift = nodeThrift;
+        _node = nodeThrift._node;
+        _nodeServiceMetrics = nodeThrift._nodeServiceMetrics;
         ExecutorService service = Executors.newFixedThreadPool(_numSlots);
         for (int i = 0; i < _numSlots; i++) {
             service.submit(new TaskLaunchRunnable());

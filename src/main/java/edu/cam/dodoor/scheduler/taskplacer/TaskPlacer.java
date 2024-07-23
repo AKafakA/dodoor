@@ -1,6 +1,7 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
 import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.node.TaskSpec;
 import edu.cam.dodoor.thrift.*;
 
 import java.net.InetSocketAddress;
@@ -30,5 +31,22 @@ public abstract class TaskPlacer {
         } else {
             throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         }
+    }
+
+    static void updateSchedulingResults(Map<InetSocketAddress, TEnqueueTaskReservationRequest> allocations,
+                                        InetSocketAddress nodeAddress,
+                                        TSchedulingRequest schedulingRequest,
+                                        TTaskSpec taskSpec,
+                                        THostPort schedulerAddress,
+                                        TResourceVector taskResources) {
+        String selectedNodeString = nodeAddress.getAddress().getHostAddress() + ":" + nodeAddress.getPort();
+        allocations.put(nodeAddress, new TEnqueueTaskReservationRequest(
+                schedulingRequest.user,
+                taskSpec.taskId,
+                schedulerAddress,
+                taskResources,
+                taskSpec.durationInMs,
+                selectedNodeString
+        ));
     }
 }

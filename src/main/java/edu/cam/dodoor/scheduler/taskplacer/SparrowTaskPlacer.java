@@ -37,13 +37,8 @@ public class SparrowTaskPlacer extends TaskPlacer{
                     throw new RuntimeException(e);
                 }
             }
-            allocations.put(nodeAddresses.get(firstIndex), new TEnqueueTaskReservationRequest(
-                    schedulingRequest.user,
-                    taskSpec.taskId,
-                    schedulerAddress,
-                    taskResources,
-                    taskSpec.durationInMs
-            ));
+            updateSchedulingResults(allocations, nodeAddresses.get(firstIndex),
+                    schedulingRequest, taskSpec, schedulerAddress, taskResources);
         }
         return allocations;
     }

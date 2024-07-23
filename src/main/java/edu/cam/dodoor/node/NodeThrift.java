@@ -1,31 +1,35 @@
 package edu.cam.dodoor.node;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Optional;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
-import org.apache.thrift.async.AsyncMethodCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.Iface {
 
-    private final static Logger LOG = Logger.getLogger(NodeThrift.class);
+    private final static Logger LOG = LoggerFactory.getLogger(NodeThrift.class);
 
     // Defaults if not specified by configuration
-    private static final Node _node = new NodeImpl();
-    private List<InetSocketAddress> _dataStoreAddress;
-    private ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
+    final Node _node = new NodeImpl();
+    List<InetSocketAddress> _dataStoreAddress;
+    ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
     String _neAddress;
-    private int _numTasksToUpdate;
-    private AtomicInteger _counter;
+    String _hostName;
+    NodeServiceMetrics _nodeServiceMetrics;
+    private Counter _numMessages;
+
 
     /**
      * Initialize this thrift service.
@@ -37,26 +41,28 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
      * within this class under certain configurations (e.g. a config file specifies
      * multiple NodeMonitors).
      */
-    public void initialize(Configuration conf, int nmPort, int nePort)
+    public void initialize(Configuration config, int nmPort, int nePort)
             throws IOException, TException {
-        _node.initialize(conf, this);
-        _counter = new AtomicInteger(0);
+        MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
+        _nodeServiceMetrics = new NodeServiceMetrics(metrics);
+        _numMessages = metrics.counter(DodoorConf.NODE_METRICS_NUM_MESSAGES);
+        _node.initialize(config, this);
 
-        _numTasksToUpdate = conf.getInt(DodoorConf.NUM_TASKS_TO_UPDATE,
-                DodoorConf.DEFAULT_NUM_TASKS_TO_UPDATE);
+        boolean _cachedEnabled = SchedulerUtils.isCachedEnabled(
+                config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
         // Setup application-facing agent service.
         NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
                 new NodeMonitorService.Processor<>(this);
 
-        int threads = conf.getInt(DodoorConf.NM_THRIFT_THREADS,
+        int threads = config.getInt(DodoorConf.NM_THRIFT_THREADS,
                 DodoorConf.DEFAULT_NM_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(nmPort, threads, processor);
 
         // Setup internal-facing agent service.
         NodeEnqueueService.Processor<NodeEnqueueService.Iface> nodeEnqueueProcessor =
                 new NodeEnqueueService.Processor<>(this);
-        int neThreads = conf.getInt(
+        int neThreads = config.getInt(
                 DodoorConf.INTERNAL_THRIFT_THREADS,
                 DodoorConf.DEFAULT_NM_INTERNAL_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(nePort,neThreads, nodeEnqueueProcessor);
@@ -64,84 +70,63 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _dataStoreAddress = new ArrayList<>();
 
-        for (String dataStoreAddress : ConfigUtil.parseNodeAddress(conf, DodoorConf.STATIC_DATA_STORE,
-                DodoorConf.DATA_STORE_THRIFT_PORTS)) {
-            registerDataStore(dataStoreAddress);
+        if (_cachedEnabled) {
+            for (String dataStoreAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_DATA_STORE,
+                    DodoorConf.DATA_STORE_THRIFT_PORTS)) {
+               handleRegisterDataStore(dataStoreAddress);
+            }
         }
 
-        String ipAddress = Network.getIPAddress(conf);
-        _neAddress = ipAddress + ":" + nePort;
+        _neAddress = null;
+        _hostName = null;
     }
 
     @Override
     public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
+        _numMessages.inc();
+        if (_neAddress == null) {
+            Optional<InetSocketAddress> neAddressSocketOptional = Serialization.strToSocket(request.nodeEnqueueAddress);
+            if (neAddressSocketOptional.isPresent()) {
+                _neAddress = request.nodeEnqueueAddress;
+                _hostName = neAddressSocketOptional.get().getHostName();
+            } else {
+                throw new TException("Node enqueue address " + _neAddress + " not valid");
+            }
+            LOG.info(Logging.auditEventString("register_ne_address_local_host", _hostName));
+        } else if (!_neAddress.equals(request.nodeEnqueueAddress)) {
+            throw new TException("Node enqueue address mismatch: " + _neAddress + " vs " + request.nodeEnqueueAddress);
+        }
+        _nodeServiceMetrics.taskEnqueued();
         return _node.enqueueTaskReservation(request);
     }
 
     @Override
     public void registerDataStore(String dataStoreAddress) throws TException {
+        _numMessages.inc();
+        handleRegisterDataStore(dataStoreAddress);
+    }
+
+    private void handleRegisterDataStore(String dataStoreAddress) throws TException {
         Optional<InetSocketAddress> dataStoreAddressOptional = Serialization.strToSocket(dataStoreAddress);
         if (dataStoreAddressOptional.isPresent()) {
             _dataStoreAddress.add(dataStoreAddressOptional.get());
+            LOG.debug(Logging.auditEventString("register_datastore",
+                    dataStoreAddressOptional.get().getHostName()));
         } else {
             throw new TException("Data store address " + dataStoreAddress + " not found");
         }
     }
 
     @Override
-    public void tasksFinished(TFullTaskId task) throws TException {
+    public void taskFinished(TFullTaskId task) throws TException {
+        _numMessages.inc();
         _node.taskFinished(task);
-        int numFinishedTasks = _counter.incrementAndGet();
-
-        if (numFinishedTasks % _numTasksToUpdate == 0) {
-            for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
-                DataStoreService.AsyncClient dataStoreClient = null;
-                try {
-                    dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                TNodeState nodeState = new TNodeState(_node.getRequestedResourceVector(), _node.getNumTasks());
-                dataStoreClient.updateNodeLoad(_neAddress, nodeState,
-                        new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
-                LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
-                        dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
-            }
-        }
-        LOG.debug(Logging.auditEventString("tasks_finished", task.toString())
-                + " numTasksFinished: " + numFinishedTasks);
+        LOG.debug(Logging.auditEventString("task_finished_from_node", task.taskId, _hostName));
     }
 
     @Override
     public int getNumTasks() throws TException {
+        _numMessages.inc();
         return _node.getNumTasks();
-    }
-
-    private class UpdateNodeLoadCallBack implements AsyncMethodCallback<Void> {
-        private final DataStoreService.AsyncClient _client;
-        private final InetSocketAddress _address;
-
-        public UpdateNodeLoadCallBack(InetSocketAddress address, DataStoreService.AsyncClient client) {
-            _client = client;
-            _address = address;
-        }
-
-        @Override
-        public void onComplete(Void unused) {
-            LOG.info(Logging.auditEventString("deliver_nodes_load_to_scheduler",
-                    _address.getHostName()));
-            try {
-                _dataStoreClientPool.returnClient(_address, _client);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void onError(Exception e) {
-            LOG.warn(Logging.auditEventString("failed_deliver_nodes_load_to_scheduler",
-                    _address.getHostName()));
-        }
-
     }
 }
