@@ -30,8 +30,6 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     NodeServiceMetrics _nodeServiceMetrics;
     private Counter _numMessages;
 
-    private boolean _cachedEnabled;
-
 
     /**
      * Initialize this thrift service.
@@ -47,10 +45,11 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
             throws IOException, TException {
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
         _nodeServiceMetrics = new NodeServiceMetrics(metrics);
-        _numMessages = metrics.counter("node.num.messages");
+        _numMessages = metrics.counter(DodoorConf.NODE_METRICS_NUM_MESSAGES);
         _node.initialize(config, this);
 
-        _cachedEnabled = SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
+        boolean _cachedEnabled = SchedulerUtils.isCachedEnabled(
+                config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
         // Setup application-facing agent service.
         NodeMonitorService.Processor<NodeMonitorService.Iface> processor =

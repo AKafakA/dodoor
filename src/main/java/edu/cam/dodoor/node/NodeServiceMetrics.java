@@ -3,6 +3,8 @@ package edu.cam.dodoor.node;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.datastore.DataStore;
 
 public class NodeServiceMetrics {
 
@@ -13,9 +15,9 @@ public class NodeServiceMetrics {
 
     public NodeServiceMetrics(MetricRegistry metrics) {
         _metrics = metrics;
-        _tasksRate = _metrics.meter("node.tasks.rate");
-        _waitingTasksCounter = _metrics.counter("node.waiting.tasks");
-        _finishedTasksCounter = _metrics.counter("node.finished.tasks");
+        _tasksRate = _metrics.meter(DodoorConf.NODE_METRICS_TASKS_RATE);
+        _waitingTasksCounter = _metrics.counter(DodoorConf.NODE_METRICS_WAITING_TASKS);
+        _finishedTasksCounter = _metrics.counter(DodoorConf.NODE_METRICS_FINISHED_TASKS);
     }
 
     public void taskEnqueued() {

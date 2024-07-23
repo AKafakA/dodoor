@@ -54,7 +54,7 @@ public class SchedulerThrift implements SchedulerService.Iface{
         InetSocketAddress addr = new InetSocketAddress(hostname, port);
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
         SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics);
-        _numMessages = metrics.counter("scheduler.num.messages");
+        _numMessages = metrics.counter(DodoorConf.SCHEDULER_METRICS_NUM_MESSAGES);
         _scheduler.initialize(config, addr, schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
 

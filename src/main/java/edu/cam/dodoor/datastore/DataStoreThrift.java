@@ -39,15 +39,15 @@ public class DataStoreThrift implements DataStoreService.Iface {
     private Meter _updateRequestsRate;
     private Meter _getRequestsRate;
     private Counter _numMessages;
-    private boolean _cachedEnabled;
 
     public void initialize(Configuration config, int port)
             throws TException, IOException {
         _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.DATA_STORE_METRICS_REGISTRY);
-        _updateRequestsRate = _metrics.meter("data.store.update.request.rate");
-        _getRequestsRate = _metrics.meter("data.store.get.request.rate");
-        _numMessages = _metrics.counter("data.store.num.messages");
-        _cachedEnabled = SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
+        _updateRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_UPDATE_REQUEST_RATE);
+        _getRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_GET_REQUEST_RATE);
+        _numMessages = _metrics.counter(DodoorConf.DATA_STORE_METRICS_NUM_MESSAGES);
+        boolean _cachedEnabled =
+                SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
         _dataStore = new BasicDataStoreImpl(new HashMap<>());
         _config = config;
