@@ -45,4 +45,5 @@ src/main/gen-java/
 logs/
 target/
 
+deploy/resources/data/raw_data/
 *__pycache__/
