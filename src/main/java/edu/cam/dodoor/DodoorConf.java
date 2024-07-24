@@ -121,8 +121,8 @@ public class DodoorConf {
     public final static String SCHEDULER_METRICS_REGISTRY = "scheduler.metrics.registry";
     public final static String SCHEDULER_METRICS_LOG_FILE = "scheduler.metrics.log.file";
     public final static String DEFAULT_SCHEDULER_METRICS_LOG_FILE = "dodoor_scheduler_metrics.log";
-    public final static String SCHEDULER_METRICS_END_TO_END_TASK_LATENCY_HISTOGRAMS =
-            "scheduler.metrics.tasks.e2e.latency.histograms";
+    public final static String SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS =
+            "scheduler.metrics.tasks.e2e.scheduling.latency.histograms";
     public final static String SCHEDULER_METRICS_TASK_RATE = "scheduler.metrics.tasks.rate";
     public final static String SCHEDULER_METRICS_LOAD_UPDATE_RATE = "scheduler.metrics.load.update.rate";
     public final static String SCHEDULER_METRICS_NUM_MESSAGES = "scheduler.metrics.num.messages";
@@ -135,6 +135,7 @@ public class DodoorConf {
     public final static String DEFAULT_NODE_METRICS_LOG_FILE = "dodoor_node_metrics.log";
     public final static String NODE_METRICS_WAITING_TASKS = "node.metrics.tasks.waiting.count";
     public final static String NODE_METRICS_FINISHED_TASKS = "node.metrics.tasks.finished.count";
+    public final static String NODE_METRICS_TASKS_WAIT_TIME_HISTOGRAMS = "node.metrics.tasks.wait.time.histograms";
     public final static String NODE_METRICS_TASKS_RATE = "node.metrics.tasks.rate";
     public final static String NODE_METRICS_NUM_MESSAGES = "node.metrics.num.messages";
 

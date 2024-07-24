@@ -23,6 +23,7 @@ public class TaskSpec {
 
     public TResourceVector _resourceVector;
     public long _duration;
+    public long _enqueuedTime;
 
 
     public TaskSpec(TEnqueueTaskReservationRequest request) {
@@ -32,6 +33,8 @@ public class TaskSpec {
 
         _resourceVector = request.resourceRequested;
         _duration = request.durationInMs;
+
+        _enqueuedTime = System.currentTimeMillis();
     }
 
     public TFullTaskId getFullTaskId() {

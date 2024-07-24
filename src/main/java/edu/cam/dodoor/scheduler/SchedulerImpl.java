@@ -211,7 +211,7 @@ public class SchedulerImpl implements Scheduler{
                 LOG.error("Error enqueuing task on node {}", _nodeMonitorAddress.getHostName());
             }
             long totalTime = System.currentTimeMillis() - _startTimeMillis;
-            _schedulerServiceMetrics.taskFinished(totalTime);
+            _schedulerServiceMetrics.taskScheduled(totalTime);
             LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
                     new Object[]{_nodeMonitorAddress.getHostName(), _taskId, totalTime});
             try {

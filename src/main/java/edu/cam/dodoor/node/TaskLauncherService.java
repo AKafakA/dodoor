@@ -38,7 +38,8 @@ public class TaskLauncherService {
                 } catch (TException e) {
                     throw new RuntimeException(e);
                 }
-                _nodeServiceMetrics.taskFinished();
+                long endToEndDuration = System.currentTimeMillis() - task._enqueuedTime;
+                _nodeServiceMetrics.taskFinished(endToEndDuration);
                 LOG.debug("Completed task {} on application backend at system time {}", task._taskId, System.currentTimeMillis());
             }
 
