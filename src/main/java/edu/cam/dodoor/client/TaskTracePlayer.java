@@ -28,10 +28,11 @@ public class TaskTracePlayer {
         private final long _startTime;
         private final DodoorClient _client;
         private final long _globalStartTime;
+        private final boolean _addTimelineDelay;
 
         public TaskLaunchRunnable(String taskId, int cores, long memory,
                                   long disks, long durationInMs, long startTime,
-                                  DodoorClient client, long globalStartTime) {
+                                  DodoorClient client, long globalStartTime, boolean addTimelineDelay) {
             _taskId = taskId;
             _cores = cores;
             _memory = memory;
@@ -40,13 +41,14 @@ public class TaskTracePlayer {
             _startTime = startTime;
             _client = client;
             _globalStartTime = globalStartTime;
+            _addTimelineDelay = addTimelineDelay;
         }
 
         @Override
         public void run(){
             // Generate tasks in the format expected by Sparrow. First, pack task parameters.
             long start = System.currentTimeMillis() - _globalStartTime;
-            if (start < _startTime) {
+            if (start < _startTime && _addTimelineDelay) {
                 try {
                     Thread.sleep(_startTime - start);
                 } catch (InterruptedException e) {
@@ -58,8 +60,6 @@ public class TaskTracePlayer {
             } catch (TException e) {
                 LOG.error("Scheduling request failed!", e);
             }
-            long end = System.currentTimeMillis();
-            LOG.debug("Scheduling request duration " + (end - start));
         }
     }
 
@@ -95,6 +95,10 @@ public class TaskTracePlayer {
 
         String traceFile = (String) options.valueOf("f");
         List<String> allLines = Files.readAllLines(Paths.get(traceFile));
+
+        boolean addDelay = config.getBoolean(DodoorConf.REPLAY_WITH_TIMELINE_DELAY,
+                DodoorConf.DEFAULT_REPLAY_WITH_TIMELINE_DELAY);
+
         for (String line : allLines) {
             String[] parts = line.split(",");
             String taskId = parts[0];
@@ -104,7 +108,7 @@ public class TaskTracePlayer {
             long durationInMs = Long.parseLong(parts[4]);
             long startTime = Long.parseLong(parts[5]);
             (new TaskTracePlayer()).new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs,
-                    startTime, client, globalStartTime).run();
+                    startTime, client, globalStartTime, addDelay).run();
         }
 
     }

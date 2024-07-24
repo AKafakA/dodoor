@@ -56,6 +56,10 @@ def parse_args():
                       help="The beta value used for 1 + beta process for random scheduling")
     parser.add_option("--batch-size", default=1024,
                       help="The batch size of the tasks to be scheduled by dodoor scheduler")
+    parser.add_option("--replay_with_delay", default=True,
+                        help="Whether to replay the trace following the provided timeline and "
+                             "delay the tasks kicking off until the time comes.")
+
     return parser.parse_args()
 
 # adding options
@@ -103,6 +107,7 @@ def main():
 
     file.write("node.enqueue.thrift.ports = {} \n".format(options.node_enqueue_ports))
     file.write("node.enqueue.thrift.threads = {} \n".format(options.node_enqueue_thrift_threads))
+    file.write("replay.with.delay = {} \n".format(options.replay_with_delay))
     file.close()
 
 

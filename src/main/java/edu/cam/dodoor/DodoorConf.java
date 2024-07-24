@@ -142,4 +142,7 @@ public class DodoorConf {
 
     public final static String DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT = "dodoor.scheduler.clients.count";
     public final static int DEFAULT_DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT = 8;
+
+    public final static String REPLAY_WITH_TIMELINE_DELAY = "replay.with.delay";
+    public final static boolean DEFAULT_REPLAY_WITH_TIMELINE_DELAY = true;
 }
