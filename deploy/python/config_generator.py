@@ -78,10 +78,10 @@ def main():
 
     if options.trace_enabled:
         file.write("tracking.enabled = true \n")
-        file.write("tracking.interval.seconds = " + options.tracking_interval + "\n")
-        file.write("node.metrics.log.file = " + options.node_trace_file + "\n")
-        file.write("datastore.metrics.log.file = " + options.datastore_trace_file + "\n")
-        file.write("scheduler.metrics.log.file = " + options.scheduler_trace_file + "\n")
+        file.write("tracking.interval.seconds = {} \n".format(options.tracking_interval))
+        file.write("node.metrics.log.file = {} \n".format(options.node_trace_file))
+        file.write("datastore.metrics.log.file = {} \n".format(options.datastore_trace_file))
+        file.write("scheduler.metrics.log.file = {} \n".format(options.scheduler_trace_file))
 
     file.write("system.cores = {} \n".format(options.cores))
 
