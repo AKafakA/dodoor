@@ -44,3 +44,5 @@ src/main/gen-java/
 .idea/
 logs/
 target/
+
+*__pycache__/
