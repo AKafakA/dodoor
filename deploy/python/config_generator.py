@@ -44,9 +44,9 @@ def parse_args():
                       help="The interval in seconds of tracking the system status")
     parser.add_option("--cores", default=24,
                       help="The number of available cores in the system to run the tasks")
-    parser.add_option("--memory", default=20480,
+    parser.add_option("--memory", default=30720,
                       help="The amount of memory in Mb in the system to run the tasks")
-    parser.add_option("--disk", default=40960,
+    parser.add_option("--disk", default=307200,
                       help="The amount of disk in Mb in the system to run the tasks")
     parser.add_option("--num-slots", default=4,
                       help="The number of slots in each node to run the tasks in parallel. So, "

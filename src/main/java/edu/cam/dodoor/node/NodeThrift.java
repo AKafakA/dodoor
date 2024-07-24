@@ -48,7 +48,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         _numMessages = metrics.counter(DodoorConf.NODE_METRICS_NUM_MESSAGES);
         _node.initialize(config, this);
 
-        boolean _cachedEnabled = SchedulerUtils.isCachedEnabled(
+        boolean cachedEnabled = SchedulerUtils.isCachedEnabled(
                 config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
         // Setup application-facing agent service.
@@ -70,7 +70,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _dataStoreAddress = new ArrayList<>();
 
-        if (_cachedEnabled) {
+        if (cachedEnabled) {
             for (String dataStoreAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_DATA_STORE,
                     DodoorConf.DATA_STORE_THRIFT_PORTS)) {
                handleRegisterDataStore(dataStoreAddress);
