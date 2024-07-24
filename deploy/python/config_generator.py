@@ -57,10 +57,11 @@ def parse_args():
     parser.add_option("--batch-size", default=1024,
                       help="The batch size of the tasks to be scheduled by dodoor scheduler")
     parser.add_option("--replay_with_delay", default=True,
-                        help="Whether to replay the trace following the provided timeline and "
-                             "delay the tasks kicking off until the time comes.")
+                      help="Whether to replay the trace following the provided timeline and "
+                           "delay the tasks kicking off until the time comes.")
 
     return parser.parse_args()
+
 
 # adding options
 def main():

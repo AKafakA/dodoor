@@ -48,12 +48,18 @@ public class TaskLauncherService {
         /** Executes to launch a task */
         private Process executeLaunchTask(TaskSpec task) throws IOException, InterruptedException {
             Runtime rt = Runtime.getRuntime();
-            int cpu = task._resourceVector.cores;
             long memory = task._resourceVector.memory;
             long disks = task._resourceVector.disks;
+            int cpu = task._resourceVector.cores;
+            if (disks > 0) {
+                cpu = cpu - 1; // hdd itself is cpu intensive and need to consume one core
+                if (cpu < 1) {
+                    cpu = 1;
+                }
+            }
             long duration = task._duration;
             return rt.exec(
-                    String.format("stress -c %d --vm 1 --vm-bytes %dM -d 1 --hdd-bytes %dM --timeout %d",
+                    String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang 0 -d 1 --hdd-bytes %dM --timeout %d",
                             cpu, memory, disks, duration));
         }
     }

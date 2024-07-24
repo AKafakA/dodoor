@@ -7,7 +7,6 @@ import org.apache.log4j.*;
 
 import java.io.File;
 import com.sun.management.OperatingSystemMXBean;
-import org.hyperic.sigar.*;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -61,28 +60,19 @@ public class MetricsTrackerService {
                     Thread.sleep(TimeUnit.SECONDS.toMillis(_trackingInterval));
                     _timelineInSeconds += _trackingInterval;
                     logUsage();
-                } catch (InterruptedException | SigarException e) {
+                } catch (InterruptedException e) {
                     LOG.error("Metrics tracker thread interrupted", e);
                 }
             }
         }
     }
 
-    private void logUsage() throws InterruptedException, SigarException {
-        Sigar sigar = new Sigar();
-        CpuPerc cpu = sigar.getCpuPerc();
-        Mem mem = sigar.getMem();
+    private void logUsage() throws InterruptedException {
         double cpuUsage = _operatingSystemMXBean.getCpuLoad();
-        double cpuUsage2 = cpu.getCombined();
-        FileSystemUsage filesystemusage = sigar.getFileSystemUsage(_root.getPath());
         double memoryUsage =
                 (double) (_systemMemory - _operatingSystemMXBean.getFreeMemorySize()) / _systemMemory;
-        double memoryUsage2 = mem.getUsedPercent();
-        double diskUsage2 = filesystemusage.getUsePercent();
-
         double diskUsage =  (double) _root.getFreeSpace() / _totalSpace;
         LOG.info("Time(in Seconds) OSM: {} CPU usage: {} Memory usage: {} Disk usage: {}", new Object[]{_timelineInSeconds, cpuUsage, memoryUsage, diskUsage});
-        LOG.info("Time(in Seconds) SIGAR : {} CPU usage: {} Memory usage: {} Disk usage: {}", new Object[]{_timelineInSeconds, cpuUsage2, memoryUsage2, diskUsage2});
     }
 
     public void start() {

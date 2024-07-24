@@ -4,6 +4,7 @@ from abc import ABC
 from deploy.python.data.generator.azure.azure_sqlite_processor import AzureSqliteProcessor, TableKeys
 from deploy.python.data.generator.data_generator import DataGenerator
 
+MIN_CORES = 1
 
 class AzureDataGenerator(DataGenerator, ABC):
     def __init__(self, db_path, output_path, machine_ids=None,
@@ -43,7 +44,7 @@ class AzureDataGenerator(DataGenerator, ABC):
                 disk = vm[TableKeys.RESOURCE_TYPE[2]] * self.max_disk
                 data.append({
                     "taskId": task_id,
-                    "cores": math.ceil(cores),
+                    "cores": max(MIN_CORES, math.ceil(cores)),
                     "memory": math.ceil(memory),
                     "disk": math.ceil(disk),
                     "duration": int(duration),
