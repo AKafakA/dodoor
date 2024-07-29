@@ -38,9 +38,9 @@ public class Resources {
     }
   }
   
-  public static int getSystemCPUCount(Configuration conf) {
+  public static int getSystemCores(Configuration conf) {
     // No system interrogation yet
-    return conf.getInt(DodoorConf.SYSTEM_CPUS, DodoorConf.DEFAULT_SYSTEM_CPUS);
+    return conf.getInt(DodoorConf.SYSTEM_CORES, DodoorConf.DEFAULT_SYSTEM_CORES);
   }
 
   public static int getSystemDiskGb(Configuration conf) {

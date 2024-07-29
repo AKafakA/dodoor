@@ -88,8 +88,8 @@ public class DodoorConf {
     public final static String SYSTEM_MEMORY = "system.memory";
     public final static int DEFAULT_SYSTEM_MEMORY = 1024;
 
-    public final static String SYSTEM_CPUS = "system.cpus";
-    public final static int DEFAULT_SYSTEM_CPUS = 4;
+    public final static String SYSTEM_CORES = "system.cores";
+    public final static int DEFAULT_SYSTEM_CORES = 4;
 
     public final static String SYSTEM_DISK = "system.disk";
     public final static int DEFAULT_SYSTEM_DISK = 10240;
