@@ -107,10 +107,10 @@ public class DodoorConf {
     public final static String TRACKING_INTERVAL_IN_SECONDS = "tracking.interval.seconds";
     public final static int DEFAULT_TRACKING_INTERVAL = 10;
 
-    public final static String NODE_NUM_TASKS_TO_UPDATE = "node.num_tasks_to_update";
+    public final static String NODE_NUM_TASKS_TO_UPDATE = "node.num.tasks.update";
     public final static int  DEFAULT_NODE_NUM_TASKS_TO_UPDATE = 8;
 
-    public final static String SCHEDULER_NUM_TASKS_TO_UPDATE = "scheduler.num_tasks_to_update";
+    public final static String SCHEDULER_NUM_TASKS_TO_UPDATE = "scheduler.num.tasks.update";
     public final static int  DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE = 10;
 
     public final static String DATA_STORE_METRICS_REGISTRY = "datastore.metrics.registry";

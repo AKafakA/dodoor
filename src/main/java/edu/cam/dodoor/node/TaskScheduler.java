@@ -73,11 +73,10 @@ public abstract class TaskScheduler {
     public synchronized void submitTaskReservation(TEnqueueTaskReservationRequest request) {
         TaskSpec reservation = new TaskSpec(request);
         if (!enoughResourcesToRun(request.resourceRequested)){
-            LOG.info(Logging.auditEventString("big_task_failed_enqueued",
+            LOG.warn(Logging.auditEventString("big_task_failed_enqueued",
                     reservation._taskId, request.resourceRequested.cores,
                     request.resourceRequested.memory,
                     request.resourceRequested.disks));
-            return;
         }
         int queuedReservations = handleSubmitTaskReservation(reservation);
         LOG.info(Logging.auditEventString("reservation_enqueued", request.taskId,
