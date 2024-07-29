@@ -3,10 +3,7 @@ package edu.cam.dodoor.datastore;
 import com.codahale.metrics.*;
 import com.google.common.base.Optional;
 import edu.cam.dodoor.DodoorConf;
-import edu.cam.dodoor.thrift.DataStoreService;
-import edu.cam.dodoor.thrift.SchedulerService;
-import edu.cam.dodoor.thrift.THostPort;
-import edu.cam.dodoor.thrift.TNodeState;
+import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.FileAppender;
@@ -19,6 +16,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import edu.cam.dodoor.utils.ConfigUtil;
 import org.slf4j.Logger;
@@ -32,24 +30,26 @@ public class DataStoreThrift implements DataStoreService.Iface {
     THostPort _networkPort;
     private ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool;
     List<InetSocketAddress> _schedulerAddress;
-    private AtomicInteger _counter;
+    private AtomicLong _counter;
     private int _batchSize;
-    private int _numTasksPerUpdate;
+    private int _numTasksPerUpdateFromNode;
     MetricRegistry _metrics;
-    private Meter _updateRequestsRate;
+    private Meter _overrideRequestsRate;
+    private Meter _addRequestsRate;
     private Meter _getRequestsRate;
     private Counter _numMessages;
 
     public void initialize(Configuration config, int port)
             throws TException, IOException {
         _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.DATA_STORE_METRICS_REGISTRY);
-        _updateRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_UPDATE_REQUEST_RATE);
+        _overrideRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_OVERRIDE_REQUEST_RATE);
         _getRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_GET_REQUEST_RATE);
+        _addRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_ADD_REQUEST_RATE);
         _numMessages = _metrics.counter(DodoorConf.DATA_STORE_METRICS_NUM_MESSAGES);
         boolean _cachedEnabled =
                 SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
-        _dataStore = new BasicDataStoreImpl(new HashMap<>());
+        _dataStore = new BasicDataStoreImpl();
         _config = config;
 
         String hostname = Network.getHostName(config);
@@ -57,7 +57,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _networkPort = Network.socketAddressToThrift(addr);
 
         _dataStore.initialize(_config);
-        _counter = new AtomicInteger(0);
+        _counter = new AtomicLong(0);
         _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
 
@@ -99,7 +99,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         int threads = _config.getInt(DodoorConf.DATA_STORE_THRIFT_THREADS, DodoorConf.DEFAULT_DATA_STORE_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(port, threads, processor);
 
-        _numTasksPerUpdate = config.getInt(DodoorConf.NUM_TASKS_TO_UPDATE, DodoorConf.DEFAULT_NUM_TASKS_TO_UPDATE);
+        _numTasksPerUpdateFromNode = config.getInt(DodoorConf.NODE_NUM_TASKS_TO_UPDATE, DodoorConf.DEFAULT_NODE_NUM_TASKS_TO_UPDATE);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             String datastoreLogPath = config.getString(DodoorConf.DATA_STORE_METRICS_LOG_FILE,
@@ -163,7 +163,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
     }
 
     @Override
-    public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) throws TException {
+    public void overrideNodeState(String nodeEnqueueAddress, TNodeState nodeState) throws TException {
         _numMessages.inc();
         Optional<InetSocketAddress> nodeEnqueueAddressSocket = Serialization.strToSocket(nodeEnqueueAddress);
         if (!nodeEnqueueAddressSocket.isPresent()) {
@@ -171,11 +171,19 @@ public class DataStoreThrift implements DataStoreService.Iface {
         }
         InetSocketAddress nodeEnqueueAddressInet = nodeEnqueueAddressSocket.get();
         LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddressInet.getHostName()));
-        _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeStates);
-        _counter.getAndAdd(_numTasksPerUpdate);
-        _updateRequestsRate.mark(_numTasksPerUpdate);
+        _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeState);
+        _overrideRequestsRate.mark(_numTasksPerUpdateFromNode);
+    }
 
-        if (_counter.get() > _batchSize) {
+    @Override
+    public synchronized void addNodeLoad(String nodeEnqueueAddress, TResourceVector resourceLoad, int numTasks, int sign)
+            throws TException {
+        long numScheduledBefore = _counter.get();
+        _numMessages.inc();
+        _dataStore.addNodeLoad(nodeEnqueueAddress, resourceLoad, numTasks, sign);
+        _counter.getAndAdd(numTasks);
+        _addRequestsRate.mark(numTasks);
+        if (_counter.get() / _batchSize != numScheduledBefore / _batchSize) {
             for (InetSocketAddress socket : _schedulerAddress) {
                 SchedulerService.AsyncClient client = null;
                 try {
@@ -186,7 +194,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
                 client.updateNodeState(getNodeStates(), new UpdateNodeLoadCallBack(socket, client));
             }
         }
-        _counter.set(0);
     }
 
     @Override

@@ -107,15 +107,19 @@ public class DodoorConf {
     public final static String TRACKING_INTERVAL_IN_SECONDS = "tracking.interval.seconds";
     public final static int DEFAULT_TRACKING_INTERVAL = 10;
 
-    public final static String NUM_TASKS_TO_UPDATE = "node.num_tasks_to_update";
-    public final static int  DEFAULT_NUM_TASKS_TO_UPDATE = 1;
+    public final static String NODE_NUM_TASKS_TO_UPDATE = "node.num_tasks_to_update";
+    public final static int  DEFAULT_NODE_NUM_TASKS_TO_UPDATE = 8;
+
+    public final static String SCHEDULER_NUM_TASKS_TO_UPDATE = "scheduler.num_tasks_to_update";
+    public final static int  DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE = 10;
 
     public final static String DATA_STORE_METRICS_REGISTRY = "datastore.metrics.registry";
     public final static String DATA_STORE_METRICS_LOG_FILE = "datastore.metrics.log.file";
     public final static String DEFAULT_DATA_STORE_METRICS_LOG_FILE = "dodoor_datastore_metrics.log";
     public final static String DATA_STORE_METRICS_NUM_MESSAGES = "datastore.metrics.num.messages";
     public final static String DATA_STORE_METRICS_GET_REQUEST_RATE = "datastore.metrics.request.get.rate";
-    public final static String DATA_STORE_METRICS_UPDATE_REQUEST_RATE = "datastore.metrics.request.update.rate";
+    public final static String DATA_STORE_METRICS_OVERRIDE_REQUEST_RATE = "datastore.metrics.request.override.rate";
+    public final static String DATA_STORE_METRICS_ADD_REQUEST_RATE = "datastore.metrics.request.add.rate";
 
 
     public final static String SCHEDULER_METRICS_REGISTRY = "scheduler.metrics.registry";

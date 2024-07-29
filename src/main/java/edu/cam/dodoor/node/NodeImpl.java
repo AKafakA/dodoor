@@ -55,14 +55,14 @@ public class NodeImpl implements Node{
         _finishedTasksCounter = new AtomicInteger(0);
         _dataStoreClientPool = nodeThrift._dataStoreClientPool;
 
-        _numTasksToUpdate = config.getInt(DodoorConf.NUM_TASKS_TO_UPDATE,
-                DodoorConf.DEFAULT_NUM_TASKS_TO_UPDATE);
+        _numTasksToUpdate = config.getInt(DodoorConf.NODE_NUM_TASKS_TO_UPDATE,
+                DodoorConf.DEFAULT_NODE_NUM_TASKS_TO_UPDATE);
         _dataStoreAddress = nodeThrift._dataStoreAddress;
         _neAddress = nodeThrift._neAddress;
     }
 
     @Override
-    public void taskFinished(TFullTaskId task) throws TException {
+    public synchronized void taskFinished(TFullTaskId task) throws TException {
         _taskScheduler.tasksFinished(task);
         _requested_cores.getAndAdd(-task.resourceRequest.cores);
         _requested_memory.getAndAdd(-task.resourceRequest.memory);
@@ -81,7 +81,7 @@ public class NodeImpl implements Node{
                     throw new RuntimeException(e);
                 }
                 TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
-                dataStoreClient.updateNodeLoad(_neAddress, nodeState,
+                dataStoreClient.overrideNodeState(_neAddress, nodeState,
                         new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
                 LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
                         dataStoreAddress.getAddress(), dataStoreAddress.getPort()));

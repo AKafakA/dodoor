@@ -3,6 +3,7 @@ package edu.cam.dodoor.scheduler.taskplacer;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.node.TaskSpec;
 import edu.cam.dodoor.thrift.*;
+import edu.cam.dodoor.utils.Serialization;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -14,7 +15,7 @@ public abstract class TaskPlacer {
         _beta = beta;
     }
 
-    public Map<InetSocketAddress, TEnqueueTaskReservationRequest> getEnqueueTaskReservationRequests(
+    public Map<TEnqueueTaskReservationRequest, InetSocketAddress> getEnqueueTaskReservationRequests(
             TSchedulingRequest schedulingRequest,
             Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress) {
         return null;
@@ -33,20 +34,19 @@ public abstract class TaskPlacer {
         }
     }
 
-    static void updateSchedulingResults(Map<InetSocketAddress, TEnqueueTaskReservationRequest> allocations,
+    static void updateSchedulingResults(Map<TEnqueueTaskReservationRequest, InetSocketAddress> allocations,
                                         InetSocketAddress nodeAddress,
                                         TSchedulingRequest schedulingRequest,
                                         TTaskSpec taskSpec,
                                         THostPort schedulerAddress,
                                         TResourceVector taskResources) {
-        String selectedNodeString = nodeAddress.getAddress().getHostAddress() + ":" + nodeAddress.getPort();
-        allocations.put(nodeAddress, new TEnqueueTaskReservationRequest(
+        allocations.put(new TEnqueueTaskReservationRequest(
                 schedulingRequest.user,
                 taskSpec.taskId,
                 schedulerAddress,
                 taskResources,
                 taskSpec.durationInMs,
-                selectedNodeString
-        ));
+                Serialization.getStrFromSocket(nodeAddress)
+        ), nodeAddress);
     }
 }

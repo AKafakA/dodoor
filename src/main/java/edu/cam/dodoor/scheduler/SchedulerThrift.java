@@ -44,6 +44,12 @@ public class SchedulerThrift implements SchedulerService.Iface{
         _scheduler.registerNode(nodeAddress);
     }
 
+    @Override
+    public void registerDataStore(String dataStoreAddress) throws TException {
+        _numMessages.inc();
+        _scheduler.registerDataStore(dataStoreAddress);
+    }
+
     public void initialize(Configuration config, int port) throws TException, IOException {
         _scheduler = new SchedulerImpl();
         SchedulerService.Processor<SchedulerService.Iface> processor =

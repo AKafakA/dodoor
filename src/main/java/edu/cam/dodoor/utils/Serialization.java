@@ -25,6 +25,10 @@ public class Serialization {
       return Optional.absent();
     }
   }
+
+  public static String getStrFromSocket(InetSocketAddress socket) {
+      return socket.getAddress().getHostAddress() + ":" + socket.getPort();
+  }
   
   public static byte[] getByteBufferContents(ByteBuffer buffer) {
     byte[] out = new byte[buffer.limit() - buffer.position()];
