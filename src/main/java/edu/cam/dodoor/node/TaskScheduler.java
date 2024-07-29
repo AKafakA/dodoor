@@ -17,16 +17,15 @@ public abstract class TaskScheduler {
     int _numSlots;
     int _activeTasks;
 
-    double _cores_per_slots;
-    int _memory_per_slots;
-    int _disk_per_slots;
+    final NodeResources _nodeResources;
 
     protected Configuration _conf;
     private final BlockingQueue<TaskSpec> _runnableTaskQueue =
             new LinkedBlockingQueue<>();
 
-    public TaskScheduler(int numSlots) {
+    public TaskScheduler(int numSlots, NodeResources nodeResources) {
         _numSlots = numSlots;
+        _nodeResources = nodeResources;
         _activeTasks = 0;
     }
 
@@ -34,10 +33,6 @@ public abstract class TaskScheduler {
      *  on the machine. */
     void initialize(Configuration config) {
         _conf = config;
-
-        _cores_per_slots = Resources.getSystemCPUCount(config) / _numSlots;
-        _memory_per_slots = Resources.getSystemMemoryMb(config) / _numSlots;
-        _disk_per_slots = Resources.getSystemDiskGb(config) / _numSlots;
     }
 
     TaskSpec getNextTask() {
@@ -58,7 +53,7 @@ public abstract class TaskScheduler {
 
     void tasksFinished(TFullTaskId finishedTask) {
         LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
-        handleTaskFinished(finishedTask.taskId);
+        handleTaskFinished(finishedTask);
     }
 
     protected void makeTaskRunnable(TaskSpec task) {
@@ -72,21 +67,9 @@ public abstract class TaskScheduler {
 
     public synchronized void submitTaskReservation(TEnqueueTaskReservationRequest request) {
         TaskSpec reservation = new TaskSpec(request);
-        if (!enoughResourcesToRun(request.resourceRequested)){
-            LOG.warn(Logging.auditEventString("big_task_failed_enqueued",
-                    reservation._taskId, request.resourceRequested.cores,
-                    request.resourceRequested.memory,
-                    request.resourceRequested.disks));
-        }
         int queuedReservations = handleSubmitTaskReservation(reservation);
         LOG.info(Logging.auditEventString("reservation_enqueued", request.taskId,
                 queuedReservations));
-    }
-
-    boolean enoughResourcesToRun(TResourceVector requestedResources) {
-        return requestedResources.cores <= _cores_per_slots
-                && requestedResources.memory <= _memory_per_slots
-                && requestedResources.disks <= _disk_per_slots;
     }
 
     // TASK SCHEDULERS MUST IMPLEMENT THE FOLLOWING.
@@ -100,7 +83,7 @@ public abstract class TaskScheduler {
     /**
      * Handles the completion of a task that has finished executing.
      */
-    protected abstract void handleTaskFinished(String taskId);
+    protected abstract void handleTaskFinished(TFullTaskId finishedTask);
 
     /**
      * Returns the maximum number of active tasks allowed (the number of slots).

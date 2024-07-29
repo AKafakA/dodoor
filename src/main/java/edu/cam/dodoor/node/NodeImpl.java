@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NodeImpl implements Node{
     private final static Logger LOG = LoggerFactory.getLogger(NodeImpl.class);
 
-    private TaskScheduler _taskScheduler;
+    private volatile TaskScheduler _taskScheduler;
     TResourceVector _requestedResources;
     private AtomicInteger _requested_cores;
     private AtomicLong _requested_memory;
@@ -30,12 +30,15 @@ public class NodeImpl implements Node{
     private int _numTasksToUpdate;
     List<InetSocketAddress> _dataStoreAddress;
     private String _neAddress;
+    private volatile NodeResources _nodeResources;
 
     @Override
     public void initialize(Configuration config, NodeThrift nodeThrift) {
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
         // TODO(wda): add more task scheduler
-        _taskScheduler = new FifoTaskScheduler(numSlots);
+        _nodeResources = new NodeResources(Resources.getSystemCPUCount(config),
+                Resources.getSystemMemoryMb(config), Resources.getSystemDiskGb(config));
+        _taskScheduler = new FifoTaskScheduler(numSlots, _nodeResources);
         _taskScheduler.initialize(config);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
         taskLauncherService.initialize(config, _taskScheduler, nodeThrift);

@@ -38,7 +38,7 @@ public class Resources {
     }
   }
   
-  public static double getSystemCPUCount(Configuration conf) {
+  public static int getSystemCPUCount(Configuration conf) {
     // No system interrogation yet
     return conf.getInt(DodoorConf.SYSTEM_CPUS, DodoorConf.DEFAULT_SYSTEM_CPUS);
   }
