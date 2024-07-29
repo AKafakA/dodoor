@@ -1,9 +1,13 @@
 package edu.cam.dodoor.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class NodeResources {
+    private static final Logger LOG = LoggerFactory.getLogger(NodeResources.class);
     private final AtomicInteger _cores;
     private final AtomicLong _memory;
     private final AtomicLong _disk;
@@ -15,6 +19,8 @@ public class NodeResources {
     }
 
     public synchronized boolean runTaskIfPossible(int cores, long memory, long disk) {
+        LOG.debug("Current resources: cores={}, memory={}, disk={} and requested resources {}, {}, {}",
+                new Object[]{_cores.get(), _memory.get(), _disk.get(), cores, memory, disk});
         boolean canRun = _cores.get() >= cores && _memory.get() >= memory && _disk.get() >= disk;
         if (canRun) {
             _cores.addAndGet(-cores);
