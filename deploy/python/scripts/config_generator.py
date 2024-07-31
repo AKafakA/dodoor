@@ -52,9 +52,9 @@ def parse_args():
                       help="The number of slots in each node to run the tasks in parallel. So, "
                            "the maximal resources can be used by the tasks like cores will be cores / num_slots."
                            "And the large tasks exceeding the resources will be rejected.")
-    parser.add_option("--beta", default=0.6,
+    parser.add_option("--beta", default=0.85,
                       help="The beta value used for 1 + beta process for random scheduling")
-    parser.add_option("--batch-size", default=1024,
+    parser.add_option("--batch-size", default=82,
                       help="The batch size of the tasks to be scheduled by dodoor scheduler")
     parser.add_option("--replay_with_delay", default=True,
                       help="Whether to replay the trace following the provided timeline and "
