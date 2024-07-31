@@ -21,7 +21,15 @@ class AzureDataGenerator(DataGenerator, ABC):
         self.max_disk = max_disk
         self.time_interval = time_interval
 
-    def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None):
+    def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None,
+                 timeline_compress_ratio=1, time_shift=-1):
+        """
+            timeline_compress_ratio is used to compress the timeline to smaller value for fasting replay.
+            e.g if last events is submitted in 14th days, so the timeline should be 60000 * 60 * 24 * 14
+            but if want to replay it within half day, then the time_compress_ratio should be 1 / (14 * 2)
+            Similarly, time_shift is used to shift the time by the mod functions. -1 means no shifting
+        """
+        task_ids = {}
         data = []
         if time_range_in_days is None:
             time_range_in_days = [0, 0.1]
@@ -30,12 +38,14 @@ class AzureDataGenerator(DataGenerator, ABC):
                                                                                   num_requests_per_machine=num_records)
             for vm in vm_requests:
                 task_id = vm[TableKeys.VM_ID]
-                if None in vm.values() or task_id < start_id:
+                if None in vm.values() or task_id < start_id or task_ids.get(task_id, False):
                     continue
                 start_time = vm[TableKeys.START_TIME]
                 if start_time < time_range_in_days[0] or start_time > time_range_in_days[1]:
                     continue
-                start_time *= self.time_interval
+                start_time *= self.time_interval * timeline_compress_ratio
+                if time_shift > 0:
+                    start_time = start_time % time_shift
                 duration = (vm[TableKeys.END_TIME] - vm[TableKeys.START_TIME]) * self.time_interval
                 if 0 < max_duration < duration:
                     continue
@@ -50,6 +60,7 @@ class AzureDataGenerator(DataGenerator, ABC):
                     "duration": int(duration),
                     "startTime": int(start_time)
                 })
+                task_ids[task_id] = True
         data = sorted(data, key=lambda x: x["taskId"])[:num_records]
         return data
 

@@ -99,14 +99,13 @@ class CompositedNodesMetrics:
         return get_average_nodes_metrics("disk_usage", self.length, self.node_metrics), \
             get_variance_nodes_metrics("disk_usage", self.length, self.node_metrics)
 
+    def get_average_resource_mean_and_variance(self):
+        cpu_mean, cpu_variance = self.get_cpu_usage_mean_and_variance()
+        mem_mean, mem_variance = self.get_mem_usage_mean_and_variance()
+        disk_mean, disk_variance = self.get_disk_usage_mean_and_variance()
+        average_mean = [sum(x) / 3 for x in zip(cpu_mean, mem_mean, disk_mean)]
+        average_variance = [sum(x) / 3 for x in zip(cpu_variance, mem_variance, disk_variance)]
+        return average_mean, average_variance
 
-if __name__ == "__main__":
-    test_node_log_dir = "deploy/resources/log/node/test/dodoor_node_metrics_103.log"
-    node_metrics = NodeMetrics(test_node_log_dir, "1")
-    test_node_log_dir = "deploy/resources/log/node/test"
-    composited_nodes_metrics = CompositedNodesMetrics(test_node_log_dir)
-    print(composited_nodes_metrics.get_num_nodes())
-    print(composited_nodes_metrics.get_cpu_usage_mean_and_variance())
-    print(composited_nodes_metrics.get_average_waiting_tasks())
-    print(composited_nodes_metrics.get_total_waiting_tasks())
-    print(composited_nodes_metrics.get_average_task_waited_duration())
+    def get_variance_waiting_tasks(self):
+        return get_variance_nodes_metrics("num_waiting_tasks", self.length, self.node_metrics)

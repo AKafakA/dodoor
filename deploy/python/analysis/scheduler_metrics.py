@@ -62,11 +62,3 @@ class SchedulerMetrics:
 
     def get_e2e_latency_p50(self):
         return self.metrics["e2e_latency_p50"]
-
-
-if __name__ == "__main__":
-    test_scheduler_log = "deploy/resources/log/scheduler/test/dodoor_scheduler_metrics_102.log"
-    test_scheduler_metrics = SchedulerMetrics(test_scheduler_log)
-    test_scheduler_metrics.parse()
-    for key, value in test_scheduler_metrics.metrics.items():
-        print(key, len(value))

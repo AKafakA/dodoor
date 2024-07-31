@@ -3,8 +3,6 @@ import re
 
 def calibrate_metrics(start_point, end_point, metrics):
     new_metrics = metrics[start_point:]
-    print(len(new_metrics))
-    print(len(metrics))
     new_metrics.extend([metrics[-1]] * (end_point - len(metrics)))
     return new_metrics
 
@@ -75,11 +73,3 @@ class NodeMetrics:
         for key, metric in self.metrics.items():
             new_metric = calibrate_metrics(start_point, end_point, metric)
             self.metrics[key] = new_metric
-
-
-if __name__ == "__main__":
-    test_node_log_dir = "deploy/resources/log/node/test/dodoor_node_metrics_103.log"
-    node_metrics = NodeMetrics(test_node_log_dir, "1")
-    node_metrics.parse()
-    for key, metric in node_metrics.metrics.items():
-        print(key, str(len(metric)))

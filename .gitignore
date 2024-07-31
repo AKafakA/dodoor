@@ -44,6 +44,7 @@ src/main/gen-java/
 .idea/
 logs/
 target/
+/deploy/figure/
 
 deploy/resources/data/raw_data/
 *__pycache__/
