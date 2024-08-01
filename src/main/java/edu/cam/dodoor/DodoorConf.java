@@ -29,6 +29,7 @@ public class DodoorConf {
     public final static String DODOOR_SCHEDULER = "dodoor";
     public final static String SPARROW_SCHEDULER = "sparrow";
     public final static String CACHED_SPARROW_SCHEDULER = "cached_sparrow_scheduler";
+    public final static String RANDOM_SCHEDULER = "random";
 
     public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20503;

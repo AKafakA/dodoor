@@ -29,7 +29,9 @@ public abstract class TaskPlacer {
             return new SparrowTaskPlacer(beta, nodeMonitorClients);
         } else if (schedulingStrategy.equals(DodoorConf.CACHED_SPARROW_SCHEDULER)) {
             return new CachedTaskPlacer(beta, false);
-        } else {
+        } else if (schedulingStrategy.equals(DodoorConf.RANDOM_SCHEDULER)) {
+            return new CachedTaskPlacer(-1.0, false);
+        }else {
             throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         }
     }
