@@ -1,7 +1,6 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
 import edu.cam.dodoor.DodoorConf;
-import edu.cam.dodoor.node.TaskSpec;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Serialization;
 
@@ -23,17 +22,13 @@ public abstract class TaskPlacer {
 
     public static TaskPlacer createTaskPlacer(double beta, String schedulingStrategy,
                                               Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients) {
-        if (schedulingStrategy.equals(DodoorConf.DODOOR_SCHEDULER)) {
-            return new CachedTaskPlacer(beta, true);
-        } else if (schedulingStrategy.equals(DodoorConf.SPARROW_SCHEDULER)) {
-            return new SparrowTaskPlacer(beta, nodeMonitorClients);
-        } else if (schedulingStrategy.equals(DodoorConf.CACHED_SPARROW_SCHEDULER)) {
-            return new CachedTaskPlacer(beta, false);
-        } else if (schedulingStrategy.equals(DodoorConf.RANDOM_SCHEDULER)) {
-            return new CachedTaskPlacer(-1.0, false);
-        }else {
-            throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
-        }
+        return switch (schedulingStrategy) {
+            case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true);
+            case DodoorConf.SPARROW_SCHEDULER -> new SparrowTaskPlacer(beta, nodeMonitorClients);
+            case DodoorConf.CACHED_SPARROW_SCHEDULER -> new CachedTaskPlacer(beta, false);
+            case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false);
+            default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
+        };
     }
 
     static void updateSchedulingResults(Map<TEnqueueTaskReservationRequest, InetSocketAddress> allocations,
