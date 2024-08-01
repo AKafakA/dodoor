@@ -112,7 +112,7 @@ public class DodoorConf {
     public final static int  DEFAULT_NODE_NUM_TASKS_TO_UPDATE = 8;
 
     public final static String SCHEDULER_NUM_TASKS_TO_UPDATE = "scheduler.num.tasks.update";
-    public final static int  DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE = 10;
+    public final static int  DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE = 8;
 
     public final static String DATA_STORE_METRICS_REGISTRY = "datastore.metrics.registry";
     public final static String DATA_STORE_METRICS_LOG_FILE = "datastore.metrics.log.file";
