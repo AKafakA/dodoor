@@ -26,6 +26,7 @@ class SchedulerMetrics:
                         "e2e_latency_std": [],
                         "e2e_latency_p50": [],
                         "e2e_latency_p99": [],
+                        "e2e_latency_count": [],
                         "task_rate_mean": []}
         self.log_file = log_file
 
@@ -43,6 +44,7 @@ class SchedulerMetrics:
                     self.metrics["e2e_latency_std"].append(float(line.split(",")[6].split("=")[1]))
                     self.metrics["e2e_latency_p50"].append(float(line.split(",")[7].split("=")[1]))
                     self.metrics["e2e_latency_p99"].append(float(line.split(",")[11].split("=")[1]))
+                    self.metrics["e2e_latency_count"].append(int(line.split(",")[2].split("=")[1]))
         return self.metrics
 
     def get_num_messages(self):
@@ -62,3 +64,6 @@ class SchedulerMetrics:
 
     def get_e2e_latency_p50(self):
         return self.metrics["e2e_latency_p50"]
+
+    def get_e2e_latency_count(self):
+        return self.metrics["e2e_latency_count"]

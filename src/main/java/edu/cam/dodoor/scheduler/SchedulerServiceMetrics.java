@@ -3,6 +3,7 @@ package edu.cam.dodoor.scheduler;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.UniformReservoir;
 import edu.cam.dodoor.DodoorConf;
 
 
@@ -13,7 +14,9 @@ public class SchedulerServiceMetrics {
     private final Meter _loadUpdateRate;
 
     public SchedulerServiceMetrics(MetricRegistry metrics) {
-        _endToEndLatencyHistogram = metrics.histogram(DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS);
+        _endToEndLatencyHistogram = metrics.histogram(
+                DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS,
+                () -> new Histogram(new UniformReservoir()));
         _tasksRate = metrics.meter(DodoorConf.SCHEDULER_METRICS_TASK_RATE);
         _loadUpdateRate = metrics.meter(DodoorConf.SCHEDULER_METRICS_LOAD_UPDATE_RATE);
     }

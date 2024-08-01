@@ -29,7 +29,9 @@ public class TaskLauncherService {
                 try {
                     Process process = executeLaunchTask(task);
                     Thread.sleep(task._duration);
-                    process.destroy();
+                    if (process.isAlive()) {
+                        process.destroy();
+                    }
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }

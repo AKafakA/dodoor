@@ -46,9 +46,9 @@ class AzureDataGenerator(DataGenerator, ABC):
                     continue
                 elif start_time < time_range_in_days[0]:
                     start_time = time_range_in_days[0]
-                start_time *= self.time_interval * timeline_compress_ratio
                 if time_shift > 0:
                     start_time = start_time % time_shift
+                start_time *= self.time_interval * timeline_compress_ratio
                 duration = (vm[TableKeys.END_TIME] - vm[TableKeys.START_TIME]) * self.time_interval
                 if 0 < max_duration < duration:
                     continue
