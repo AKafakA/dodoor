@@ -21,7 +21,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     synchronized int handleSubmitTaskReservation(TaskSpec taskReservation) {
         // This method, cancelTaskReservations(), and handleTaskCompleted() are synchronized to avoid
         // race conditions between updating activeTasks and taskReservations.
-        if (_activeTasks < _numSlots) {
+        if (_activeTasks.get() < _numSlots) {
             if (!_taskReservations.isEmpty()) {
                 String errorMessage = "activeTasks should be less than maxActiveTasks only " +
                         "when no outstanding reservations.";
@@ -31,7 +31,7 @@ public class FifoTaskScheduler extends TaskScheduler {
             if (_nodeResources.runTaskIfPossible(taskReservation._resourceVector.cores,
                     taskReservation._resourceVector.memory, taskReservation._resourceVector.disks)) {
                 makeTaskRunnable(taskReservation);
-                ++_activeTasks;
+                _activeTasks.incrementAndGet();
                 LOG.debug("Making task for task {} runnable ({} of {} task slots currently filled)", new Object[]{taskReservation._taskId, _activeTasks, _numSlots});
                 return 0;
             } else {
@@ -39,13 +39,18 @@ public class FifoTaskScheduler extends TaskScheduler {
             }
         }
         int queuedReservations = _taskReservations.size();
-        LOG.debug("Enqueueing task reservation with task id {} because all task slots filled. {} already enqueued reservations.", taskReservation._taskId, queuedReservations);
+        LOG.debug("Enqueueing task reservation with task id {} because {} slots filled. {} already enqueued reservations.",
+                new Object[] {taskReservation._taskId,
+                _activeTasks.get()
+                ,queuedReservations});
         _taskReservations.add(taskReservation);
         return queuedReservations;
     }
 
     @Override
     protected void handleTaskFinished(TFullTaskId finishedTask) {
+        LOG.debug("Task {} finished, freeing resources and attempting to launch new task and" +
+                "current filled slots:{} ", finishedTask.taskId, _activeTasks);
         attemptTaskLaunch(finishedTask.taskId);
     }
 
@@ -57,11 +62,13 @@ public class FifoTaskScheduler extends TaskScheduler {
      * task to execute. This method needs to be synchronized to prevent a race condition.
      */
     private synchronized void attemptTaskLaunch(String lastExecutedTaskId) {
+        _activeTasks.getAndDecrement();
         for (TaskSpec taskSpec : _taskReservations) {
             if (_nodeResources.runTaskIfPossible(taskSpec._resourceVector.cores,
                     taskSpec._resourceVector.memory, taskSpec._resourceVector.disks)) {
                 if (_taskReservations.remove(taskSpec)) {
                     makeTaskRunnable(taskSpec);
+                    _activeTasks.getAndIncrement();
                     taskSpec._previousTaskId = lastExecutedTaskId;
                     return;
                 } else {
@@ -72,7 +79,6 @@ public class FifoTaskScheduler extends TaskScheduler {
                 }
             }
         }
-        _activeTasks -= 1;
         LOG.debug("No tasks to run, {} of {} task slots currently filled", _activeTasks, _numSlots);
     }
 

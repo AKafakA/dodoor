@@ -9,13 +9,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class TaskScheduler {
 
     private final static Logger LOG = LoggerFactory.getLogger(TaskScheduler.class);;
 
     int _numSlots;
-    int _activeTasks;
+    AtomicInteger _activeTasks;
 
     final NodeResources _nodeResources;
 
@@ -26,7 +27,7 @@ public abstract class TaskScheduler {
     public TaskScheduler(int numSlots, NodeResources nodeResources) {
         _numSlots = numSlots;
         _nodeResources = nodeResources;
-        _activeTasks = 0;
+        _activeTasks = new AtomicInteger(0);
     }
 
     /** Initialize the task scheduler, passing it the current available resources

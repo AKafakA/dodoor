@@ -11,7 +11,7 @@ if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 400
+max_checkpoints = 70
 composited_node_host_file = "deploy/resources/log/node/{}".format(experiment_name)
 
 nodes_metrics = CompositedNodesMetrics(composited_node_host_file)
