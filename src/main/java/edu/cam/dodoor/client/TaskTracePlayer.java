@@ -16,52 +16,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class TaskTracePlayer {
-    private final Logger LOG = Logger.getLogger(TaskTracePlayer.class);
-
-    private class TaskLaunchRunnable implements Runnable {
-        //        private int requestId;
-        private final String _taskId;
-        private final int _cores;
-        private final long _memory;
-        private final long _disks;
-        private final long _durationInMs;
-        private final long _startTime;
-        private final DodoorClient _client;
-        private final long _globalStartTime;
-        private final boolean _addTimelineDelay;
-
-        public TaskLaunchRunnable(String taskId, int cores, long memory,
-                                  long disks, long durationInMs, long startTime,
-                                  DodoorClient client, long globalStartTime, boolean addTimelineDelay) {
-            _taskId = taskId;
-            _cores = cores;
-            _memory = memory;
-            _disks = disks;
-            _durationInMs = durationInMs;
-            _startTime = startTime;
-            _client = client;
-            _globalStartTime = globalStartTime;
-            _addTimelineDelay = addTimelineDelay;
-        }
-
-        @Override
-        public void run(){
-            // Generate tasks in the format expected by Sparrow. First, pack task parameters.
-            long start = System.currentTimeMillis() - _globalStartTime;
-            if (start < _startTime && _addTimelineDelay) {
-                try {
-                    Thread.sleep(_startTime - start);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            try {
-                _client.submitTask(_taskId, _cores, _memory, _disks, _durationInMs);
-            } catch (TException e) {
-                LOG.error("Scheduling request failed!", e);
-            }
-        }
-    }
+    private static final Logger LOG = Logger.getLogger(TaskTracePlayer.class);
 
     public static void main(String[] args) throws ConfigurationException, TException, IOException {
         OptionParser parser = new OptionParser();
@@ -99,18 +54,32 @@ public class TaskTracePlayer {
         boolean addDelay = config.getBoolean(DodoorConf.REPLAY_WITH_TIMELINE_DELAY,
                 DodoorConf.DEFAULT_REPLAY_WITH_TIMELINE_DELAY);
 
+        boolean replayWithDisk = config.getBoolean(DodoorConf.REPLAY_WITH_DISK,
+                DodoorConf.DEFAULT_REPLAY_WITH_DISK);
+
         for (String line : allLines) {
             String[] parts = line.split(",");
             String taskId = parts[0];
             int cores = Integer.parseInt(parts[1]);
             long memory = Long.parseLong(parts[2]);
-            long disks = Long.parseLong(parts[3]);
+            long disks = replayWithDisk? Long.parseLong(parts[3]):0;
             long durationInMs = Long.parseLong(parts[4]);
             long startTime = Long.parseLong(parts[5]);
-            (new TaskTracePlayer()).new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs,
-                    startTime, client, globalStartTime, addDelay).run();
+
+            if (addDelay) {
+                long currentTime = System.currentTimeMillis();
+                long delay = startTime - (currentTime - globalStartTime);
+                if (delay > 0) {
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else if (delay < 0) {
+                    LOG.warn(String.format("Task %s is already late by %d ms", taskId, -delay));
+                }
+            }
+            client.submitTask(taskId, cores, memory, disks, durationInMs);
         }
-
     }
-
 }

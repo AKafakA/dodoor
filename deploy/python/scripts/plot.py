@@ -70,6 +70,7 @@ plt.ylabel("scheduler task rate mean")
 plt.savefig("{}/scheduler_task_rate_mean.png".format(target_dir))
 
 plt.figure(7)
+e2e_latency_avg_in_seconds = [e2e_latency / 1000 for e2e_latency in e2e_latency_avg]
 plt.plot(e2e_latency_avg[:max_checkpoints], label="e2e latency avg")
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("scheduler e2e latency avg")

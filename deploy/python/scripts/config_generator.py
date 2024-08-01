@@ -60,6 +60,9 @@ def parse_args():
                       help="Whether to replay the trace following the provided timeline and "
                            "delay the tasks kicking off until the time comes.")
 
+    parser.add_option("--replay_with_disk", default=False,
+                      help="Whether to replay the trace with disks requirements or just ignore it.")
+
     return parser.parse_args()
 
 
@@ -109,6 +112,7 @@ def main():
     file.write("node.enqueue.thrift.ports = {} \n".format(options.node_enqueue_ports))
     file.write("node.enqueue.thrift.threads = {} \n".format(options.node_enqueue_thrift_threads))
     file.write("replay.with.delay = {} \n".format(options.replay_with_delay))
+    file.write("replay.with.disk = {} \n".format(options.replay_with_disk))
     file.close()
 
 

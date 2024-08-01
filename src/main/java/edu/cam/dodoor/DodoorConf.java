@@ -150,4 +150,8 @@ public class DodoorConf {
 
     public final static String REPLAY_WITH_TIMELINE_DELAY = "replay.with.delay";
     public final static boolean DEFAULT_REPLAY_WITH_TIMELINE_DELAY = true;
+
+    // Consider some trace like GCP is not recording the disk resources. We may disable this for better comparison across traces.
+    public final static String REPLAY_WITH_DISK = "replay.with.disk";
+    public final static boolean DEFAULT_REPLAY_WITH_DISK = false;
 }
