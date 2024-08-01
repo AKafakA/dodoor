@@ -28,10 +28,7 @@ public class TaskLauncherService {
                 LOG.debug("Received task{}", task._taskId);
                 try {
                     Process process = executeLaunchTask(task);
-                    Thread.sleep(task._duration);
-                    if (process.isAlive()) {
-                        process.destroy();
-                    }
+                    process.waitFor();
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }

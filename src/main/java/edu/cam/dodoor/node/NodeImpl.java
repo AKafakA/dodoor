@@ -66,10 +66,11 @@ public class NodeImpl implements Node{
 
     @Override
     public synchronized void taskFinished(TFullTaskId task) throws TException {
-        _taskScheduler.tasksFinished(task);
         _requested_cores.getAndAdd(-task.resourceRequest.cores);
         _requested_memory.getAndAdd(-task.resourceRequest.memory);
         _requested_disk.getAndAdd(-task.resourceRequest.disks);
+        _nodeResources.freeTask(task.resourceRequest.cores, task.resourceRequest.memory, task.resourceRequest.disks);
+        _taskScheduler.tasksFinished(task);
 
         _waitingOrRunningTasksCounter.getAndAdd(-1);
 

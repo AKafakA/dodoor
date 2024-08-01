@@ -8,8 +8,7 @@ host_prefix = "wd312@caelum-"
 
 ip_pattern = re.compile("\d+:\d+.\d+.\d+.\d+")
 
-exp_name = sys.argv[1]
-
+exp_name = "exp_azure_full_replay/dodoor"
 with open(node_host_file, "r") as f:
     node_hosts = f.readlines()
     for host in node_hosts:

@@ -11,7 +11,7 @@ if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 2000
+max_checkpoints = 400
 composited_node_host_file = "deploy/resources/log/node/{}".format(experiment_name)
 
 nodes_metrics = CompositedNodesMetrics(composited_node_host_file)
@@ -54,7 +54,7 @@ for scheduler_log in os.listdir(scheduler_host_file):
 scheduler_metrics.parse()
 
 num_messages = scheduler_metrics.get_num_messages()
-task_rate_mean = scheduler_metrics.get_task_rate_mean()
+task_rate_m1 = scheduler_metrics.get_task_rate_m1()
 e2e_latency_avg = scheduler_metrics.get_e2e_latency_avg()
 
 plt.figure(5)
@@ -64,10 +64,10 @@ plt.ylabel("scheduler num messages")
 plt.savefig("{}/scheduler_num_messages.png".format(target_dir))
 
 plt.figure(6)
-plt.plot(task_rate_mean[:max_checkpoints], label="task rate mean")
+plt.plot(task_rate_m1[:max_checkpoints], label="task rate m1")
 plt.xlabel("{} seconds".format(time_steps))
-plt.ylabel("scheduler task rate mean")
-plt.savefig("{}/scheduler_task_rate_mean.png".format(target_dir))
+plt.ylabel("scheduler task rate in last one minute")
+plt.savefig("{}/scheduler_task_rate_m1.png".format(target_dir))
 
 plt.figure(7)
 e2e_latency_avg_in_seconds = [e2e_latency / 1000 for e2e_latency in e2e_latency_avg]

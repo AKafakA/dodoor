@@ -99,12 +99,16 @@ class CompositedNodesMetrics:
         return get_average_nodes_metrics("disk_usage", self.length, self.node_metrics), \
             get_variance_nodes_metrics("disk_usage", self.length, self.node_metrics)
 
-    def get_average_resource_mean_and_variance(self):
+    def get_average_resource_mean_and_variance(self, include_disk=False):
         cpu_mean, cpu_variance = self.get_cpu_usage_mean_and_variance()
         mem_mean, mem_variance = self.get_mem_usage_mean_and_variance()
-        disk_mean, disk_variance = self.get_disk_usage_mean_and_variance()
-        average_mean = [sum(x) / 3 for x in zip(cpu_mean, mem_mean, disk_mean)]
-        average_variance = [sum(x) / 3 for x in zip(cpu_variance, mem_variance, disk_variance)]
+        if include_disk:
+            disk_mean, disk_variance = self.get_disk_usage_mean_and_variance()
+            average_mean = [sum(x) / 3 for x in zip(cpu_mean, mem_mean, disk_mean)]
+            average_variance = [sum(x) / 3 for x in zip(cpu_variance, mem_variance, disk_variance)]
+        else:
+            average_mean = [sum(x) / 2 for x in zip(cpu_mean, mem_mean)]
+            average_variance = [sum(x) / 2 for x in zip(cpu_variance, mem_variance)]
         return average_mean, average_variance
 
     def get_variance_waiting_tasks(self):

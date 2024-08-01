@@ -46,8 +46,6 @@ public class FifoTaskScheduler extends TaskScheduler {
 
     @Override
     protected void handleTaskFinished(TFullTaskId finishedTask) {
-        _nodeResources.freeTask(finishedTask.resourceRequest.cores,
-                finishedTask.resourceRequest.memory, finishedTask.resourceRequest.disks);
         attemptTaskLaunch(finishedTask.taskId);
     }
 
@@ -75,6 +73,7 @@ public class FifoTaskScheduler extends TaskScheduler {
             }
         }
         _activeTasks -= 1;
+        LOG.debug("No tasks to run, {} of {} task slots currently filled", _activeTasks, _numSlots);
     }
 
     @Override

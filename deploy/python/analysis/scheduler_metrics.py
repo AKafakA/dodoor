@@ -27,7 +27,8 @@ class SchedulerMetrics:
                         "e2e_latency_p50": [],
                         "e2e_latency_p99": [],
                         "e2e_latency_count": [],
-                        "task_rate_mean": []}
+                        "task_rate_mean": [],
+                        "task_rate_m1": []}
         self.log_file = log_file
 
     def parse(self):
@@ -37,6 +38,7 @@ class SchedulerMetrics:
                     self.metrics["num_messages"].append(int(line.split(",")[2].split("=")[1]))
                 elif self.task_rate_pattern.match(line):
                     self.metrics["task_rate_mean"].append(float(line.split(",")[6].split("=")[1]))
+                    self.metrics["task_rate_m1"].append(float(line.split(",")[3].split("=")[1]))
                 elif self.e2e_latency_pattern.match(line):
                     self.metrics["e2e_latency_avg"].append(float(line.split(",")[5].split("=")[1]))
                     self.metrics["e2e_latency_max"].append(float(line.split(",")[4].split("=")[1]))
@@ -52,6 +54,9 @@ class SchedulerMetrics:
 
     def get_task_rate_mean(self):
         return self.metrics["task_rate_mean"]
+
+    def get_task_rate_m1(self):
+        return self.metrics["task_rate_m1"]
 
     def get_e2e_latency_avg(self):
         return self.metrics["e2e_latency_avg"]
