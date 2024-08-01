@@ -8,13 +8,15 @@ host_prefix = "wd312@caelum-"
 
 ip_pattern = re.compile("\d+:\d+.\d+.\d+.\d+")
 
+exp_name = sys.argv[1]
+
 with open(node_host_file, "r") as f:
     node_hosts = f.readlines()
     for host in node_hosts:
         if ip_pattern.match(host):
             node_host.append(host_prefix + host.strip().split(":")[0] + ".cl.cam.ac.uk")
 
-target_dir = "deploy/resources/log/node/exp_azure_full"
+target_dir = "deploy/resources/log/node/{}".format(exp_name)
 node_log_name = "dodoor_node_metrics.log"
 node_log_target_file_prefix = "dodoor_node_metrics"
 
@@ -31,7 +33,7 @@ with open(scheduler_host_file, "r") as f:
         if ip_pattern.match(host):
             scheduler_host.append(host_prefix + host.strip().split(":")[0] + ".cl.cam.ac.uk")
 
-target_scheduler_dir = "deploy/resources/log/scheduler/exp_azure_full"
+target_scheduler_dir = "deploy/resources/log/scheduler/{}".format(exp_name)
 scheduler_log_name = "dodoor_scheduler_metrics.log"
 scheduler_log_target_file_prefix = "dodoor_scheduler_metrics"
 

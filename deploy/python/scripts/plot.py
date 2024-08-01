@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 from deploy.python.analysis.composited_nodes_metrics import CompositedNodesMetrics
 from deploy.python.analysis.scheduler_metrics import SchedulerMetrics
 
-experiment_name = "exp_azure_full"
+experiment_name = "exp_azure_full_replay/dodoor"
 target_dir = "deploy/resources/figure/{}".format(experiment_name)
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 1000
+max_checkpoints = 2000
 composited_node_host_file = "deploy/resources/log/node/{}".format(experiment_name)
 
 nodes_metrics = CompositedNodesMetrics(composited_node_host_file)
