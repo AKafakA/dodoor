@@ -1,0 +1,56 @@
+<rspec xmlns="http://www.geni.net/resources/rspec/3" xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" xmlns:tour="http://www.protogeni.net/resources/rspec/ext/apt-tour/1" xmlns:jacks="http://www.protogeni.net/resources/rspec/ext/jacks/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.geni.net/resources/rspec/3    http://www.geni.net/resources/rspec/3/request.xsd" type="request">
+    <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node0" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+ms0613" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+1841306">
+        <sliver_type name="raw-pc"/>
+        <hardware_type name="m400"/>
+        <interface client_id="node0:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+ms0613:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+1841310" mac_address="fc15b41f6c93">
+            <ip address="10.10.1.1" type="ipv4" netmask="255.255.255.0"/>
+        </interface>
+        <services>
+            <login authentication="ssh-keys" hostname="ms0613.utah.cloudlab.us" port="22" username="asdwb"/>
+            <emulab:console server="boss.utah.cloudlab.us"/>
+            <emulab:recovery available="true"/>
+            <emulab:powercycle available="true"/>
+            <emulab:imageable available="true"/>
+            <execute shell="/bin/sh" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout 854898bbb4c65cd1be75fc44e674e0c443ef62d4 &amp;&amp; git branch -ft main origin/main&amp;&amp; git checkout -B main HEAD &amp;&amp; git submodule update --init --recursive&amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'"/>
+            <execute shell="sh" command="/local/repository/setup.sh"/>
+        </services>
+        <emulab:vnode name="ms0613" hardware_type="m400"/>
+        <host name="node0.asdwb-213133.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.216.204"/>
+    </node>
+    <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node1" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+ms0620" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+1841307">
+        <sliver_type name="raw-pc"/>
+        <hardware_type name="m400"/>
+        <interface client_id="node1:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+ms0620:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+1841311" mac_address="fc15b41fdd53">
+            <ip address="10.10.1.2" type="ipv4" netmask="255.255.255.0"/>
+        </interface>
+        <services>
+            <login authentication="ssh-keys" hostname="ms0620.utah.cloudlab.us" port="22" username="asdwb"/>
+            <emulab:console server="boss.utah.cloudlab.us"/>
+            <emulab:recovery available="true"/>
+            <emulab:powercycle available="true"/>
+            <emulab:imageable available="true"/>
+            <execute shell="/bin/sh" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout 854898bbb4c65cd1be75fc44e674e0c443ef62d4 &amp;&amp; git branch -ft main origin/main&amp;&amp; git checkout -B main HEAD &amp;&amp; git submodule update --init --recursive&amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'"/>
+            <execute shell="sh" command="/local/repository/setup.sh"/>
+            <execute shell="sh" command="nohup java -cp dodoor/target/dodoor-1.0-SNAPSHOT.jar edu.cam.dodoor.ServiceDaemon -c ~/dodoor/config.conf -d false -s false -n true  1&gt;service.out  2&gt;/dev/null &amp;"/>
+        </services>
+        <emulab:vnode name="ms0620" hardware_type="m400"/>
+        <host name="node1.asdwb-213133.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.216.211"/>
+    </node>
+    <link client_id="link-1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+1841309" vlantag="285">
+        <interface_ref client_id="node0:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+ms0613:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+1841310"/>
+        <interface_ref client_id="node1:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+ms0620:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+1841311"/>
+        <component_manager name="urn:publicid:IDN+utah.cloudlab.us+authority+cm"/>
+    </link>
+    <rspec_tour xmlns="http://www.protogeni.net/resources/rspec/ext/apt-tour/1">
+        <description type="markdown">This is a trivial example of a gitrepo-based profile; The profile source code and other software, documentation, etc. are stored in in a publicly accessible GIT repository (say, github.com). When you instantiate this profile, the repository is cloned to all of the nodes in your experiment, to `/local/repository`.
+
+            This particular profile is a simple example of using a single raw PC. It can be instantiated on any cluster; the node will boot the default operating system, which is typically a recent version of Ubuntu.</description>
+        <instructions type="markdown">Wait for the profile instance to start, then click on the node in the topology and choose the `shell` menu item.
+        </instructions>
+    </rspec_tour>
+    <emulab:repository type="git" url="https://github.com/AKafakA/dodoor-cl-profile" refspec="refs/heads/main" commit="854898bbb4c65cd1be75fc44e674e0c443ef62d4" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout 854898bbb4c65cd1be75fc44e674e0c443ef62d4 &amp;&amp; git branch -ft main origin/main&amp;&amp; git checkout -B main HEAD &amp;&amp; git submodule update --init --recursive&amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'"/>
+    <emulab:portal name="cloudlab" url="https://www.cloudlab.us/status.php?uuid=a9fc8e0c-5286-11ef-a601-e4434b2381fc" project="Hyperion" experiment="asdwb-213133" sequence="1722792385"/>
+    <rs:site_info xmlns:rs="http://www.protogeni.net/resources/rspec/ext/site-info/1">
+        <rs:location country="US" latitude="40.750714" longitude="-111.893288"/>
+    </rs:site_info>
+</rspec>
