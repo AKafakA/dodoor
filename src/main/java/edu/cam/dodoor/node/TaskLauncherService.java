@@ -6,7 +6,9 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -29,6 +31,9 @@ public class TaskLauncherService {
                 try {
                     Process process = executeLaunchTask(task);
                     process.waitFor();
+                    BufferedReader stdError = new BufferedReader(new
+                            InputStreamReader(process.getErrorStream()));
+                    LOG.debug("Error output of the command: {}", stdError.readLine());
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }

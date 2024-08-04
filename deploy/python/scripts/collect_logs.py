@@ -3,7 +3,7 @@ import re
 from deploy.python.analysis.utils import collect_logs
 
 node_host = []
-node_host_file = "deploy/resources/host_ip"
+node_host_file = "deploy/resources/caelum_host_ip"
 host_prefix = "wd312@caelum-"
 
 ip_pattern = re.compile("\d+:\d+.\d+.\d+.\d+")
@@ -24,7 +24,7 @@ collect_logs(node_host, output_dir=target_dir,
              node_log_target_file_prefix=node_log_target_file_prefix)
 
 
-scheduler_host_file = "deploy/resources/scheduler_ip"
+scheduler_host_file = "deploy/resources/caelum_scheduler_ip"
 scheduler_host = []
 with open(scheduler_host_file, "r") as f:
     scheduler_hosts = f.readlines()

@@ -42,7 +42,7 @@ def parse_args():
                       help="The trace file of scheduler service to be used in the experiment")
     parser.add_option("--tracking-interval", default=10,
                       help="The interval in seconds of tracking the system status")
-    parser.add_option("--cores", default=24,
+    parser.add_option("--cores", default=6,
                       help="The number of available cores in the system to run the tasks")
     parser.add_option("--memory", default=30720,
                       help="The amount of memory in Mb in the system to run the tasks")
