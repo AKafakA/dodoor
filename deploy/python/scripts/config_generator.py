@@ -4,12 +4,22 @@ from optparse import OptionParser
 def parse_args():
     parser = OptionParser(usage="dodoor-config [options]" +
                                 "\n\n generate the configuration file for dodoor experiments")
+    parser.add_option("--use-configable-address", default=True,
+                        help="Whether to use the configable address for the services")
     parser.add_option("-n", "--nodes-file",
                       help="Inject the host ip addresses of nodes into the config file from the host files")
     parser.add_option("-s", "--scheduler-file",
                       help="Inject the scheduler ip address into the config file from the scheduler file")
     parser.add_option("-d", "--data-store-file",
                       help="Inject the data store ip address into the config file from the data store file")
+    parser.add_option("--num-schedulers", default=1,
+                      help="The number of schedulers in the system")
+    parser.add_option("--num-nodes", default=100,
+                      help="The number of nodes in the system")
+    parser.add_option("--num-data-stores", default=1,
+                      help="The number of data stores in the system")
+    parser.add_option("--scheduler-data-store-colocated", default=True,
+                      help="Whether the scheduler and data store are colocated on the same host")
     parser.add_option("-o", "--output", default="./config.conf",
                       help="The output path of generated configuration file")
     parser.add_option("--node-monitor-ports", default="20501",
@@ -79,14 +89,52 @@ def main():
     config_path = options.output
     file = open(config_path, "w")
 
-    with open(options.nodes_file, "r") as f:
-        write_ip_port(file, f.readlines(), "static.node")
+    if options.use_configable_address:
+        with open(options.nodes_file, "r") as f:
+            write_ip_port(file, f.readlines(), "static.node")
 
-    with open(options.scheduler_file, "r") as f:
-        write_ip_port(file, f.readlines(), "static.scheduler")
+        with open(options.scheduler_file, "r") as f:
+            write_ip_port(file, f.readlines(), "static.scheduler")
 
-    with open(options.data_store_file, "r") as f:
-        write_ip_port(file, f.readlines(), "static.datastore")
+        with open(options.data_store_file, "r") as f:
+            write_ip_port(file, f.readlines(), "static.datastore")
+    else:
+        num_scheduler = int(options.num_schedulers)
+        num_nodes = int(options.num_nodes)
+        num_data_stores = int(options.num_data_stores)
+        scheduler_data_store_colocated = options.scheduler_data_store_colocated
+        start_ip_prefix = "10.10.1."
+        j = 0
+        if scheduler_data_store_colocated:
+            assert num_scheduler == num_data_stores, "The number of schedulers and data stores should be the same"
+            address = ""
+            for i in range(num_scheduler):
+                address += start_ip_prefix + str(j + 1) + ","
+                j += 1
+            address = address[:-1]
+            file.write("static.scheduler = " + address + "\n")
+            file.write("static.datastore = " + address + "\n")
+        else:
+            address = ""
+            for i in range(num_scheduler):
+                address += start_ip_prefix + str(j + 1) + ","
+                j += 1
+            address = address[:-1]
+            file.write("static.scheduler = " + address + "\n")
+
+            address = ""
+            for i in range(j, j + num_data_stores):
+                address += start_ip_prefix + str(j + 1) + ","
+                j += 1
+            address = address[:-1]
+            file.write("static.datastore = " + address + "\n")
+
+        address = ""
+        for i in range(j, j + num_nodes):
+            address += start_ip_prefix + str(j + 1) + ","
+            j += 1
+        address = address[:-1]
+        file.write("static.node = " + address + "\n")
 
     if options.trace_enabled:
         file.write("tracking.enabled = true \n")
