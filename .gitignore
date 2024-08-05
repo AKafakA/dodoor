@@ -48,3 +48,6 @@ target/
 
 deploy/resources/data/raw_data/
 *__pycache__/
+
+deploy/resources/cl_manifest.xml
+deploy/resources/host_addresses/
