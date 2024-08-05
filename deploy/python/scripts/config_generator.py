@@ -4,8 +4,8 @@ from optparse import OptionParser
 def parse_args():
     parser = OptionParser(usage="dodoor-config [options]" +
                                 "\n\n generate the configuration file for dodoor experiments")
-    parser.add_option("--use-configable-address", default=True,
-                        help="Whether to use the configable address for the services")
+    parser.add_option("--use-configable-address", default=False,
+                      help="Whether to use the configable address for the services")
     parser.add_option("-n", "--nodes-file",
                       help="Inject the host ip addresses of nodes into the config file from the host files")
     parser.add_option("-s", "--scheduler-file",
@@ -73,7 +73,6 @@ def parse_args():
     parser.add_option("--replay_with_delay", default=True,
                       help="Whether to replay the trace following the provided timeline and "
                            "delay the tasks kicking off until the time comes.")
-
     parser.add_option("--replay_with_disk", default=False,
                       help="Whether to replay the trace with disks requirements or just ignore it.")
 
