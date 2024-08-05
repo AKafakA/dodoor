@@ -5,7 +5,13 @@ import matplotlib.pyplot as plt
 from deploy.python.analysis.composited_nodes_metrics import CompositedNodesMetrics
 from deploy.python.analysis.scheduler_metrics import SchedulerMetrics
 
-experiment_name = "exp_azure_full_replay/dodoor"
+use_caelum = False
+num_nodes = 30
+experiment_name = "exp_azure_full_replay_{}/dodoor".format(num_nodes)
+if use_caelum:
+    experiment_name += "_caelum"
+else:
+    experiment_name += "_cloud_lab"
 target_dir = "deploy/resources/figure/{}".format(experiment_name)
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
