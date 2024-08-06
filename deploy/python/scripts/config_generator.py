@@ -4,6 +4,8 @@ from optparse import OptionParser
 def parse_args():
     parser = OptionParser(usage="dodoor-config [options]" +
                                 "\n\n generate the configuration file for dodoor experiments")
+    parser.add_option("--scheduler-type", default="dodoor",
+                      help="The type of scheduler to be used in the experiment")
     parser.add_option("--use-configable-address", default=False,
                       help="Whether to use the configable address for the services")
     parser.add_option("-n", "--nodes-file",
