@@ -4,6 +4,6 @@ data_path = "deploy/resources/data/raw_data/azure_trace.sqlite"
 output_path = "deploy/resources/data/azure_data"
 
 azure_data_generator = AzureDataGenerator(data_path, output_path, machine_ids=range(0, 10), max_cores=8,
-                                          max_memory=63 * 1024)
-data = azure_data_generator.generate(100000, 0, 60000, [0, 2.5], time_shift=1/24)
+                                          max_memory=60 * 1024)
+data = azure_data_generator.generate(1000000, 0, 1000 * 60 * 30, [0, 14], time_shift=1/12)
 azure_data_generator.write_data(data)
