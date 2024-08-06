@@ -118,14 +118,16 @@ public class SchedulerImpl implements Scheduler{
                     newRequestedResources.disks += task.resourceRequested.disks;
                 }
                 int newRequestedTasks = mapOfNodesToPlacedTasks.get(nodeEnqueueAddress).size();
-                try {
-                    DataStoreService.AsyncClient client = _dataStoreAsyncClientPool.borrowClient(nodeEnqueueAddress);
-                    client.addNodeLoad(nodeEnqueueAddressStr, newRequestedResources, newRequestedTasks, 1,
-                            new addNodeLoadCallback(request.requestId, nodeEnqueueAddress, client));
-                } catch (TException e) {
-                    LOG.error("Error updating node state for node: {}", nodeEnqueueAddress.getHostName(), e);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+                for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
+                    try {
+                        DataStoreService.AsyncClient client = _dataStoreAsyncClientPool.borrowClient(dataStoreAddress);
+                        client.addNodeLoad(nodeEnqueueAddressStr, newRequestedResources, newRequestedTasks, 1,
+                                new addNodeLoadCallback(request.requestId, nodeEnqueueAddress, client));
+                    } catch (TException e) {
+                        LOG.error("Error updating node state for node: {}", nodeEnqueueAddress.getHostName(), e);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }

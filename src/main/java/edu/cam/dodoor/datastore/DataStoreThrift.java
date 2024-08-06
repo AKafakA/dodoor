@@ -133,7 +133,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         if (schedulerAddressOptional.isPresent()) {
             _schedulerAddress.add(schedulerAddressOptional.get());
             LOG.debug(Logging.auditEventString("register_scheduler",
-                    schedulerAddressOptional.get().getHostName()));
+                    schedulerAddressOptional.get().getHostName(), schedulerAddressOptional.get().getPort()));
         } else {
             throw new TException("Scheduler address " + schedulerAddress + " not found");
         }

@@ -30,10 +30,16 @@ public class TaskLauncherService {
                 LOG.debug("Received task{}", task._taskId);
                 try {
                     Process process = executeLaunchTask(task);
-                    process.waitFor();
+                    boolean terminated = process.waitFor(task._duration, java.util.concurrent.TimeUnit.MILLISECONDS);
                     BufferedReader stdError = new BufferedReader(new
                             InputStreamReader(process.getErrorStream()));
-                    LOG.debug("Error output of the command: {}", stdError.readLine());
+                    if (!stdError.readLine().isEmpty()) {
+                        LOG.error("Task {} failed to execute with error {}", task._taskId, stdError.readLine());
+                    }
+                    if (!terminated && process.isAlive()) {
+                        process.destroy();
+                        LOG.error("Task {} was killed due to timeout", task._taskId);
+                    }
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -73,9 +79,8 @@ public class TaskLauncherService {
         _taskScheduler = taskScheduler;
         _node = nodeThrift._node;
         _nodeServiceMetrics = nodeThrift._nodeServiceMetrics;
-        ExecutorService service = Executors.newFixedThreadPool(_numSlots);
         for (int i = 0; i < _numSlots; i++) {
-            service.submit(new TaskLaunchRunnable());
+            new Thread(new TaskLaunchRunnable()).start();
         }
     }
 
