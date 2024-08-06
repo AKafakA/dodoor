@@ -22,12 +22,6 @@ public class FifoTaskScheduler extends TaskScheduler {
         // This method, cancelTaskReservations(), and handleTaskCompleted() are synchronized to avoid
         // race conditions between updating activeTasks and taskReservations.
         if (_activeTasks.get() < _numSlots) {
-            if (!_taskReservations.isEmpty()) {
-                String errorMessage = "activeTasks should be less than maxActiveTasks only " +
-                        "when no outstanding reservations.";
-                LOG.error(errorMessage);
-                throw new IllegalStateException(errorMessage);
-            }
             if (_nodeResources.runTaskIfPossible(taskReservation._resourceVector.cores,
                     taskReservation._resourceVector.memory, taskReservation._resourceVector.disks)) {
                 makeTaskRunnable(taskReservation);

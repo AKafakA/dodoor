@@ -144,6 +144,8 @@ def main():
         file.write("datastore.metrics.log.file = {} \n".format(options.datastore_trace_file))
         file.write("scheduler.metrics.log.file = {} \n".format(options.scheduler_trace_file))
 
+    file.write("scheduler.type = {} \n".format(options.scheduler_type))
+
     file.write("system.cores = {} \n".format(options.cores))
 
     file.write("system.memory = {} \n".format(options.memory))
