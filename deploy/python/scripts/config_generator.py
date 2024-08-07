@@ -36,13 +36,13 @@ def parse_args():
                            "same as scheduler ports to create multiple data stores instances")
     parser.add_option("--node-enqueue-ports", default="20502",
                       help="The port number of the internal service to enqueue and dequeue the tasks")
-    parser.add_option("--scheduler-thrift-threads", default=10,
+    parser.add_option("--scheduler-thrift-threads", default=1,
                       help="The number of threads running in scheduler service to listen to the thrift requests")
-    parser.add_option("--node-monitor-thrift-threads", default=4,
+    parser.add_option("--node-monitor-thrift-threads", default=1,
                       help="The number of threads running in node monitor to listen to the thrift requests")
-    parser.add_option("--data-store-thrift-threads", default=4,
+    parser.add_option("--data-store-thrift-threads", default=1,
                       help="The number of threads running in data store to listen to the thrift requests")
-    parser.add_option("--node-enqueue-thrift-threads", default=4,
+    parser.add_option("--node-enqueue-thrift-threads", default=1,
                       help="The number of threads running in internal service to listen to the thrift requests")
     parser.add_option("-t", "--trace-enabled",
                       default=True, help="whether to enable the trace of the system status")
@@ -77,6 +77,8 @@ def parse_args():
                            "delay the tasks kicking off until the time comes.")
     parser.add_option("--replay_with_disk", default=False,
                       help="Whether to replay the trace with disks requirements or just ignore it.")
+    parser.add_option("--num_thread_concurrent_submitted_tasks", default=1000,
+                      help="The number of threads concurrently submitting the tasks to scheduler from trace player.")
 
     return parser.parse_args()
 
@@ -171,6 +173,8 @@ def main():
 
     file.write("node.num.tasks.update = {} \n".format(options.node_num_tasks_update))
     file.write("scheduler.num.tasks.update = {} \n".format(options.scheduler_num_tasks_update))
+    file.write("trace.num.thread.concurrent.submitted.tasks = {} \n"
+               .format(options.num_thread_concurrent_submitted_tasks))
 
     file.close()
 

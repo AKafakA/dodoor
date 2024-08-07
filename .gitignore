@@ -51,3 +51,5 @@ deploy/resources/data/raw_data/
 
 deploy/resources/cl_manifest.xml
 deploy/resources/host_addresses/
+
+deploy/resources/figure/

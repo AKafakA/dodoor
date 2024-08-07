@@ -39,7 +39,7 @@ service DataStoreService {
   # Update the state of the nodes for scheduling decisions by given the node enqueue socket address and the node state
   void overrideNodeState(1:string nodeEnqueueAddress, 2:types.TNodeState nodeState);
   # Add the load of set of tasks to the node specified by the nodeEnqueueAddress
-  void addNodeLoad(1:string nodeEnqueueAddress, 2:types.TResourceVector resourceLoad, 3:i32 numTasks, 4:i32 sign);
+  void addNodeLoads(1: map<string, types.TNodeState> additionNodeStates, 2: i32 sign);
 
   map<string, types.TNodeState> getNodeStates();
 }

@@ -6,8 +6,7 @@ from deploy.python.analysis.composited_nodes_metrics import CompositedNodesMetri
 from deploy.python.analysis.scheduler_metrics import SchedulerMetrics
 
 use_caelum = False
-num_nodes = 30
-experiment_name = "exp_azure_full_replay_{}/dodoor".format(num_nodes)
+experiment_name = "exp_azure_full_replay/dodoor"
 if use_caelum:
     experiment_name += "_caelum"
 else:
@@ -17,7 +16,7 @@ if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 70
+max_checkpoints = 700
 composited_node_host_file = "deploy/resources/log/node/{}".format(experiment_name)
 
 nodes_metrics = CompositedNodesMetrics(composited_node_host_file)

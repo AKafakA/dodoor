@@ -20,6 +20,9 @@ public class DodoorConf {
     // Values: "debug", "info", "warn", "error", "fatal"
     public final static String LOG_LEVEL = "log_level";
 
+    public final static String NUM_THREAD_CONCURRENT_SUBMITTED_TASKS = "trace.num.thread.concurrent.submitted.tasks";
+    public final static int DEFAULT_NUM_THREAD_CONCURRENT_SUBMITTED_TASKS = 1000;
+
 
     /**
      * Scheduler config
@@ -36,7 +39,7 @@ public class DodoorConf {
     public final static String SCHEDULER_THRIFT_THREADS =
             "scheduler.thrift.threads";
     // Listen port for the state store --> scheduler interface
-    public final static int DEFAULT_SCHEDULER_THRIFT_THREADS = 10;
+    public final static int DEFAULT_SCHEDULER_THRIFT_THREADS = 1;
 
     // beta value for 1 + beta process
     public final static String BETA = "dodoor.beta";
@@ -52,7 +55,7 @@ public class DodoorConf {
             "datastore.thrift.threads";
 
     public final static int DEFAULT_DATA_STORE_THRIFT_PORT = 20510;
-    public final static int DEFAULT_DATA_STORE_THRIFT_THREADS = 4;
+    public final static int DEFAULT_DATA_STORE_THRIFT_THREADS = 1;
     public final static String BATCH_SIZE = "dodoor.batch_size";
     public final static int DEFAULT_BATCH_SIZE = 1024;
 
@@ -66,7 +69,7 @@ public class DodoorConf {
     public final static String NODE_MONITOR_THRIFT_PORTS = "node.monitor.thrift.ports";
     public final static int DEFAULT_NODE_MONITOR_THRIFT_PORT = 20501;
     public final static String NM_THRIFT_THREADS = "node.monitor.thrift.threads";
-    public final static int DEFAULT_NM_THRIFT_THREADS = 4;
+    public final static int DEFAULT_NM_THRIFT_THREADS = 1;
 
     /* List of ports corresponding to node monitors (internal interface) this daemon is
      * supposed to run. In most deployment scenarios this will consist of a single port,

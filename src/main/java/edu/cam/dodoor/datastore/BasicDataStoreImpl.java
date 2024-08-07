@@ -34,12 +34,19 @@ public class BasicDataStoreImpl implements DataStore{
     }
 
     @Override
-    public void addNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector, int numTasks, int sign) {
-        LOG.debug("Adding node load for {}", nodeEnqueueAddress);
+    public void addNodeLoads(Map<String, TNodeState> additionalNodeLoad, int sign) {
+        for (Map.Entry<String, TNodeState> entry : additionalNodeLoad.entrySet()) {
+            String nodeEnqueueAddress = entry.getKey();
+            TNodeState nodeState = entry.getValue();
+            addSingleNodeLoad(nodeEnqueueAddress, nodeState.resourceRequested, nodeState.numTasks, sign);
+        }
+    }
+
+    private void addSingleNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector, int numTasks, int sign) {
         TNodeState nodeState = _nodeStates.get(nodeEnqueueAddress);
         if (nodeState == null) {
             LOG.warn("Node {} not found in the data store. Creating a new entry.", nodeEnqueueAddress);
-            nodeState = new TNodeState();
+            nodeState = new TNodeState(new TResourceVector(), 0);
         }
         if (numTasks < 0 || Math.abs(sign) != 1) {
             throw new IllegalArgumentException("numTasks should be positive and sign should be 1 or -1");

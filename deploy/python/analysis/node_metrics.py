@@ -38,7 +38,7 @@ class NodeMetrics:
                         "message": []}
         self.length = 0
         # track when the node start to consume the tasks
-        self.start_step = -1
+        self.start_step = 0
 
     def parse(self):
         with open(self.log_file, 'r') as f:
@@ -48,7 +48,7 @@ class NodeMetrics:
                 elif self.num_waiting_tasks_pattern.match(line):
                     wait_task = int(line.split(",")[2].split("=")[1])
                     self.metrics["num_waiting_tasks"].append(wait_task)
-                    if wait_task > 0 > self.start_step:
+                    if wait_task > 0 >= self.start_step:
                         self.start_step = len(self.metrics["num_waiting_tasks"])
                 elif self.num_finished_tasks_pattern.match(line):
                     self.metrics["num_finished_tasks"].append(int(line.split(",")[2].split("=")[1]))
@@ -66,10 +66,17 @@ class NodeMetrics:
                     self.metrics["duration_task_waited_total"].append(average_duration * counted_tasks)
                     self.metrics["count_tasks_waited"].append(counted_tasks)
         self.length = len(self.metrics["num_waiting_tasks"])
+        self.metrics_appending()
 
     def calibrate(self, start_point, end_point):
         if start_point < 0 or end_point < self.length:
+            print("Invalid start_point {} or end_point {} with self length {}".format(start_point, end_point, self.length))
             raise ValueError("Invalid start_point or end_point")
         for key, metric in self.metrics.items():
             new_metric = calibrate_metrics(start_point, end_point, metric)
             self.metrics[key] = new_metric
+
+    def metrics_appending(self):
+        max_metrics_length = max([len(metric) for metric in self.metrics.values()])
+        for key, metric in self.metrics.items():
+            self.metrics[key].extend([metric[-1]] * (max_metrics_length - len(metric)))

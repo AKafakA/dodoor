@@ -40,7 +40,7 @@ with open(scheduler_host_file, "r") as f:
     scheduler_hosts = f.readlines()
     for host in scheduler_hosts:
         if ip_pattern.match(host) or host_patter.match(host):
-            scheduler_host.append(node_host.append(get_host_address(host, test_on_caelum=caelum_test)))
+            scheduler_host.append(get_host_address(host, test_on_caelum=caelum_test))
 
 target_scheduler_dir = "deploy/resources/log/scheduler/{}".format(exp_name)
 scheduler_log_name = "dodoor_scheduler_metrics.log"

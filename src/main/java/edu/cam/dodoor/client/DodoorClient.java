@@ -104,9 +104,10 @@ public class DodoorClient {
         return submitRequest(request);
     }
 
-    public boolean submitRequest(TSchedulingRequest request) throws TException {
+    public synchronized boolean submitRequest(TSchedulingRequest request) throws TException {
         try {
             SchedulerService.Client client = _clients.take();
+            LOG.info("Submitting request " + request.getRequestId());
             client.submitJob(request);
             _clients.put(client);
         } catch (InterruptedException e) {

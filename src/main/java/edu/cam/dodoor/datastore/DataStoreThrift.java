@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import edu.cam.dodoor.utils.ConfigUtil;
@@ -46,7 +45,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _getRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_GET_REQUEST_RATE);
         _addRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_ADD_REQUEST_RATE);
         _numMessages = _metrics.counter(DodoorConf.DATA_STORE_METRICS_NUM_MESSAGES);
-        boolean _cachedEnabled =
+        boolean cachedEnabled =
                 SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
         _dataStore = new BasicDataStoreImpl();
@@ -77,7 +76,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
             nePorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT));
         }
 
-        if (_cachedEnabled) {
+        if (cachedEnabled) {
             for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER,
                     DodoorConf.SCHEDULER_THRIFT_PORTS)) {
                 this.handleRegisterScheduler(schedulerAddress);
@@ -156,7 +155,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         Optional<InetSocketAddress> neAddress = Serialization.strToSocket(nodeEnqueueAddress);
         if (neAddress.isPresent()) {
             LOG.debug(Logging.auditEventString("register_node", neAddress.get().getHostName()));
-            _dataStore.updateNodeLoad(nodeEnqueueAddress, new TNodeState());
+            _dataStore.updateNodeLoad(nodeEnqueueAddress, new TNodeState(new TResourceVector(), 0));
         } else {
             throw new TException("Node monitor address " + nodeEnqueueAddress + " not found");
         }
@@ -176,16 +175,20 @@ public class DataStoreThrift implements DataStoreService.Iface {
     }
 
     @Override
-    public synchronized void addNodeLoad(String nodeEnqueueAddress, TResourceVector resourceLoad, int numTasks, int sign)
+    public synchronized void addNodeLoads(Map<String, TNodeState> additionNodeStates, int sign)
             throws TException {
         long numScheduledBefore = _counter.get();
-        _numMessages.inc();
-        _dataStore.addNodeLoad(nodeEnqueueAddress, resourceLoad, numTasks, sign);
-        _counter.getAndAdd(numTasks);
+        int numTasks = 0;
+        for (TNodeState nodeState : additionNodeStates.values()) {
+            numTasks += nodeState.numTasks;
+        }
         _addRequestsRate.mark(numTasks);
-        if (_counter.get() / _batchSize != numScheduledBefore / _batchSize) {
+        _numMessages.inc();
+        _dataStore.addNodeLoads(additionNodeStates, sign);
+        long numScheduledAfter = _counter.addAndGet(numTasks);
+        if (numScheduledAfter  / _batchSize != numScheduledBefore / _batchSize) {
             for (InetSocketAddress socket : _schedulerAddress) {
-                SchedulerService.AsyncClient client = null;
+                SchedulerService.AsyncClient client;
                 try {
                     client = _schedulerClientPool.borrowClient(socket);
                 } catch (Exception e) {

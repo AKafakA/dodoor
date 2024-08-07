@@ -27,7 +27,7 @@ public class ThriftClientPool<T extends TAsyncClient> {
   /** See {@link GenericKeyedObjectPool.Config} */
   public static int TIME_BETWEEN_EVICTION_RUNS_MILLIS = -1;
   /** See {@link GenericKeyedObjectPool.Config} */
-  public static int MAX_ACTIVE_CLIENTS_PER_ADDR = 16;
+  public static int MAX_ACTIVE_CLIENTS_PER_ADDR = 32;
 
   private static final Logger LOG = Logger.getLogger(ThriftClientPool.class);
 

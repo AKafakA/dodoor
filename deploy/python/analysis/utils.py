@@ -10,7 +10,9 @@ def collect_logs(host_list,
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     for host in host_list:
-        target_name = host.split("@")[1].split(".")[0].split("-")[1]
+        if host == None:
+            continue
+        target_name = host.split("@")[1].split(".")[0]
         target_file_path = os.path.join(os.getcwd(),
                                         output_dir + "/" + node_log_target_file_prefix + "_"
                                         + target_name + node_log_target_file_suffix)

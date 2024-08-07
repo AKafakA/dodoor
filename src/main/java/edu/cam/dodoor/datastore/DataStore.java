@@ -12,7 +12,7 @@ public interface DataStore {
 
     void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates);
 
-    void addNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector, int numTasks, int sign);
+    void addNodeLoads(Map<String, TNodeState> additionalNodeLoad, int sign);
 
     Map<String, TNodeState> getNodeStates();
 

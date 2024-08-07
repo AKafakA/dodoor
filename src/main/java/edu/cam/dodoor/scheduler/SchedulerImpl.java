@@ -39,20 +39,22 @@ public class SchedulerImpl implements Scheduler{
                     new ThriftClientPool.DataStoreServiceMakerFactory());
     
     private Map<InetSocketAddress, NodeMonitorService.Client> _nodeEqueueSocketToNodeMonitorClients;
-    private ConcurrentMap<InetSocketAddress, TNodeState> _mapEqueueSocketToNodeState;
     private List<InetSocketAddress> _dataStoreAddress;
 
     private THostPort _address;
     private TaskPlacer _taskPlacer;
     private SchedulerServiceMetrics _schedulerServiceMetrics;
     private int _numTasksToUpdateDataStore;
+    private Map<String, TNodeState> _nodeLoadChanges;
+    private Map<InetSocketAddress, TNodeState> _loadMapEqueueSocketToNodeState;
 
     @Override
     public void initialize(Configuration config, InetSocketAddress socket,
                            SchedulerServiceMetrics schedulerServiceMetrics) throws IOException {
+        _nodeLoadChanges = Maps.newConcurrentMap();
         _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = Network.socketAddressToThrift(socket);
-        _mapEqueueSocketToNodeState = Maps.newConcurrentMap();
+        _loadMapEqueueSocketToNodeState = Maps.newConcurrentMap();
         String schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         double beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
@@ -80,13 +82,16 @@ public class SchedulerImpl implements Scheduler{
             }
         }
         List<String> dataStorePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.DATA_STORE_THRIFT_PORTS)));
-        for (String dataStoreIp : config.getStringArray(DodoorConf.STATIC_DATA_STORE)) {
-            for (String dataStorePort : dataStorePorts) {
-                String dataStoreFullAddress = dataStoreIp + ":" + dataStorePort;
-                try {
-                    this.registerDataStore(dataStoreFullAddress);
-                } catch (TException e) {
-                    throw new RuntimeException(e);
+        boolean isBatchScheduler = SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
+        if (isBatchScheduler) {
+            for (String dataStoreIp : config.getStringArray(DodoorConf.STATIC_DATA_STORE)) {
+                for (String dataStorePort : dataStorePorts) {
+                    String dataStoreFullAddress = dataStoreIp + ":" + dataStorePort;
+                    try {
+                        this.registerDataStore(dataStoreFullAddress);
+                    } catch (TException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
@@ -107,22 +112,24 @@ public class SchedulerImpl implements Scheduler{
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = handleJobSubmission(request);
         _counter.getAndAdd(request.tasks.size());
         _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
-        if (numTasksBefore / _numTasksToUpdateDataStore != _counter.get() / _numTasksToUpdateDataStore) {
-            LOG.debug("{} tasks scheduled. and need to update the datastore from scheduler side", _counter.get());
-            for (InetSocketAddress nodeEnqueueAddress : mapOfNodesToPlacedTasks.keySet()) {
-                TResourceVector newRequestedResources = new TResourceVector(0, 0, 0);
-                String nodeEnqueueAddressStr = Serialization.getStrFromSocket(nodeEnqueueAddress);
-                for (TEnqueueTaskReservationRequest task : mapOfNodesToPlacedTasks.get(nodeEnqueueAddress)) {
-                    newRequestedResources.cores += task.resourceRequested.cores;
-                    newRequestedResources.memory += task.resourceRequested.memory;
-                    newRequestedResources.disks += task.resourceRequested.disks;
-                }
-                int newRequestedTasks = mapOfNodesToPlacedTasks.get(nodeEnqueueAddress).size();
+        boolean needToUpdateDataStore = numTasksBefore / _numTasksToUpdateDataStore != _counter.get() / _numTasksToUpdateDataStore;
+        for (InetSocketAddress nodeEnqueueAddress : mapOfNodesToPlacedTasks.keySet()) {
+            String nodeEnqueueAddressStr = Serialization.getStrFromSocket(nodeEnqueueAddress);
+            TResourceVector newRequestedResources = _nodeLoadChanges.get(nodeEnqueueAddressStr).resourceRequested;
+            for (TEnqueueTaskReservationRequest task : mapOfNodesToPlacedTasks.get(nodeEnqueueAddress)) {
+                newRequestedResources.cores += task.resourceRequested.cores;
+                newRequestedResources.memory += task.resourceRequested.memory;
+                newRequestedResources.disks += task.resourceRequested.disks;
+            }
+            _nodeLoadChanges.get(nodeEnqueueAddressStr).numTasks += mapOfNodesToPlacedTasks.get(nodeEnqueueAddress).size();
+            if (needToUpdateDataStore) {
+                LOG.debug("{} tasks scheduled. and need to update the datastore from scheduler side", _counter.get());
                 for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
                     try {
                         DataStoreService.AsyncClient client = _dataStoreAsyncClientPool.borrowClient(dataStoreAddress);
-                        client.addNodeLoad(nodeEnqueueAddressStr, newRequestedResources, newRequestedTasks, 1,
-                                new addNodeLoadCallback(request.requestId, nodeEnqueueAddress, client));
+                        client.addNodeLoads(_nodeLoadChanges, 1,
+                                new addNodeLoadsCallback(request.requestId, dataStoreAddress, client));
+                        resetNodeLoadChanges();
                     } catch (TException e) {
                         LOG.error("Error updating node state for node: {}", nodeEnqueueAddress.getHostName(), e);
                     } catch (Exception e) {
@@ -133,33 +140,22 @@ public class SchedulerImpl implements Scheduler{
         }
     }
 
+    private void resetNodeLoadChanges() {
+        for (String nodeEnqueueAddress : _nodeLoadChanges.keySet()) {
+            _nodeLoadChanges.get(nodeEnqueueAddress).resourceRequested.cores = 0;
+            _nodeLoadChanges.get(nodeEnqueueAddress).resourceRequested.memory = 0;
+            _nodeLoadChanges.get(nodeEnqueueAddress).resourceRequested.disks = 0;
+            _nodeLoadChanges.get(nodeEnqueueAddress).numTasks = 0;
+        }
+    }
+
     @Override
     public Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> handleJobSubmission(TSchedulingRequest request) throws TException {
         LOG.debug(Logging.functionCall(request));
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = Maps.newHashMap();
-
         long start = System.currentTimeMillis();
-
-
-        String user = "";
-        if (request.getUser() != null && request.getUser().getUser() != null) {
-            user = request.getUser().getUser();
-        }
-        String description = "";
-        if (request.getDescription() != null) {
-            description = request.getDescription();
-        }
-
-
-        LOG.info(Logging.auditEventString("arrived",
-                request.requestId,
-                request.getTasks().size(),
-                _address.getHost(),
-                _address.getPort(),
-                user, description));
-
         Map<TEnqueueTaskReservationRequest, InetSocketAddress> enqueueTaskReservationRequests
-                = _taskPlacer.getEnqueueTaskReservationRequests(request, _mapEqueueSocketToNodeState, _address);
+                = _taskPlacer.getEnqueueTaskReservationRequests(request, _loadMapEqueueSocketToNodeState, _address);
 
         for (Map.Entry<TEnqueueTaskReservationRequest, InetSocketAddress> entry :
                 enqueueTaskReservationRequests.entrySet())  {
@@ -189,12 +185,12 @@ public class SchedulerImpl implements Scheduler{
             Optional<InetSocketAddress> neAddressOptional = Serialization.strToSocket(entry.getKey());
             if (neAddressOptional.isPresent()) {
                 InetSocketAddress nodeEnqueueSocket = neAddressOptional.get();
-                if (_mapEqueueSocketToNodeState.containsKey(nodeEnqueueSocket)) {
+                if (_loadMapEqueueSocketToNodeState.containsKey(nodeEnqueueSocket)) {
                     LOG.debug("Updating load for node: {}", nodeEnqueueSocket.getHostName());
                 } else {
                     LOG.error("Adding load for unregistered node: {}", nodeEnqueueSocket.getHostName());
                 }
-                _mapEqueueSocketToNodeState.put(nodeEnqueueSocket, entry.getValue());
+                _loadMapEqueueSocketToNodeState.put(nodeEnqueueSocket, entry.getValue());
             } else {
                 LOG.error("Invalid address: {}", entry.getKey());
             }
@@ -217,7 +213,9 @@ public class SchedulerImpl implements Scheduler{
         if (nmAddress.isPresent() && neAddress.isPresent()) {
             InetSocketAddress nmSocket = nmAddress.get();
             InetSocketAddress neSocket = neAddress.get();
-            _mapEqueueSocketToNodeState.put(neSocket, new TNodeState(
+            _loadMapEqueueSocketToNodeState.put(neSocket, new TNodeState(
+                    new TResourceVector(0, 0, 0), 0));
+            _nodeLoadChanges.put(Serialization.getStrFromSocket(neSocket), new TNodeState(
                     new TResourceVector(0, 0, 0), 0));
             try {
                 _nodeEqueueSocketToNodeMonitorClients.put(neSocket,
@@ -225,7 +223,7 @@ public class SchedulerImpl implements Scheduler{
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            LOG.info("Registering node monitor at {}", nmAddress.get().getHostName());
+            LOG.info("Registering node at {}", nmAddress.get().getHostName());
         } else {
             throw new TException("Invalid address: " + nodeMonitorAddress);
         }
@@ -243,16 +241,16 @@ public class SchedulerImpl implements Scheduler{
 
     private class EnqueueTaskReservationCallback implements AsyncMethodCallback<Boolean> {
         String _taskId;
-        InetSocketAddress _nodeMonitorAddress;
+        InetSocketAddress _nodeEnqueueAddress;
         long _startTimeMillis;
         NodeEnqueueService.AsyncClient _client;
         SchedulerServiceMetrics _schedulerServiceMetrics;
 
-        public EnqueueTaskReservationCallback(String taskId, InetSocketAddress nodeMonitorAddress,
+        public EnqueueTaskReservationCallback(String taskId, InetSocketAddress nodeEnqueueAddress,
                                               NodeEnqueueService.AsyncClient client,
                                               SchedulerServiceMetrics schedulerServiceMetrics) {
             _taskId = taskId;
-            _nodeMonitorAddress = nodeMonitorAddress;
+            _nodeEnqueueAddress = nodeEnqueueAddress;
             _startTimeMillis = System.currentTimeMillis();
             _client = client;
             _schedulerServiceMetrics = schedulerServiceMetrics;
@@ -261,12 +259,12 @@ public class SchedulerImpl implements Scheduler{
         @Override
         public void onComplete(Boolean aBoolean) {
             if (!aBoolean) {
-                LOG.error("Error enqueuing task on node {}", _nodeMonitorAddress.getHostName());
+                LOG.error("Error enqueuing task on node {}", _nodeEnqueueAddress.getHostName());
             }
             long totalTime = System.currentTimeMillis() - _startTimeMillis;
             _schedulerServiceMetrics.taskScheduled(totalTime);
             LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
-                    new Object[]{_nodeMonitorAddress.getHostName(), _taskId, totalTime});
+                    new Object[]{_nodeEnqueueAddress.getHostName(), _taskId, totalTime});
             returnClient();
         }
 
@@ -279,42 +277,42 @@ public class SchedulerImpl implements Scheduler{
 
         private void returnClient() {
             try {
-                _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeMonitorAddress, _client);
+                _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeEnqueueAddress, _client);
             } catch (Exception e) {
                 LOG.error("Error returning client to node monitor client pool: {}", e.getMessage());
             }
         }
     }
 
-    private class addNodeLoadCallback implements AsyncMethodCallback<Void> {
+    private class addNodeLoadsCallback implements AsyncMethodCallback<Void> {
         long _requestId;
-        InetSocketAddress _nodeMonitorAddress;
+        InetSocketAddress _dataStoreAddress;
         DataStoreService.AsyncClient _client;
 
-        public addNodeLoadCallback(long requestId, InetSocketAddress nodeMonitorAddress,
+        public addNodeLoadsCallback(long requestId, InetSocketAddress dataStoreAddress,
                                    DataStoreService.AsyncClient client) {
             _requestId = requestId;
-            _nodeMonitorAddress = nodeMonitorAddress;
+            _dataStoreAddress = dataStoreAddress;
             _client = client;
         }
 
         @Override
         public void onComplete(Void unused) {
-            LOG.debug(Logging.auditEventString("add_nodes_load_from_scheduler",
-                    _nodeMonitorAddress.getHostName()));
             returnClient();
+            LOG.debug(Logging.auditEventString("add_nodes_load_from_scheduler_to",
+                    _dataStoreAddress.getHostName()));
         }
 
         @Override
         public void onError(Exception exception) {
             // Do not return error client to pool
-            LOG.error("Error executing addNodeLoad RPC:{}", exception.getMessage());
             returnClient();
+            LOG.error("Error executing addNodeLoads RPC:{}", exception.getMessage());
         }
 
         private void returnClient() {
             try {
-                _dataStoreAsyncClientPool.returnClient(_nodeMonitorAddress, _client);
+                _dataStoreAsyncClientPool.returnClient(_dataStoreAddress, _client);
             } catch (Exception e) {
                 LOG.error("Error returning client to data store client pool: {}", e.getMessage());
             }

@@ -48,7 +48,7 @@ class CompositedNodesMetrics:
         self.max_length = 0
         for filename in os.listdir(os.path.join(os.getcwd(), node_log_dir)):
             if filename.endswith(".log"):
-                node_id = int(filename.split("_")[-1].split(".")[0])
+                node_id = filename.split("_")[-1].split(".")[0]
                 log_file_path = os.path.join(os.getcwd(), node_log_dir, filename)
                 node_metric = NodeMetrics(log_file_path, node_id)
                 node_metric.parse()

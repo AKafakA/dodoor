@@ -1,6 +1,7 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
 import edu.cam.dodoor.thrift.*;
+import org.apache.logging.log4j.LogBuilder;
 
 import java.net.InetSocketAddress;
 import java.util.*;
