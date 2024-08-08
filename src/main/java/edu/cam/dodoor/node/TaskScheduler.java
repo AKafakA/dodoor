@@ -59,8 +59,12 @@ public abstract class TaskScheduler {
 
     protected void makeTaskRunnable(TaskSpec task) {
         try {
-            LOG.debug("Putting reservation for task {} in runnable queue", task._taskId);
+            LOG.debug("Putting reservation for task {} in runnable queue size {}", task._taskId, _runnableTaskQueue.size());
             _runnableTaskQueue.put(task);
+            if (_runnableTaskQueue.size() == 1) {
+                LOG.debug("Notifying runnable queue");
+                _runnableTaskQueue.notify();
+            }
         } catch (InterruptedException e) {
             LOG.error("Unable to add task to runnable queue: {}", e.getMessage());
         }

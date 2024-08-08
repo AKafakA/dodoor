@@ -44,7 +44,6 @@ public class TaskLauncherService {
                     if (!stdError.readLine().isEmpty()) {
                         LOG.error("Task {} failed to execute with error {}", task._taskId, stdError.readLine());
                     }
-
                 } catch (IOException | InterruptedException | TException e) {
                     throw new RuntimeException(e);
                 }

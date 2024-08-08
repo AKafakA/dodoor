@@ -44,7 +44,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     @Override
     protected void handleTaskFinished(TFullTaskId finishedTask) {
         LOG.debug("Task {} finished, freeing resources and attempting to launch new task and" +
-                "current filled slots:{} ", finishedTask.taskId, _activeTasks);
+                "current filled slots before freeing this: {} ", finishedTask.taskId, _activeTasks);
         attemptTaskLaunch(finishedTask.taskId);
     }
 
@@ -56,13 +56,13 @@ public class FifoTaskScheduler extends TaskScheduler {
      * task to execute. This method needs to be synchronized to prevent a race condition.
      */
     private synchronized void attemptTaskLaunch(String lastExecutedTaskId) {
-        _activeTasks.getAndDecrement();
+        _activeTasks.decrementAndGet();
         for (TaskSpec taskSpec : _taskReservations) {
             if (_nodeResources.runTaskIfPossible(taskSpec._resourceVector.cores,
                     taskSpec._resourceVector.memory, taskSpec._resourceVector.disks)) {
                 if (_taskReservations.remove(taskSpec)) {
                     makeTaskRunnable(taskSpec);
-                    _activeTasks.getAndIncrement();
+                    _activeTasks.incrementAndGet();
                     LOG.debug("Task {} is launched due to enough resources, {} of {} task slots currently filled",
                             new Object[] {taskSpec._taskId, _activeTasks, _numSlots});
                     taskSpec._previousTaskId = lastExecutedTaskId;
