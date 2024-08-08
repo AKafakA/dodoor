@@ -29,13 +29,12 @@ public class NodeServiceMetrics {
         _tasksRate.mark();
     }
 
-    public void taskLaunched() {
+    public void taskLaunched(long waitingDuration) {
         _waitingTasksCounter.dec();
-        _finishedTasksCounter.inc();
+        _taskWaitTimeHistogram.update(waitingDuration);
     }
 
-    public void taskFinished(long endToEndDuration) {
-        _taskWaitTimeHistogram.update(endToEndDuration);
+    public void taskFinished() {
         _finishedTasksCounter.inc();
     }
 }

@@ -24,7 +24,8 @@ public class TaskLauncherService {
         public void run() {
             while (true) {
                 TaskSpec task = _taskScheduler.getNextTask(); // blocks until task is ready
-                _nodeServiceMetrics.taskLaunched();
+                long waitingDuration = System.currentTimeMillis() - task._enqueuedTime;
+                _nodeServiceMetrics.taskLaunched(waitingDuration);
                 LOG.debug("Received task{}", task._taskId);
                 try {
                     Process process = executeLaunchTask(task);
@@ -36,8 +37,7 @@ public class TaskLauncherService {
                     }
                     LOG.debug("Task {} completed", task._taskId);
                     _node.taskFinished(task.getFullTaskId());
-                    long endToEndDuration = System.currentTimeMillis() - task._enqueuedTime;
-                    _nodeServiceMetrics.taskFinished(endToEndDuration);
+                    _nodeServiceMetrics.taskFinished();
                     LOG.debug("Completed task {} on application backend at system time {}", task._taskId, System.currentTimeMillis());
                     BufferedReader stdError = new BufferedReader(new
                             InputStreamReader(process.getErrorStream()));
