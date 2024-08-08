@@ -28,27 +28,26 @@ public class TaskLauncherService {
                 LOG.debug("Received task{}", task._taskId);
                 try {
                     Process process = executeLaunchTask(task);
-                    boolean terminated = process.waitFor(task._duration, java.util.concurrent.TimeUnit.MILLISECONDS);
+                    long pid = process.pid();
+                    LOG.debug("Task {} launched with pid {}", task._taskId, pid);
+                    Thread.sleep(task._duration);
+                    if (process.isAlive()) {
+                        process.destroyForcibly();
+                    }
+                    LOG.debug("Task {} completed", task._taskId);
+                    _node.taskFinished(task.getFullTaskId());
+                    long endToEndDuration = System.currentTimeMillis() - task._enqueuedTime;
+                    _nodeServiceMetrics.taskFinished(endToEndDuration);
+                    LOG.debug("Completed task {} on application backend at system time {}", task._taskId, System.currentTimeMillis());
                     BufferedReader stdError = new BufferedReader(new
                             InputStreamReader(process.getErrorStream()));
                     if (!stdError.readLine().isEmpty()) {
                         LOG.error("Task {} failed to execute with error {}", task._taskId, stdError.readLine());
                     }
-                    if (!terminated) {
-                        process.destroy();
-                        LOG.error("Task {} was terminated due to timeout", task._taskId);
-                    }
-                } catch (IOException | InterruptedException e) {
+
+                } catch (IOException | InterruptedException | TException e) {
                     throw new RuntimeException(e);
                 }
-                try {
-                    _node.taskFinished(task.getFullTaskId());
-                } catch (TException e) {
-                    throw new RuntimeException(e);
-                }
-                long endToEndDuration = System.currentTimeMillis() - task._enqueuedTime;
-                _nodeServiceMetrics.taskFinished(endToEndDuration);
-                LOG.debug("Completed task {} on application backend at system time {}", task._taskId, System.currentTimeMillis());
             }
 
         }
