@@ -63,6 +63,8 @@ public class FifoTaskScheduler extends TaskScheduler {
                 if (_taskReservations.remove(taskSpec)) {
                     makeTaskRunnable(taskSpec);
                     _activeTasks.getAndIncrement();
+                    LOG.debug("Task {} is launched due to enough resources, {} of {} task slots currently filled",
+                            new Object[] {taskSpec._taskId, _activeTasks, _numSlots});
                     taskSpec._previousTaskId = lastExecutedTaskId;
                     return;
                 } else {
@@ -73,7 +75,7 @@ public class FifoTaskScheduler extends TaskScheduler {
                 }
             }
         }
-        LOG.debug("No tasks to run, {} of {} task slots currently filled", _activeTasks, _numSlots);
+        LOG.debug("No tasks to run, {} of {} task slots currently filled", _activeTasks.get(), _numSlots);
     }
 
     @Override

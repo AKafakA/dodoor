@@ -66,6 +66,7 @@ public class NodeImpl implements Node{
 
     @Override
     public synchronized void taskFinished(TFullTaskId task) throws TException {
+        LOG.debug(Logging.functionCall(task));
         _requested_cores.getAndAdd(-task.resourceRequest.cores);
         _requested_memory.getAndAdd(-task.resourceRequest.memory);
         _requested_disk.getAndAdd(-task.resourceRequest.disks);
@@ -78,7 +79,7 @@ public class NodeImpl implements Node{
 
         if (numFinishedTasks % _numTasksToUpdate == 0) {
             for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
-                DataStoreService.AsyncClient dataStoreClient = null;
+                DataStoreService.AsyncClient dataStoreClient;
                 try {
                     dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
                 } catch (Exception e) {

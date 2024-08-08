@@ -34,9 +34,9 @@ public class TaskLauncherService {
                     if (!stdError.readLine().isEmpty()) {
                         LOG.error("Task {} failed to execute with error {}", task._taskId, stdError.readLine());
                     }
-                    if (!terminated && process.isAlive()) {
+                    if (!terminated) {
                         process.destroy();
-                        LOG.error("Task {} was killed due to timeout", task._taskId);
+                        LOG.error("Task {} was terminated due to timeout", task._taskId);
                     }
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
