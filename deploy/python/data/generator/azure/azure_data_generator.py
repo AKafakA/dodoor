@@ -23,7 +23,7 @@ class AzureDataGenerator(DataGenerator, ABC):
         self.time_interval = time_interval
 
     def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None,
-                 timeline_compress_ratio=1, time_shift=-1, reassign_ids=True):
+                 timeline_compress_ratio=1, time_shift=-1, reassign_ids=True, max_cores=-1, max_memory=-1, max_disk=-1):
         """
             timeline_compress_ratio is used to compress the timeline to smaller value for fasting replay.
             e.g if last events is submitted in 14th days, so the timeline should be 60000 * 60 * 24 * 14
@@ -55,6 +55,13 @@ class AzureDataGenerator(DataGenerator, ABC):
                 cores = vm[TableKeys.RESOURCE_TYPE[0]] * self.max_cores
                 memory = vm[TableKeys.RESOURCE_TYPE[1]] * self.max_memory
                 disk = vm[TableKeys.RESOURCE_TYPE[2]] * self.max_disk
+                if max_cores > 0:
+                    cores = min(cores, max_cores)
+                if max_memory > 0:
+                    memory = min(memory, max_memory)
+                if max_disk > 0:
+                    disk = min(disk, max_disk)
+
                 data.append({
                     "taskId": task_id,
                     "cores": max(MIN_CORES, math.ceil(cores)),
