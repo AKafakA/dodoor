@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -68,15 +69,16 @@ public class TaskLauncherService {
 
     public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift) {
         /* The number of threads used by the service. */
-        int _numSlots = numSlot;
-        if (_numSlots <= 0) {
+        int numSlots = numSlot;
+        if (numSlots <= 0) {
             // If the scheduler does not enforce a maximum number of tasks, just use a number of
             // threads equal to the number of cores.
-            _numSlots = Resources.getSystemCores(conf);
+            numSlots = Resources.getSystemCores(conf);
         }
         _node = nodeThrift._node;
         _nodeServiceMetrics = nodeThrift._nodeServiceMetrics;
-        _executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(_numSlots);
+        LOG.debug("Initializing task launcher service with {} slots", numSlots);
+        _executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numSlots);
     }
 
     public void tryToLaunchTask(TaskSpec task) {
@@ -94,6 +96,14 @@ public class TaskLauncherService {
 
     public long getCompletedTaskCount() {
         return _executor.getCompletedTaskCount();
+    }
+
+    public long getQueuedTaskCount() {
+        return _executor.getQueue().size();
+    }
+
+    public long getCorePoolSize() {
+        return _executor.getCorePoolSize();
     }
 
     private String generateStressCommand(int cores, long memory, long disks, long durationInSec) {
