@@ -16,41 +16,25 @@ public abstract class TaskScheduler {
     private final static Logger LOG = LoggerFactory.getLogger(TaskScheduler.class);;
 
     int _numSlots;
-    AtomicInteger _activeTasks;
 
     final NodeResources _nodeResources;
 
     protected Configuration _conf;
-    private final BlockingQueue<TaskSpec> _runnableTaskQueue =
-            new LinkedBlockingQueue<>();
+
+    protected TaskLauncherService _taskLauncherService;
 
     public TaskScheduler(int numSlots, NodeResources nodeResources) {
         _numSlots = numSlots;
         _nodeResources = nodeResources;
-        _activeTasks = new AtomicInteger(0);
     }
 
     /** Initialize the task scheduler, passing it the current available resources
      *  on the machine. */
-    void initialize(Configuration config) {
+    void initialize(Configuration config, TaskLauncherService taskLauncherService) {
         _conf = config;
+        _taskLauncherService = taskLauncherService;
     }
 
-    TaskSpec getNextTask() {
-        TaskSpec task = null;
-        try {
-            task = _runnableTaskQueue.take();
-        } catch (InterruptedException e) {
-            LOG.error("Interrupted while trying to get next task.");
-        }
-        return task;
-    }
-    /**
-     * Returns the current number of runnable tasks (for testing).
-     */
-    int runnableTasks() {
-        return _runnableTaskQueue.size();
-    }
 
     void tasksFinished(TFullTaskId finishedTask) {
         LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
@@ -58,18 +42,8 @@ public abstract class TaskScheduler {
     }
 
     protected void makeTaskRunnable(TaskSpec task) {
-        synchronized(_runnableTaskQueue) {
-            try {
-                LOG.debug("Putting reservation for task {} in runnable queue size {}", task._taskId, _runnableTaskQueue.size());
-                _runnableTaskQueue.put(task);
-                if (_runnableTaskQueue.size() == 1) {
-                    LOG.debug("Notifying runnable queue");
-                    _runnableTaskQueue.notify();
-                }
-            } catch (InterruptedException e) {
-                LOG.error("Unable to add task to runnable queue: {}", e.getMessage());
-            }
-        }
+        LOG.debug("Making task {} runnable", task._taskId);
+        _taskLauncherService.tryToLaunchTask(task);
     }
 
     public synchronized void submitTaskReservation(TEnqueueTaskReservationRequest request) {

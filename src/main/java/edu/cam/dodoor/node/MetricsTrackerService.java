@@ -25,11 +25,14 @@ public class MetricsTrackerService {
     private final long _systemMemory;
     private long _timelineInSeconds;
     private final Slf4jReporter _slf4jReporter;
+    private final TaskLauncherService _taskLauncherService;
 
 
-    public MetricsTrackerService(int trackingInterval, Configuration config, NodeServiceMetrics nodeServiceMetrics) {
+    public MetricsTrackerService(int trackingInterval, Configuration config, NodeServiceMetrics nodeServiceMetrics,
+                                 TaskLauncherService taskLauncherService) {
         _operatingSystemMXBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         _trackingInterval = trackingInterval;
+        _taskLauncherService = taskLauncherService;
         _root = new File("/");
         _totalSpace = _root.getTotalSpace();
         _systemMemory = _operatingSystemMXBean.getTotalMemorySize();
@@ -60,6 +63,7 @@ public class MetricsTrackerService {
                     Thread.sleep(TimeUnit.SECONDS.toMillis(_trackingInterval));
                     _timelineInSeconds += _trackingInterval;
                     logUsage();
+                    logLaunchService();
                 } catch (InterruptedException e) {
                     LOG.error("Metrics tracker thread interrupted", e);
                 }
@@ -73,6 +77,15 @@ public class MetricsTrackerService {
                 (double) (_systemMemory - _operatingSystemMXBean.getFreeMemorySize()) / _systemMemory;
         double diskUsage =  (double) _root.getFreeSpace() / _totalSpace;
         LOG.info("Time(in Seconds) OSM: {} CPU usage: {} Memory usage: {} Disk usage: {}", new Object[]{_timelineInSeconds, cpuUsage, memoryUsage, diskUsage});
+    }
+
+    private void logLaunchService() {
+        int numActivateTasks = _taskLauncherService.getActiveTasks();
+        long numTotalTasks = _taskLauncherService.getTaskCount();
+        long numCompletedTasks = _taskLauncherService.getCompletedTaskCount();
+        LOG.info("Time(in Seconds) TaskLauncherService: {} Active tasks: {} Total tasks: {} Completed tasks: {}",
+                new Object[]{_timelineInSeconds, numActivateTasks, numTotalTasks, numCompletedTasks}
+        );
     }
 
     public void start() {

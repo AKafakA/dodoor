@@ -11,11 +11,11 @@ def get_host_address(host_input, test_on_caelum=False):
 
 
 node_host = []
-caelum_test = False
-exp_name = "exp_azure_full_replay/dodoor"
+caelum_test = True
+exp_name = "azure/dodoor"
 if caelum_test:
-    node_host_file = "deploy/resources/caelum_host_ip"
-    scheduler_host_file = "deploy/resources/caelum_scheduler_ip"
+    node_host_file = "deploy/resources/host_addresses/caelum_host_ip"
+    scheduler_host_file = "deploy/resources/host_addresses/caelum_scheduler_ip"
     exp_name += "_caelum"
 else:
     node_host_file = "deploy/resources/host_addresses/cloud_lab/test_nodes"

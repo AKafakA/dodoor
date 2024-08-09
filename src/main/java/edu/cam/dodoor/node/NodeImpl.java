@@ -39,15 +39,15 @@ public class NodeImpl implements Node{
         _nodeResources = new NodeResources(Resources.getSystemCores(config),
                 Resources.getSystemMemoryMb(config), Resources.getSystemDiskGb(config));
         _taskScheduler = new FifoTaskScheduler(numSlots, _nodeResources);
-        _taskScheduler.initialize(config);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
-        taskLauncherService.initialize(config, _taskScheduler, nodeThrift);
+        taskLauncherService.initialize(config, numSlots, nodeThrift);
+        _taskScheduler.initialize(config, taskLauncherService);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,
                     DodoorConf.DEFAULT_TRACKING_INTERVAL);
             MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval, config,
-                    nodeThrift._nodeServiceMetrics);
+                    nodeThrift._nodeServiceMetrics, taskLauncherService);
             metricsTrackerService.start();
         }
 

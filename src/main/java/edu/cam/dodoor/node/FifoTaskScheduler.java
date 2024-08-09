@@ -21,12 +21,13 @@ public class FifoTaskScheduler extends TaskScheduler {
     synchronized int handleSubmitTaskReservation(TaskSpec taskReservation) {
         // This method, cancelTaskReservations(), and handleTaskCompleted() are synchronized to avoid
         // race conditions between updating activeTasks and taskReservations.
-        if (_activeTasks.get() < _numSlots) {
+        int currentActiveTasks = _taskLauncherService.getActiveTasks();
+        if (currentActiveTasks < _numSlots) {
             if (_nodeResources.runTaskIfPossible(taskReservation._resourceVector.cores,
                     taskReservation._resourceVector.memory, taskReservation._resourceVector.disks)) {
                 makeTaskRunnable(taskReservation);
-                _activeTasks.incrementAndGet();
-                LOG.debug("Making task for task {} runnable ({} of {} task slots currently filled)", new Object[]{taskReservation._taskId, _activeTasks, _numSlots});
+                LOG.debug("Making task for task {} runnable ({} of {} task slots currently filled)", new Object[]{taskReservation._taskId,
+                        currentActiveTasks, _numSlots});
                 return 0;
             } else {
                 LOG.warn("Failed to run task for task {} because resources are not available, will put into reservation", taskReservation._taskId);
@@ -34,17 +35,16 @@ public class FifoTaskScheduler extends TaskScheduler {
         }
         int queuedReservations = _taskReservations.size();
         LOG.debug("Enqueueing task reservation with task id {} because {} slots filled. {} already enqueued reservations.",
-                new Object[] {taskReservation._taskId,
-                _activeTasks.get()
-                ,queuedReservations});
+                new Object[] {taskReservation._taskId, currentActiveTasks,queuedReservations});
         _taskReservations.add(taskReservation);
         return queuedReservations;
     }
 
     @Override
     protected void handleTaskFinished(TFullTaskId finishedTask) {
+        int currentActiveTasks = _taskLauncherService.getActiveTasks();
         LOG.debug("Task {} finished, freeing resources and attempting to launch new task and" +
-                "current filled slots before freeing this: {} ", finishedTask.taskId, _activeTasks);
+                "current filled slots before freeing this: {} ", finishedTask.taskId, currentActiveTasks);
         attemptTaskLaunch(finishedTask.taskId);
     }
 
@@ -56,16 +56,15 @@ public class FifoTaskScheduler extends TaskScheduler {
      * task to execute. This method needs to be synchronized to prevent a race condition.
      */
     private synchronized void attemptTaskLaunch(String lastExecutedTaskId) {
-        _activeTasks.decrementAndGet();
+        int currentActiveTasks = _taskLauncherService.getActiveTasks();
         for (TaskSpec taskSpec : _taskReservations) {
             if (_nodeResources.runTaskIfPossible(taskSpec._resourceVector.cores,
                     taskSpec._resourceVector.memory, taskSpec._resourceVector.disks)) {
                 if (_taskReservations.remove(taskSpec)) {
                     makeTaskRunnable(taskSpec);
-                    _activeTasks.incrementAndGet();
                     LOG.debug("Task {} is launched due to enough resources after {} finished, " +
                                     "{} of {} task slots currently filled",
-                            new Object[] {taskSpec._taskId, lastExecutedTaskId, _activeTasks, _numSlots});
+                            new Object[] {taskSpec._taskId, lastExecutedTaskId, currentActiveTasks, _numSlots});
                     taskSpec._previousTaskId = lastExecutedTaskId;
                     return;
                 } else {
@@ -76,7 +75,7 @@ public class FifoTaskScheduler extends TaskScheduler {
                 }
             }
         }
-        LOG.debug("No tasks to run, {} of {} task slots currently filled", _activeTasks.get(), _numSlots);
+        LOG.debug("No tasks to run, {} of {} task slots currently filled", currentActiveTasks, _numSlots);
     }
 
     @Override

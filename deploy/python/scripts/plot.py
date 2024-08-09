@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from deploy.python.analysis.composited_nodes_metrics import CompositedNodesMetrics
 from deploy.python.analysis.scheduler_metrics import SchedulerMetrics
 
-use_caelum = False
-experiment_name = "exp_azure_full_replay/dodoor"
+use_caelum = True
+experiment_name = "azure/dodoor"
 if use_caelum:
     experiment_name += "_caelum"
 else:
