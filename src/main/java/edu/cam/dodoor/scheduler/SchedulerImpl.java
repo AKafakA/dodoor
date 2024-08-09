@@ -217,13 +217,6 @@ public class SchedulerImpl implements Scheduler{
                     new TResourceVector(0, 0, 0), 0));
             _nodeLoadChanges.put(Serialization.getStrFromSocket(neSocket), new TNodeState(
                     new TResourceVector(0, 0, 0), 0));
-            // Pre-cache one client to avoid the slow start of the first enqueueTaskReservation RPC
-            try {
-                NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(neSocket);
-                _nodeEnqueueServiceAsyncClientPool.returnClient(neSocket, client);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
 
             try {
                 _nodeEqueueSocketToNodeMonitorClients.put(neSocket,
@@ -242,13 +235,6 @@ public class SchedulerImpl implements Scheduler{
         Optional<InetSocketAddress> dataStoreSocket = Serialization.strToSocket(dataStoreAddress);
         if (dataStoreSocket.isPresent()) {
             _dataStoreAddress.add(dataStoreSocket.get());
-            // Pre-cache one client to avoid the slow start of the first addNodeLoads RPC
-            try {
-                DataStoreService.AsyncClient client = _dataStoreAsyncClientPool.borrowClient(dataStoreSocket.get());
-                _dataStoreAsyncClientPool.returnClient(dataStoreSocket.get(), client);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
         } else {
             throw new TException("Invalid address: " + dataStoreAddress);
         }
