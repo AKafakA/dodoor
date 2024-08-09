@@ -22,6 +22,7 @@ public class FifoTaskScheduler extends TaskScheduler {
         // This method, cancelTaskReservations(), and handleTaskCompleted() are synchronized to avoid
         // race conditions between updating activeTasks and taskReservations.
         int currentActiveTasks = _taskLauncherService.getActiveTasks();
+        boolean noEnoughResources = false;
         if (currentActiveTasks < _numSlots) {
             if (_nodeResources.runTaskIfPossible(taskReservation._resourceVector.cores,
                     taskReservation._resourceVector.memory, taskReservation._resourceVector.disks)) {
@@ -30,12 +31,14 @@ public class FifoTaskScheduler extends TaskScheduler {
                         currentActiveTasks, _numSlots});
                 return 0;
             } else {
+                noEnoughResources = true;
                 LOG.warn("Failed to run task for task {} because resources are not available, will put into reservation", taskReservation._taskId);
             }
         }
         int queuedReservations = _taskReservations.size();
-        LOG.debug("Enqueueing task reservation with task id {} because {} slots filled. {} already enqueued reservations.",
-                new Object[] {taskReservation._taskId, currentActiveTasks,queuedReservations});
+        LOG.debug("Enqueueing task reservation with task id {} with {} slots filled and no enough resources: {}. Currently " +
+                        "{} already enqueued reservations.",
+                new Object[] {taskReservation._taskId, currentActiveTasks, noEnoughResources, queuedReservations});
         _taskReservations.add(taskReservation);
         return queuedReservations;
     }

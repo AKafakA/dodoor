@@ -38,6 +38,9 @@ public class TaskLauncherService {
                 long pid = process.pid();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
                 boolean terminated = process.waitFor(task._duration, TimeUnit.MILLISECONDS);
+                if (!terminated) {
+                    process.destroy();
+                }
                 LOG.debug("Task {} completed", task._taskId);
                 _node.taskFinished(task.getFullTaskId());
                 _nodeServiceMetrics.taskFinished();

@@ -85,7 +85,7 @@ public class MetricsTrackerService {
         long numCompletedTasks = _taskLauncherService.getCompletedTaskCount();
         long numQueuedTasks = _taskLauncherService.getQueuedTaskCount();
         LOG.debug("Time(in Seconds) ThreadPool: {} Active tasks: {} Total tasks: {} " +
-                        "Completed tasks: {} Queued tasks: {} Core pool size: {}",
+                        "Completed tasks: {} Queued tasks: {}",
                 new Object[]{_timelineInSeconds, numActivateTasks, numTotalTasks, numCompletedTasks, numQueuedTasks});
     }
 
