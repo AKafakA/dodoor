@@ -46,11 +46,11 @@ def parse_args():
                       help="The number of threads running in internal service to listen to the thrift requests")
     parser.add_option("-t", "--trace-enabled",
                       default=True, help="whether to enable the trace of the system status")
-    parser.add_option("--node_trace-file", default="dodoor_node_metrics.log",
+    parser.add_option("--node_trace-file", default="node_metrics.log",
                       help="The trace file of node service to be used in the experiment")
-    parser.add_option("--datastore_trace-file", default="dodoor_datastore_metrics.log",
+    parser.add_option("--datastore_trace-file", default="datastore_metrics.log",
                       help="The trace file of datastore service to be used in the experiment")
-    parser.add_option("--scheduler_trace-file", default="dodoor_scheduler_metrics.log",
+    parser.add_option("--scheduler_trace-file", default="scheduler_metrics.log",
                       help="The trace file of scheduler service to be used in the experiment")
     parser.add_option("--tracking-interval", default=10,
                       help="The interval in seconds of tracking the system status")
