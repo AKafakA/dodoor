@@ -100,10 +100,6 @@ public class TaskLauncherService {
         return _executor.getQueue().size();
     }
 
-    public long getCorePoolSize() {
-        return _executor.getCorePoolSize();
-    }
-
     private String generateStressCommand(int cores, long memory, long disks, long durationInSec) {
         if (disks > 0) {
             cores = cores - 1; // hdd itself is cpu intensive and need to consume one core

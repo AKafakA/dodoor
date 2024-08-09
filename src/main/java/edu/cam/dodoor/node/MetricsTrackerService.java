@@ -84,10 +84,9 @@ public class MetricsTrackerService {
         long numTotalTasks = _taskLauncherService.getTaskCount();
         long numCompletedTasks = _taskLauncherService.getCompletedTaskCount();
         long numQueuedTasks = _taskLauncherService.getQueuedTaskCount();
-        long numCorePoolSize = _taskLauncherService.getCorePoolSize();
-        LOG.debug("Time(in Seconds) Active tasks: {} Total tasks: {} " +
+        LOG.debug("Time(in Seconds) ThreadPool: {} Active tasks: {} Total tasks: {} " +
                         "Completed tasks: {} Queued tasks: {} Core pool size: {}",
-                new Object[]{_timelineInSeconds, numActivateTasks, numTotalTasks, numCompletedTasks, numQueuedTasks, numCorePoolSize});
+                new Object[]{_timelineInSeconds, numActivateTasks, numTotalTasks, numCompletedTasks, numQueuedTasks});
     }
 
     public void start() {
