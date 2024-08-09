@@ -60,28 +60,14 @@ public class ServiceDaemon {
         Logger.getRootLogger().setLevel(logLevel);
 
         if (isNode) {
-            // Start as many node monitors as specified in config
-            String[] nmPorts = config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
-            String[] nePorts = config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
-
-            if (nmPorts.length != nePorts.length) {
-                throw new ConfigurationException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
-                        DodoorConf.NODE_ENQUEUE_THRIFT_PORTS + " not of equal length");
-            }
-            if (nmPorts.length == 0) {
-                (new NodeThrift()).initialize(config,
-                        DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT,
-                        DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT);
-            }
-            else {
-                for (int i = 0; i < nmPorts.length; i++) {
-                    (new NodeThrift()).initialize(config,
-                            Integer.parseInt(nmPorts[i]), Integer.parseInt(nePorts[i]));
-                }
-            }
+            // current nmPort and nePort are only supported to be one in each node
+            int nmPorts = config.getInt(DodoorConf.NODE_MONITOR_THRIFT_PORTS, DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT);
+            int nePorts = config.getInt(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS, DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT);
+            new NodeThrift().initialize(config, nmPorts, nePorts);
         }
 
         if (isDataStore) {
+            boolean logKicked = false;
             String[] dataStorePorts = config.getStringArray(DodoorConf.DATA_STORE_THRIFT_PORTS);
             if (dataStorePorts.length == 0 ) {
                 dataStorePorts = new String[]{Integer.toString(DodoorConf.DEFAULT_DATA_STORE_THRIFT_PORT)};
@@ -89,12 +75,14 @@ public class ServiceDaemon {
 
             for (String dataStorePort : dataStorePorts) {
                 DataStoreThrift dataStore = new DataStoreThrift();
-                dataStore.initialize(config, Integer.parseInt(dataStorePort));
+                dataStore.initialize(config, Integer.parseInt(dataStorePort), logKicked);
+                logKicked = true;
             }
         }
 
         if (isScheduler) {
             String[] schedulerPorts = config.getStringArray(DodoorConf.SCHEDULER_THRIFT_PORTS);
+            boolean logKicked = false;
 
             if (schedulerPorts.length == 0) {
                 schedulerPorts = new String[]{Integer.toString(DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT)};
@@ -102,7 +90,8 @@ public class ServiceDaemon {
 
             for (String schedulerPort : schedulerPorts) {
                 SchedulerThrift scheduler = new SchedulerThrift();
-                scheduler.initialize(config, Integer.parseInt(schedulerPort));
+                scheduler.initialize(config, Integer.parseInt(schedulerPort), logKicked);
+                logKicked = true;
             }
         }
     }

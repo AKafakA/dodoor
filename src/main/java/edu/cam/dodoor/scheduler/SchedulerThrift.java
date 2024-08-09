@@ -50,7 +50,7 @@ public class SchedulerThrift implements SchedulerService.Iface{
         _scheduler.registerDataStore(dataStoreAddress);
     }
 
-    public void initialize(Configuration config, int port) throws TException, IOException {
+    public void initialize(Configuration config, int port, boolean logKicked) throws TException, IOException {
         _scheduler = new SchedulerImpl();
         SchedulerService.Processor<SchedulerService.Iface> processor =
                 new SchedulerService.Processor<>(this);
@@ -64,7 +64,8 @@ public class SchedulerThrift implements SchedulerService.Iface{
         _scheduler.initialize(config, addr, schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
 
-        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
+        // Avoid one log kicked duplicated from different scheduler instances
+        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && logKicked) {
             String schedulerLogPath = config.getString(DodoorConf.SCHEDULER_METRICS_LOG_FILE,
                     DodoorConf.DEFAULT_SCHEDULER_METRICS_LOG_FILE);
             org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(SchedulerThrift.class);

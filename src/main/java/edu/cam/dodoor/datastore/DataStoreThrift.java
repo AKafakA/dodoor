@@ -38,7 +38,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
     private Meter _getRequestsRate;
     private Counter _numMessages;
 
-    public void initialize(Configuration config, int port)
+    public void initialize(Configuration config, int port, boolean logKicked)
             throws TException, IOException {
         _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.DATA_STORE_METRICS_REGISTRY);
         _overrideRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_OVERRIDE_REQUEST_RATE);
@@ -100,7 +100,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
         _numTasksPerUpdateFromNode = config.getInt(DodoorConf.NODE_NUM_TASKS_TO_UPDATE, DodoorConf.DEFAULT_NODE_NUM_TASKS_TO_UPDATE);
 
-        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
+        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && !logKicked) {
             String datastoreLogPath = config.getString(DodoorConf.DATA_STORE_METRICS_LOG_FILE,
                     DodoorConf.DEFAULT_DATA_STORE_METRICS_LOG_FILE);
             org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(DataStoreThrift.class);
