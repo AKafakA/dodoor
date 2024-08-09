@@ -2,6 +2,7 @@ package edu.cam.dodoor.node;
 
 import com.codahale.metrics.Slf4jReporter;
 import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.utils.Resources;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.*;
 
@@ -26,6 +27,8 @@ public class MetricsTrackerService {
     private long _timelineInSeconds;
     private final Slf4jReporter _slf4jReporter;
     private final TaskLauncherService _taskLauncherService;
+    private final long _memoryCapacity;
+    private final long _occupiedMemoryBeforeTask;
 
 
     public MetricsTrackerService(int trackingInterval, Configuration config, NodeServiceMetrics nodeServiceMetrics,
@@ -36,6 +39,10 @@ public class MetricsTrackerService {
         _root = new File("/");
         _totalSpace = _root.getTotalSpace();
         _systemMemory = _operatingSystemMXBean.getTotalMemorySize();
+        // track how much memory is occupied before the task is launched so that we can calculate the memory usage by the tasks only later
+        _occupiedMemoryBeforeTask = _systemMemory - _operatingSystemMXBean.getFreeMemorySize();
+        // The configured memory allowed to be scheduled for tasks should be lower than the actual system memory to avoid OOM
+        _memoryCapacity = Resources.getMemoryMbCapacity(config);
         String tracingFile = config.getString(DodoorConf.NODE_METRICS_LOG_FILE, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE);
         org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
         logger.setAdditivity(false);
@@ -73,8 +80,8 @@ public class MetricsTrackerService {
 
     private void logUsage() throws InterruptedException {
         double cpuUsage = _operatingSystemMXBean.getCpuLoad();
-        double memoryUsage =
-                (double) (_systemMemory - _operatingSystemMXBean.getFreeMemorySize()) / _systemMemory;
+        double usedMemory = _systemMemory - _operatingSystemMXBean.getFreeMemorySize() - _occupiedMemoryBeforeTask;
+        double memoryUsage = usedMemory / _memoryCapacity;
         double diskUsage =  (double) _root.getFreeSpace() / _totalSpace;
         LOG.info("Time(in Seconds) OSM: {} CPU usage: {} Memory usage: {} Disk usage: {}", new Object[]{_timelineInSeconds, cpuUsage, memoryUsage, diskUsage});
     }

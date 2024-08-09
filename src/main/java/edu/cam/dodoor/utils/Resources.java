@@ -10,7 +10,7 @@ import edu.cam.dodoor.DodoorConf;
 
 /** Utilities for interrogating system resources. */
 public class Resources {
-  public static int getSystemMemoryMb(Configuration conf) {
+  public static int getMemoryMbCapacity(Configuration conf) {
     int systemMemory = -1;
     try {
       Process p = Runtime.getRuntime().exec("cat /proc/meminfo");  
@@ -38,12 +38,12 @@ public class Resources {
     }
   }
   
-  public static int getSystemCores(Configuration conf) {
+  public static int getSystemCoresCapacity(Configuration conf) {
     // No system interrogation yet
     return conf.getInt(DodoorConf.SYSTEM_CORES, DodoorConf.DEFAULT_SYSTEM_CORES);
   }
 
-  public static int getSystemDiskGb(Configuration conf) {
+  public static int getSystemDiskGbCapacity(Configuration conf) {
     return conf.getInt(DodoorConf.SYSTEM_DISK, DodoorConf.DEFAULT_SYSTEM_DISK);
   }
 }

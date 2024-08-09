@@ -73,7 +73,7 @@ public class TaskLauncherService {
         if (numSlots <= 0) {
             // If the scheduler does not enforce a maximum number of tasks, just use a number of
             // threads equal to the number of cores.
-            numSlots = Resources.getSystemCores(conf);
+            numSlots = Resources.getSystemCoresCapacity(conf);
         }
         _node = nodeThrift._node;
         _nodeServiceMetrics = nodeThrift._nodeServiceMetrics;

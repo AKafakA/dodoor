@@ -36,8 +36,8 @@ public class NodeImpl implements Node{
     public void initialize(Configuration config, NodeThrift nodeThrift) {
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
         // TODO(wda): add more task scheduler
-        _nodeResources = new NodeResources(Resources.getSystemCores(config),
-                Resources.getSystemMemoryMb(config), Resources.getSystemDiskGb(config));
+        _nodeResources = new NodeResources(Resources.getSystemCoresCapacity(config),
+                Resources.getMemoryMbCapacity(config), Resources.getSystemDiskGbCapacity(config));
         _taskScheduler = new FifoTaskScheduler(numSlots, _nodeResources);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
         taskLauncherService.initialize(config, numSlots, nodeThrift);
