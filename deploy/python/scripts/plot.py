@@ -16,7 +16,7 @@ if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 700
+max_checkpoints = 300
 composited_node_host_file = "deploy/resources/log/node/{}".format(experiment_name)
 
 nodes_metrics = CompositedNodesMetrics(composited_node_host_file)
@@ -52,6 +52,12 @@ plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("waiting tasks variance")
 plt.savefig("{}/waiting_tasks_variance.png".format(target_dir))
 
+plt.figure(5)
+average_waiting_time = nodes_metrics.get_average_task_waited_duration()
+plt.plot(average_waiting_time[:max_checkpoints], label="average waiting time in milliseconds")
+plt.xlabel("{} seconds".format(time_steps))
+plt.ylabel("average waiting time")
+
 scheduler_host_file = "deploy/resources/log/scheduler/{}".format(experiment_name)
 scheduler_metrics = None
 for scheduler_log in os.listdir(scheduler_host_file):
@@ -62,21 +68,21 @@ num_messages = scheduler_metrics.get_num_messages()
 task_rate_m1 = scheduler_metrics.get_task_rate_m1()
 e2e_latency_avg = scheduler_metrics.get_e2e_latency_avg()
 
-plt.figure(5)
+plt.figure(6)
 plt.plot(num_messages[:max_checkpoints], label="num messages")
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("scheduler num messages")
 plt.savefig("{}/scheduler_num_messages.png".format(target_dir))
 
-plt.figure(6)
+plt.figure(7)
 plt.plot(task_rate_m1[:max_checkpoints], label="task rate m1")
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("scheduler task rate in last one minute")
 plt.savefig("{}/scheduler_task_rate_m1.png".format(target_dir))
 
-plt.figure(7)
+plt.figure(8)
 e2e_latency_avg_in_seconds = [e2e_latency / 1000 for e2e_latency in e2e_latency_avg]
-plt.plot(e2e_latency_avg[:max_checkpoints], label="e2e latency avg")
+plt.plot(e2e_latency_avg[:max_checkpoints], label="e2e latency avg in seconds")
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("scheduler e2e latency avg")
 plt.savefig("{}/scheduler_e2e_latency_avg.png".format(target_dir))

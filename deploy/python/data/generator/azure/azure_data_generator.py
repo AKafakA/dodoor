@@ -23,7 +23,8 @@ class AzureDataGenerator(DataGenerator, ABC):
         self.time_interval = time_interval
 
     def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None,
-                 timeline_compress_ratio=1, time_shift=-1, reassign_ids=True, max_cores=-1, max_memory=-1, max_disk=-1):
+                 timeline_compress_ratio=1, time_shift=-1, reassign_ids=True, max_cores=-1, max_memory=-1, max_disk=-1,
+                 take_before_request=False):
         """
             timeline_compress_ratio is used to compress the timeline to smaller value for fasting replay.
             e.g if last events is submitted in 14th days, so the timeline should be 60000 * 60 * 24 * 14
@@ -44,8 +45,11 @@ class AzureDataGenerator(DataGenerator, ABC):
                 start_time = vm[TableKeys.START_TIME]
                 if start_time > time_range_in_days[1]:
                     continue
-                elif start_time < time_range_in_days[0]:
-                    start_time = time_range_in_days[0]
+                if start_time < time_range_in_days[0]:
+                    if take_before_request:
+                        start_time = time_range_in_days[0]
+                    else:
+                        continue
                 if time_shift > 0:
                     start_time = start_time % time_shift
                 start_time *= self.time_interval * timeline_compress_ratio

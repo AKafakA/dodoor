@@ -53,7 +53,7 @@ class CompositedNodesMetrics:
                 node_metric = NodeMetrics(log_file_path, node_id)
                 node_metric.parse()
                 self.node_metrics.append(node_metric)
-                self.min_start_step = 0
+                self.min_start_step = min(node_metric.start_step, self.min_start_step)
                 self.max_length = max(node_metric.length, self.max_length)
 
         for node_metric in self.node_metrics:
