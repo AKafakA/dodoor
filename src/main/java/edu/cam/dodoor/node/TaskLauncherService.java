@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TaskLauncherService {
     private final static Logger LOG = LoggerFactory.getLogger(TaskLauncherService.class);
@@ -36,17 +37,14 @@ public class TaskLauncherService {
                 Process process = executeLaunchTask(task);
                 long pid = process.pid();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
-                Thread.sleep(task._duration);
-                if (process.isAlive()) {
-                    process.destroyForcibly();
-                }
+                boolean terminated = process.waitFor(task._duration, TimeUnit.MILLISECONDS);
                 LOG.debug("Task {} completed", task._taskId);
                 _node.taskFinished(task.getFullTaskId());
                 _nodeServiceMetrics.taskFinished();
                 BufferedReader stdError = new BufferedReader(new
                         InputStreamReader(process.getErrorStream()));
-                if (!stdError.readLine().isEmpty()) {
-                    LOG.error("Task {} failed to execute with error {}", task._taskId, stdError.readLine());
+                if (!stdError.readLine().isEmpty() || !terminated) {
+                    LOG.error("Task {} failed to execute with error {} or unterminated", task._taskId, stdError.readLine());
                 }
             } catch (IOException | InterruptedException | TException e) {
                 throw new RuntimeException(e);
