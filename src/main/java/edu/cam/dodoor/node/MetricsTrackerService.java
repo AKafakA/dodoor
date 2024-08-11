@@ -28,7 +28,6 @@ public class MetricsTrackerService {
     private final Slf4jReporter _slf4jReporter;
     private final TaskLauncherService _taskLauncherService;
     private final long _memoryCapacity;
-    private final long _occupiedMemoryBeforeTask;
 
 
     public MetricsTrackerService(int trackingInterval, Configuration config, NodeServiceMetrics nodeServiceMetrics,
@@ -40,7 +39,6 @@ public class MetricsTrackerService {
         _totalSpace = _root.getTotalSpace();
         _systemMemory = _operatingSystemMXBean.getTotalMemorySize();
         // track how much memory is occupied before the task is launched so that we can calculate the memory usage by the tasks only later
-        _occupiedMemoryBeforeTask = _systemMemory - _operatingSystemMXBean.getFreeMemorySize();
         // The configured memory allowed to be scheduled for tasks should be lower than the actual system memory to avoid OOM
         _memoryCapacity = Resources.getMemoryMbCapacity(config);
         String tracingFile = config.getString(DodoorConf.NODE_METRICS_LOG_FILE, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE);
@@ -80,8 +78,8 @@ public class MetricsTrackerService {
 
     private void logUsage() throws InterruptedException {
         double cpuUsage = _operatingSystemMXBean.getCpuLoad();
-        double usedMemory = _systemMemory - _operatingSystemMXBean.getFreeMemorySize() - _occupiedMemoryBeforeTask;
-        double memoryUsage = usedMemory / _memoryCapacity;
+        double usedMemory = _systemMemory - _operatingSystemMXBean.getFreeMemorySize();
+        double memoryUsage = usedMemory / _systemMemory;
         double diskUsage =  (double) _root.getFreeSpace() / _totalSpace;
         LOG.info("Time(in Seconds) OSM: {} CPU usage: {} Memory usage: {} Disk usage: {}", new Object[]{_timelineInSeconds, cpuUsage, memoryUsage, diskUsage});
     }

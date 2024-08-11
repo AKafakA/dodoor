@@ -51,3 +51,5 @@ target/
 deploy/resources/cl_manifest.xml
 
 deploy/resources/figure/
+
+*.out
