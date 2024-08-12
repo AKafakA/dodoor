@@ -118,8 +118,8 @@ public class DodoorConf {
     public final static int  DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE = 8;
 
     public final static String DATA_STORE_METRICS_REGISTRY = "datastore.metrics.registry";
-    public final static String DATA_STORE_METRICS_LOG_FILE = "datastore.metrics.log.file";
-    public final static String DEFAULT_DATA_STORE_METRICS_LOG_FILE = "dodoor_datastore_metrics.log";
+    public final static String DATA_STORE_METRICS_LOG_FILE_SUFFIX = "datastore.metrics.log.file";
+    public final static String DEFAULT_DATA_STORE_METRICS_LOG_FILE_SUFFIX = "datastore_metrics.log";
     public final static String DATA_STORE_METRICS_NUM_MESSAGES = "datastore.metrics.num.messages";
     public final static String DATA_STORE_METRICS_GET_REQUEST_RATE = "datastore.metrics.request.get.rate";
     public final static String DATA_STORE_METRICS_OVERRIDE_REQUEST_RATE = "datastore.metrics.request.override.rate";
@@ -127,8 +127,8 @@ public class DodoorConf {
 
 
     public final static String SCHEDULER_METRICS_REGISTRY = "scheduler.metrics.registry";
-    public final static String SCHEDULER_METRICS_LOG_FILE = "scheduler.metrics.log.file";
-    public final static String DEFAULT_SCHEDULER_METRICS_LOG_FILE = "dodoor_scheduler_metrics.log";
+    public final static String SCHEDULER_METRICS_LOG_FILE_SUFFIX = "scheduler.metrics.log.file";
+    public final static String DEFAULT_SCHEDULER_METRICS_LOG_FILE_SUFFIX = "scheduler_metrics.log";
     public final static String SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS =
             "scheduler.metrics.tasks.e2e.scheduling.latency.histograms";
     public final static String SCHEDULER_METRICS_TASK_RATE = "scheduler.metrics.tasks.rate";
@@ -139,8 +139,8 @@ public class DodoorConf {
      * Node Monitor Config
      */
     public final static String NODE_METRICS_REGISTRY = "node.metrics.registry";
-    public final static String NODE_METRICS_LOG_FILE = "node.metrics.log.file";
-    public final static String DEFAULT_NODE_METRICS_LOG_FILE = "dodoor_node_metrics.log";
+    public final static String NODE_METRICS_LOG_FILE_SUFFIX = "node.metrics.log.file";
+    public final static String DEFAULT_NODE_METRICS_LOG_FILE_SUFFIX = "node_metrics.log";
     public final static String NODE_METRICS_WAITING_TASKS = "node.metrics.tasks.waiting.count";
     public final static String NODE_METRICS_FINISHED_TASKS = "node.metrics.tasks.finished.count";
     public final static String NODE_METRICS_TASKS_WAIT_TIME_HISTOGRAMS = "node.metrics.tasks.wait.time.histograms";

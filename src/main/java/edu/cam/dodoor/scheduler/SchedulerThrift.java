@@ -66,8 +66,10 @@ public class SchedulerThrift implements SchedulerService.Iface{
 
         // Avoid one log kicked duplicated from different scheduler instances
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && logKicked) {
-            String schedulerLogPath = config.getString(DodoorConf.SCHEDULER_METRICS_LOG_FILE,
-                    DodoorConf.DEFAULT_SCHEDULER_METRICS_LOG_FILE);
+            String schedulerLogPathSuffix = config.getString(DodoorConf.SCHEDULER_METRICS_LOG_FILE_SUFFIX,
+                    DodoorConf.DEFAULT_SCHEDULER_METRICS_LOG_FILE_SUFFIX);
+            String schedulerLogPath = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER)
+                    + "_" +schedulerLogPathSuffix;
             org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(SchedulerThrift.class);
             logger.setAdditivity(false);
             try {

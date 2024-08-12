@@ -101,8 +101,9 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _numTasksPerUpdateFromNode = config.getInt(DodoorConf.NODE_NUM_TASKS_TO_UPDATE, DodoorConf.DEFAULT_NODE_NUM_TASKS_TO_UPDATE);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && !logKicked) {
-            String datastoreLogPath = config.getString(DodoorConf.DATA_STORE_METRICS_LOG_FILE,
-                    DodoorConf.DEFAULT_DATA_STORE_METRICS_LOG_FILE);
+            String datastoreLogPathSuffix = config.getString(DodoorConf.DATA_STORE_METRICS_LOG_FILE_SUFFIX,
+                    DodoorConf.DEFAULT_DATA_STORE_METRICS_LOG_FILE_SUFFIX);
+            String datastoreLogPath = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER) + "_" + datastoreLogPathSuffix;
             org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(DataStoreThrift.class);
             logger.setAdditivity(false);
             try {

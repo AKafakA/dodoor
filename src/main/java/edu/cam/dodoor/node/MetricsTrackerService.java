@@ -41,7 +41,8 @@ public class MetricsTrackerService {
         // track how much memory is occupied before the task is launched so that we can calculate the memory usage by the tasks only later
         // The configured memory allowed to be scheduled for tasks should be lower than the actual system memory to avoid OOM
         _memoryCapacity = Resources.getMemoryMbCapacity(config);
-        String tracingFile = config.getString(DodoorConf.NODE_METRICS_LOG_FILE, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE);
+        String tracingFileSuffix = config.getString(DodoorConf.NODE_METRICS_LOG_FILE_SUFFIX, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE_SUFFIX);
+        String tracingFile = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER) + "_" + tracingFileSuffix;
         org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
         logger.setAdditivity(false);
         try {
