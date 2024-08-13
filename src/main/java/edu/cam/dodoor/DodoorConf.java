@@ -47,6 +47,11 @@ public class DodoorConf {
     public final static double DEFAULT_BETA = 0.75;
 
 
+    // number of probes to send for sparrow, cached sparrow, and late binding sparrow
+    public final static String SCHEDULER_NUM_PROBES = "scheduler.num.probes";
+    public final static int DEFAULT_SCHEDULER_NUM_PROBES = 2;
+
+
 
     /**
      * Data Store Config
@@ -130,8 +135,8 @@ public class DodoorConf {
     public final static String SCHEDULER_METRICS_REGISTRY = "scheduler.metrics.registry";
     public final static String SCHEDULER_METRICS_LOG_FILE_SUFFIX = "scheduler.metrics.log.file";
     public final static String DEFAULT_SCHEDULER_METRICS_LOG_FILE_SUFFIX = "scheduler_metrics.log";
-    public final static String SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS =
-            "scheduler.metrics.tasks.e2e.scheduling.latency.histograms";
+    public final static String SCHEDULER_METRICS_END_TO_END_TASK_RESERVATION_LATENCY_HISTOGRAMS =
+            "scheduler.metrics.tasks.e2e.reservation.latency.histograms";
     public final static String SCHEDULER_METRICS_END_TO_END_TASK_LATENCY_HISTOGRAMS =
             "scheduler.metrics.tasks.e2e.latency.histograms";
     public final static String SCHEDULER_METRICS_TASK_RATE = "scheduler.metrics.tasks.rate";

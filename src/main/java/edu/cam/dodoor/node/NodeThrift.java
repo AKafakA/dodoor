@@ -102,7 +102,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
 
     @Override
     public boolean lazyLauchTask(TFullTaskId task) throws TException {
-        return false;
+        return _node.lazyLauchTask(task);
     }
 
     @Override
@@ -130,9 +130,10 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     }
 
     @Override
-    public void taskCancelled(TFullTaskId task) throws TException {
+    public boolean taskReservationToCancel(TFullTaskId task) throws TException {
         _numMessages.inc();
         LOG.debug(Logging.auditEventString("task_cancelled_from_node", task.taskId, _hostName));
+        return _node.taskReservationToCancel(task);
     }
 
     @Override

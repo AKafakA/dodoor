@@ -121,6 +121,16 @@ public class NodeImpl implements Node{
         return true;
     }
 
+    @Override
+    public boolean lazyLauchTask(TFullTaskId task) throws TException {
+        return false;
+    }
+
+    @Override
+    public boolean taskReservationToCancel(TFullTaskId task) throws TException {
+        return false;
+    }
+
     private class UpdateNodeLoadCallBack implements AsyncMethodCallback<Void> {
         private final DataStoreService.AsyncClient _client;
         private final InetSocketAddress _address;

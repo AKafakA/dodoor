@@ -71,5 +71,5 @@ service NodeEnqueueService {
   void taskFinished(1: types.TFullTaskId task);
 
   # Notify if a task is cancelled at node side, this is only used for late binding scheduler to cancel the task which mighe be reserved at multiple nodes
-  void taskCancelled(1: types.TFullTaskId task);
+  bool taskReservationToCancel(1: types.TFullTaskId task);
 }

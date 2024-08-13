@@ -6,15 +6,15 @@ import edu.cam.dodoor.DodoorConf;
 
 public class SchedulerServiceMetrics {
 
-    private final Histogram _endToEndSchedulingLatencyHistogram;
+    private final Histogram _endToEndReservationLatencyHistogram;
     private final Histogram _endToEndLatencyHistogram;
     private final Meter _tasksRate;
     private final Meter _loadUpdateRate;
     private final Counter _numSchedulingMessages;
 
     public SchedulerServiceMetrics(MetricRegistry metrics) {
-        _endToEndSchedulingLatencyHistogram = metrics.histogram(
-                DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS,
+        _endToEndReservationLatencyHistogram = metrics.histogram(
+                DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_RESERVATION_LATENCY_HISTOGRAMS,
                 () -> new Histogram(new UniformReservoir()));
         _endToEndLatencyHistogram = metrics.histogram(
                 DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_LATENCY_HISTOGRAMS,
@@ -36,9 +36,13 @@ public class SchedulerServiceMetrics {
         _loadUpdateRate.mark();
     }
 
-    public void taskScheduled(long latency) {
+    public void taskReserved(long latency) {
         _numSchedulingMessages.inc();
-        _endToEndSchedulingLatencyHistogram.update(latency);
+        _endToEndReservationLatencyHistogram.update(latency);
+    }
+
+    public void taskReservationCancelled() {
+        _numSchedulingMessages.inc();
     }
 
     public void taskFinished(long latency) {

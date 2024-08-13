@@ -14,6 +14,10 @@ public interface Node {
 
     boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException;
 
+    boolean lazyLauchTask(TFullTaskId task) throws TException;
+
+    boolean taskReservationToCancel(TFullTaskId task) throws TException;
+
     TResourceVector getRequestedResourceVector();
 
     int getNumTasks();

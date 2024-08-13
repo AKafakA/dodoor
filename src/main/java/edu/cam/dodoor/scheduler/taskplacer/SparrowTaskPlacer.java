@@ -9,13 +9,14 @@ import java.util.*;
 public class SparrowTaskPlacer extends TaskPlacer{
     Map<InetSocketAddress, NodeMonitorService.Client> _nodeMonitorClients;
     public SparrowTaskPlacer(double beta,
+                             int numProbe,
                              Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients) {
-        super(beta);
+        super(beta, numProbe);
         _nodeMonitorClients = nodeMonitorClients;
     }
 
     @Override
-    public Map<TEnqueueTaskReservationRequest, InetSocketAddress> getEnqueueTaskReservationRequests(
+    public Map<TEnqueueTaskReservationRequest, InetSocketAddress> getEnqueueTaskReservationRequestsToSingleAddress(
             TSchedulingRequest schedulingRequest,
             Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress) {
         Map<TEnqueueTaskReservationRequest, InetSocketAddress> allocations = new HashMap<>();
@@ -25,13 +26,17 @@ public class SparrowTaskPlacer extends TaskPlacer{
             Random ran = new Random();
             double flag = ran.nextFloat();
             int firstIndex = ran.nextInt(loadMaps.size());
+            int miniPendingTasks;
             if (flag < _beta) {
-                int secondIndex = ran.nextInt(loadMaps.size());
                 try {
-                    int numPendingTasks1 = _nodeMonitorClients.get(nodeAddresses.get(firstIndex)).getNumTasks();
-                    int numPendingTasks2 = _nodeMonitorClients.get(nodeAddresses.get(secondIndex)).getNumTasks();
-                    if (numPendingTasks1 > numPendingTasks2) {
-                        firstIndex = secondIndex;
+                    miniPendingTasks = _nodeMonitorClients.get(nodeAddresses.get(firstIndex)).getNumTasks();
+                    for (int i = 1; i < _numProbe; i++) {
+                        int secondIndex = ran.nextInt(loadMaps.size());
+                        int newNumPendingTasks = _nodeMonitorClients.get(nodeAddresses.get(secondIndex)).getNumTasks();
+                        if (miniPendingTasks > newNumPendingTasks) {
+                            firstIndex = secondIndex;
+                            miniPendingTasks = newNumPendingTasks;
+                        }
                     }
                 } catch (TException e) {
                     throw new RuntimeException(e);

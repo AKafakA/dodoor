@@ -18,6 +18,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -50,12 +51,16 @@ public class SchedulerImpl implements Scheduler{
 
     private Map<String, Long> _scheduledTaskToReceivedTime;
     private boolean _isLateBinding;
+    private Map<String, Set<InetSocketAddress>> _taskToReservedNodeMap;
 
     @Override
     public void initialize(Configuration config, InetSocketAddress socket,
                            SchedulerServiceMetrics schedulerServiceMetrics) throws IOException {
         _scheduledTaskToReceivedTime = Maps.newConcurrentMap();
         _isLateBinding = SchedulerUtils.isLateBindingEnabled(config);
+        if (_isLateBinding) {
+            _taskToReservedNodeMap = Maps.newConcurrentMap();
+        }
         _nodeLoadChanges = Maps.newConcurrentMap();
         _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = Network.socketAddressToThrift(socket);
@@ -101,7 +106,12 @@ public class SchedulerImpl implements Scheduler{
             }
         }
 
-        _taskPlacer = TaskPlacer.createTaskPlacer(beta,
+        if (isBatchScheduler && _isLateBinding) {
+            throw new IllegalArgumentException("Late binding is not supported for batch scheduler");
+        }
+
+        int numProbe = config.getInt(DodoorConf.SCHEDULER_NUM_PROBES, DodoorConf.DEFAULT_SCHEDULER_NUM_PROBES);
+        _taskPlacer = TaskPlacer.createTaskPlacer(beta, numProbe,
                 schedulingStrategy, _nodeEqueueSocketToNodeMonitorClients);
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
@@ -159,23 +169,31 @@ public class SchedulerImpl implements Scheduler{
         LOG.debug(Logging.functionCall(request));
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = Maps.newHashMap();
         long start = System.currentTimeMillis();
-        Map<TEnqueueTaskReservationRequest, InetSocketAddress> enqueueTaskReservationRequests
-                = _taskPlacer.getEnqueueTaskReservationRequests(request, _loadMapEqueueSocketToNodeState, _address);
+        Map<TEnqueueTaskReservationRequest, Set<InetSocketAddress>> enqueueTaskReservationRequestsToNodes
+                = _taskPlacer.getEnqueueTaskReservationRequestsToSet(request, _loadMapEqueueSocketToNodeState, _address);
 
-        for (Map.Entry<TEnqueueTaskReservationRequest, InetSocketAddress> entry :
-                enqueueTaskReservationRequests.entrySet())  {
-            try {
-                _scheduledTaskToReceivedTime.put(entry.getKey().taskId, System.currentTimeMillis());
-                NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(entry.getValue());
-                LOG.debug("Launching enqueueTask for request {} on node: {}", request.requestId, entry.getValue().getHostName());
-                client.enqueueTaskReservation(entry.getKey(), new EnqueueTaskReservationCallback(
-                        entry.getKey().taskId, entry.getValue(), client, _schedulerServiceMetrics));
-                if (!mapOfNodesToPlacedTasks.containsKey(entry.getValue())) {
-                    mapOfNodesToPlacedTasks.put(entry.getValue(), new ArrayList<>());
+        for (TEnqueueTaskReservationRequest taskReservationRequest : enqueueTaskReservationRequestsToNodes.keySet()) {
+            if (_isLateBinding) {
+                _taskToReservedNodeMap.put(taskReservationRequest.taskId,
+                        enqueueTaskReservationRequestsToNodes.get(taskReservationRequest));
+            }
+            for (InetSocketAddress nodeEnqueueAddress : enqueueTaskReservationRequestsToNodes.get(taskReservationRequest)) {
+                try {
+                    _scheduledTaskToReceivedTime.put(taskReservationRequest.taskId, System.currentTimeMillis());
+                    NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(nodeEnqueueAddress);
+                    LOG.debug("Launching enqueueTask for request {} on node: {}", request.requestId, nodeEnqueueAddress.getHostName());
+                    if (taskReservationRequest.nodeEnqueueAddress.equals(TaskPlacer.NO_PLACED)) {
+                        taskReservationRequest.nodeEnqueueAddress = Serialization.getStrFromSocket(nodeEnqueueAddress);
+                    }
+                    client.enqueueTaskReservation(taskReservationRequest, new EnqueueTaskReservationCallback(
+                            taskReservationRequest.taskId, nodeEnqueueAddress, client, _schedulerServiceMetrics));
+                    if (!mapOfNodesToPlacedTasks.containsKey(nodeEnqueueAddress)) {
+                        mapOfNodesToPlacedTasks.put(nodeEnqueueAddress, new ArrayList<>());
+                    }
+                    mapOfNodesToPlacedTasks.get(nodeEnqueueAddress).add(taskReservationRequest);
+                } catch (Exception e) {
+                    LOG.error("Error enqueuing task on node {}", nodeEnqueueAddress.getHostName(), e);
                 }
-                mapOfNodesToPlacedTasks.get(entry.getValue()).add(entry.getKey());
-            } catch (Exception e) {
-                LOG.error("Error enqueuing task on node {}", entry.getValue().getHostName(), e);
             }
         }
         long end = System.currentTimeMillis();
@@ -260,6 +278,20 @@ public class SchedulerImpl implements Scheduler{
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
+                for (InetSocketAddress nodeEnqueueSocket : _taskToReservedNodeMap.get(task.taskId)) {
+                   if (!nodeEnqueueSocket.equals(nodeEnqueueAddressOptional.get())) {
+                          try {
+                            NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(
+                                      nodeEnqueueSocket);
+                            client.taskReservationToCancel(task, new TaskReservationToCancelCallback(client,
+                                    nodeEnqueueSocket, task.taskId));
+                            _schedulerServiceMetrics.taskReservationCancelled();
+                          } catch (Exception e) {
+                            throw new RuntimeException(e);
+                          }
+                   }
+                }
+                _taskToReservedNodeMap.remove(task.taskId);
             } else {
                 LOG.error("Invalid address: {} when try to launch task {}", nodeEnqueueAddress, task.taskId);
             }
@@ -297,7 +329,7 @@ public class SchedulerImpl implements Scheduler{
                 LOG.error("Error enqueuing task on node {}", _nodeEnqueueAddress.getHostName());
             }
             long totalTime = System.currentTimeMillis() - _startTimeMillis;
-            _schedulerServiceMetrics.taskScheduled(totalTime);
+            _schedulerServiceMetrics.taskReserved(totalTime);
             LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
                     new Object[]{_nodeEnqueueAddress.getHostName(), _taskId, totalTime});
             returnClient();
@@ -386,6 +418,44 @@ public class SchedulerImpl implements Scheduler{
                 _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeEnqueueAddress, _client);
             } catch (Exception e) {
                 LOG.error("Error returning client to node monitor client pool for launch rpc: {}", e.getMessage());
+            }
+        }
+    }
+
+    private class TaskReservationToCancelCallback implements AsyncMethodCallback<Boolean> {
+        NodeEnqueueService.AsyncClient _client;
+        InetSocketAddress _nodeEnqueueAddress;
+        String _taskId;
+
+        public TaskReservationToCancelCallback(NodeEnqueueService.AsyncClient client,
+                                               InetSocketAddress nodeEnqueueAddress,
+                                               String taskId) {
+            _client = client;
+            _nodeEnqueueAddress = nodeEnqueueAddress;
+            _taskId = taskId;
+        }
+
+        @Override
+        public void onComplete(Boolean aBoolean) {
+            if (!aBoolean) {
+                LOG.error("Error cancelling task {} on node {}", _taskId, _nodeEnqueueAddress.getHostName());
+            } else {
+                LOG.debug("Task {} cancelled on node {}", _taskId, _nodeEnqueueAddress.getHostName());
+            }
+            returnClient();
+        }
+
+        @Override
+        public void onError(Exception e) {
+            LOG.error("Error cancelling task on node {}", _nodeEnqueueAddress.getHostName(), e);
+            returnClient();
+        }
+
+        private void returnClient() {
+            try {
+                _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeEnqueueAddress, _client);
+            } catch (Exception e) {
+                LOG.error("Error returning client to node client pool for cancelling reservation rpc: {}", e.getMessage());
             }
         }
     }
