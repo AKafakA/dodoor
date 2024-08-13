@@ -57,7 +57,7 @@ class CompositedNodesMetrics:
                 self.max_length = max(node_metric.length, self.max_length)
 
         for node_metric in self.node_metrics:
-            node_metric.calibrate(self.min_start_step, self.max_length)
+            node_metric.calibrate(0, self.max_length)
         self.length = self.max_length - self.min_start_step
 
     def get_num_nodes(self):

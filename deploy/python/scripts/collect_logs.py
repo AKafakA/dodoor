@@ -32,7 +32,7 @@ with open(node_host_file, "r") as f:
             node_host.append(get_host_address(host, test_on_caelum=caelum_test))
 
 target_dir = "deploy/resources/log/node/{}".format(exp_name)
-node_log_name = "dodoor_node_metrics.log"
+node_log_name = "*_node_metrics.log"
 node_log_target_file_prefix = "dodoor_node_metrics"
 
 scheduler_host = []
@@ -43,7 +43,7 @@ with open(scheduler_host_file, "r") as f:
             scheduler_host.append(get_host_address(host, test_on_caelum=caelum_test))
 
 target_scheduler_dir = "deploy/resources/log/scheduler/{}".format(exp_name)
-scheduler_log_name = "dodoor_scheduler_metrics.log"
+scheduler_log_name = "*_scheduler_metrics.log"
 scheduler_log_target_file_prefix = "dodoor_scheduler_metrics"
 
 collect_logs(node_host, output_dir=target_dir,

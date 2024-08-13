@@ -1,15 +1,14 @@
-package edu.cam.dodoor.node;
+package edu.cam.dodoor.node.taskscheduler;
 
 
+import edu.cam.dodoor.node.NodeResources;
+import edu.cam.dodoor.node.TaskLauncherService;
+import edu.cam.dodoor.node.TaskSpec;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class TaskScheduler {
 
@@ -30,13 +29,13 @@ public abstract class TaskScheduler {
 
     /** Initialize the task scheduler, passing it the current available resources
      *  on the machine. */
-    void initialize(Configuration config, TaskLauncherService taskLauncherService) {
+    public void initialize(Configuration config, TaskLauncherService taskLauncherService) {
         _conf = config;
         _taskLauncherService = taskLauncherService;
     }
 
 
-    void tasksFinished(TFullTaskId finishedTask) {
+    public void tasksFinished(TFullTaskId finishedTask) {
         LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
         handleTaskFinished(finishedTask);
     }

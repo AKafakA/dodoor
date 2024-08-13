@@ -19,4 +19,6 @@ public interface Scheduler {
     void updateNodeState(Map<String, TNodeState> snapshot);
     void registerNode(String nodeAddress) throws TException;
     void registerDataStore(String dataStoreAddress) throws TException;
+    void taskToLaunch(TFullTaskId task, String nodeEnqueueAddress) throws TException;
+    void taskFinished(TFullTaskId task) throws TException;
 }

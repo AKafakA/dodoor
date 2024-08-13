@@ -1,6 +1,7 @@
 package edu.cam.dodoor.utils;
 
 import edu.cam.dodoor.DodoorConf;
+import org.apache.commons.configuration.Configuration;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,5 +13,10 @@ public class SchedulerUtils {
 
     public static boolean isCachedEnabled(String schedulerType) {
         return CACHED_SCHEDULERS_SET.contains(schedulerType);
+    }
+
+    public static boolean isLateBindingEnabled(Configuration configuration) {
+        String schedulerType = configuration.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
+        return schedulerType.equals(DodoorConf.LATE_BINDING_SPARROW);
     }
 }

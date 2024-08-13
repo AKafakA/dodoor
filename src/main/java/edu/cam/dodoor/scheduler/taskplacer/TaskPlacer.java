@@ -6,6 +6,7 @@ import edu.cam.dodoor.utils.Serialization;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class TaskPlacer {
     double _beta;
@@ -17,6 +18,13 @@ public abstract class TaskPlacer {
     public Map<TEnqueueTaskReservationRequest, InetSocketAddress> getEnqueueTaskReservationRequests(
             TSchedulingRequest schedulingRequest,
             Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress) {
+        return null;
+    }
+
+    public Map<TEnqueueTaskReservationRequest, Set<InetSocketAddress>> getLateBindingReservationRequests(
+            TSchedulingRequest schedulingRequest,
+            Map<InetSocketAddress, TNodeState> loadMaps, THostPort schedulerAddress,
+            Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients) {
         return null;
     }
 

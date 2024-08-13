@@ -5,6 +5,16 @@ import matplotlib.pyplot as plt
 from deploy.python.analysis.composited_nodes_metrics import CompositedNodesMetrics
 from deploy.python.analysis.scheduler_metrics import SchedulerMetrics
 
+
+def remove_outliers(data, threshold=3):
+    mean = sum(data) / len(data)
+    std_dev = (sum([(x - mean) ** 2 for x in data]) / len(data)) ** 0.5
+    for i in range(len(data)):
+        if abs(data[i] - mean) > threshold * std_dev:
+            data[i] = mean
+        else:
+            data[i] = data[i]
+
 use_caelum = True
 experiment_name = "azure/dodoor"
 if use_caelum:
@@ -16,7 +26,7 @@ if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 300
+max_checkpoints = 3000
 composited_node_host_file = "deploy/resources/log/node/{}".format(experiment_name)
 
 nodes_metrics = CompositedNodesMetrics(composited_node_host_file)
@@ -82,7 +92,7 @@ plt.savefig("{}/scheduler_task_rate_m1.png".format(target_dir))
 
 plt.figure(8)
 e2e_latency_avg_in_seconds = [e2e_latency / 1000 for e2e_latency in e2e_latency_avg]
-plt.plot(e2e_latency_avg[:max_checkpoints], label="e2e latency avg in seconds")
+plt.plot(e2e_latency_avg_in_seconds[:max_checkpoints], label="e2e latency avg in seconds")
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("scheduler e2e latency avg")
 plt.savefig("{}/scheduler_e2e_latency_avg.png".format(target_dir))

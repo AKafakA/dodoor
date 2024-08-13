@@ -26,8 +26,14 @@ service SchedulerService {
   void updateNodeState(1: map<string, types.TNodeState> snapshot);
   # Register a node with the given socket address for enqueue and monitoring (IP: nmPort:nePort)
   void registerNode(1: string nodeFullAddress);
-    # Register a datastore with the given socket address (IP: Port)
+  # Register a datastore with the given socket address (IP: Port)
   void registerDataStore(1: string dataStoreAddress);
+
+  # Notify if a task is launched at node side
+  void taskToLaunch(1: types.TFullTaskId task, 2: string nodeEnqueueAddress);
+
+  # Notify if a task is finished at node side
+  void taskFinished(1: types.TFullTaskId task);
 }
 
 # DataStoreService for storing the state of the nodes
@@ -57,6 +63,13 @@ service NodeMonitorService {
 
 # Service of the node exposed to the scheduler to enqueue tasks
 service NodeEnqueueService {
+  # Enqueue a task to the node
   bool enqueueTaskReservation(1: types.TEnqueueTaskReservationRequest request);
+  # Notify if a reserved task is abled to be launched at node side, this is only used for late binding scheduler
+  bool lazyLauchTask(1: types.TFullTaskId task);
+  # Notify if a task is finished at node side
   void taskFinished(1: types.TFullTaskId task);
+
+  # Notify if a task is cancelled at node side, this is only used for late binding scheduler to cancel the task which mighe be reserved at multiple nodes
+  void taskCancelled(1: types.TFullTaskId task);
 }

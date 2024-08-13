@@ -101,6 +101,11 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     }
 
     @Override
+    public boolean lazyLauchTask(TFullTaskId task) throws TException {
+        return false;
+    }
+
+    @Override
     public void registerDataStore(String dataStoreAddress) throws TException {
         _numMessages.inc();
         handleRegisterDataStore(dataStoreAddress);
@@ -122,6 +127,12 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         _numMessages.inc();
         _node.taskFinished(task);
         LOG.debug(Logging.auditEventString("task_finished_from_node", task.taskId, _hostName));
+    }
+
+    @Override
+    public void taskCancelled(TFullTaskId task) throws TException {
+        _numMessages.inc();
+        LOG.debug(Logging.auditEventString("task_cancelled_from_node", task.taskId, _hostName));
     }
 
     @Override

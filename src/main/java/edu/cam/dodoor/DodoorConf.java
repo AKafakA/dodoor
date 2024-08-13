@@ -33,6 +33,7 @@ public class DodoorConf {
     public final static String SPARROW_SCHEDULER = "sparrow";
     public final static String CACHED_SPARROW_SCHEDULER = "cached_sparrow";
     public final static String RANDOM_SCHEDULER = "random";
+    public final static String LATE_BINDING_SPARROW = "late_binding_sparrow";
 
     public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20503;
@@ -131,6 +132,8 @@ public class DodoorConf {
     public final static String DEFAULT_SCHEDULER_METRICS_LOG_FILE_SUFFIX = "scheduler_metrics.log";
     public final static String SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS =
             "scheduler.metrics.tasks.e2e.scheduling.latency.histograms";
+    public final static String SCHEDULER_METRICS_END_TO_END_TASK_LATENCY_HISTOGRAMS =
+            "scheduler.metrics.tasks.e2e.latency.histograms";
     public final static String SCHEDULER_METRICS_TASK_RATE = "scheduler.metrics.tasks.rate";
     public final static String SCHEDULER_METRICS_LOAD_UPDATE_RATE = "scheduler.metrics.load.update.rate";
     public final static String SCHEDULER_METRICS_NUM_MESSAGES = "scheduler.metrics.num.messages";

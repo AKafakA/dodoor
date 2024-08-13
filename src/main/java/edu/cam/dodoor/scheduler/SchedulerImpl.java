@@ -48,9 +48,14 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, TNodeState> _nodeLoadChanges;
     private Map<InetSocketAddress, TNodeState> _loadMapEqueueSocketToNodeState;
 
+    private Map<String, Long> _scheduledTaskToReceivedTime;
+    private boolean _isLateBinding;
+
     @Override
     public void initialize(Configuration config, InetSocketAddress socket,
                            SchedulerServiceMetrics schedulerServiceMetrics) throws IOException {
+        _scheduledTaskToReceivedTime = Maps.newConcurrentMap();
+        _isLateBinding = SchedulerUtils.isLateBindingEnabled(config);
         _nodeLoadChanges = Maps.newConcurrentMap();
         _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = Network.socketAddressToThrift(socket);
@@ -160,6 +165,7 @@ public class SchedulerImpl implements Scheduler{
         for (Map.Entry<TEnqueueTaskReservationRequest, InetSocketAddress> entry :
                 enqueueTaskReservationRequests.entrySet())  {
             try {
+                _scheduledTaskToReceivedTime.put(entry.getKey().taskId, System.currentTimeMillis());
                 NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(entry.getValue());
                 LOG.debug("Launching enqueueTask for request {} on node: {}", request.requestId, entry.getValue().getHostName());
                 client.enqueueTaskReservation(entry.getKey(), new EnqueueTaskReservationCallback(
@@ -240,6 +246,34 @@ public class SchedulerImpl implements Scheduler{
         }
     }
 
+    @Override
+    public void taskToLaunch(TFullTaskId task, String nodeEnqueueAddress) throws TException {
+        LOG.debug("Task {} launched from node", task.taskId);
+        if (_isLateBinding) {
+            Optional<InetSocketAddress> nodeEnqueueAddressOptional = Serialization.strToSocket(nodeEnqueueAddress);
+            if (nodeEnqueueAddressOptional.isPresent()) {
+                try {
+                    NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(
+                            nodeEnqueueAddressOptional.get());
+                    client.lazyLauchTask(task, new LazyLaunchTaskCallback(task.taskId,
+                            nodeEnqueueAddressOptional.get(), client));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                LOG.error("Invalid address: {} when try to launch task {}", nodeEnqueueAddress, task.taskId);
+            }
+        }
+    }
+
+    @Override
+    public void taskFinished(TFullTaskId task) throws TException {
+        long receivedTime = _scheduledTaskToReceivedTime.get(task.taskId);
+        long totalTime = System.currentTimeMillis() - receivedTime;
+        _schedulerServiceMetrics.taskFinished(totalTime);
+        LOG.debug("Task {} finished in {} ms", task.taskId, totalTime);
+    }
+
     private class EnqueueTaskReservationCallback implements AsyncMethodCallback<Boolean> {
         String _taskId;
         InetSocketAddress _nodeEnqueueAddress;
@@ -280,7 +314,7 @@ public class SchedulerImpl implements Scheduler{
             try {
                 _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeEnqueueAddress, _client);
             } catch (Exception e) {
-                LOG.error("Error returning client to node monitor client pool: {}", e.getMessage());
+                LOG.error("Error returning client to node client pool for enqueue rpc: {}", e.getMessage());
             }
         }
     }
@@ -316,6 +350,42 @@ public class SchedulerImpl implements Scheduler{
                 _dataStoreAsyncClientPool.returnClient(_dataStoreAddress, _client);
             } catch (Exception e) {
                 LOG.error("Error returning client to data store client pool: {}", e.getMessage());
+            }
+        }
+    }
+
+    private class LazyLaunchTaskCallback implements AsyncMethodCallback<Boolean> {
+        String _taskId;
+        InetSocketAddress _nodeEnqueueAddress;
+        NodeEnqueueService.AsyncClient _client;
+
+        public LazyLaunchTaskCallback(String taskId, InetSocketAddress nodeEnqueueAddress,
+                                      NodeEnqueueService.AsyncClient client) {
+            _taskId = taskId;
+            _nodeEnqueueAddress = nodeEnqueueAddress;
+            _client = client;
+        }
+
+        @Override
+        public void onComplete(Boolean aBoolean) {
+            if (!aBoolean) {
+                LOG.error("Error launch task on node {}", _nodeEnqueueAddress.getHostName());
+            }
+            returnClient();
+        }
+
+        @Override
+        public void onError(Exception exception) {
+            // Do not return error client to pool
+            LOG.error("Error lazyLaunchTask RPC:{}", exception.getMessage());
+            returnClient();
+        }
+
+        private void returnClient() {
+            try {
+                _nodeEnqueueServiceAsyncClientPool.returnClient(_nodeEnqueueAddress, _client);
+            } catch (Exception e) {
+                LOG.error("Error returning client to node monitor client pool for launch rpc: {}", e.getMessage());
             }
         }
     }

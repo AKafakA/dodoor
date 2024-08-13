@@ -18,7 +18,6 @@ public class BasicDataStoreImpl implements DataStore{
     private static final Logger LOG = LoggerFactory.getLogger(BasicDataStoreImpl.class);
     private final ConcurrentMap<String, TNodeState> _nodeStates;
 
-
     public BasicDataStoreImpl(){
         _nodeStates = Maps.newConcurrentMap();
     }

@@ -1,5 +1,7 @@
-package edu.cam.dodoor.node;
+package edu.cam.dodoor.node.taskscheduler;
 
+import edu.cam.dodoor.node.NodeResources;
+import edu.cam.dodoor.node.TaskSpec;
 import edu.cam.dodoor.thrift.TFullTaskId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
