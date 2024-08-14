@@ -50,8 +50,12 @@ public class Network {
 
   public static THostPort getInternalHostPort(int port, Configuration config) throws SocketException {
     Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+    String networkInterfaceName = config.getString(DodoorConf.NETWORK_INTERFACE, DodoorConf.DEFAULT_NETWORK_INTERFACE);
     while (interfaces.hasMoreElements()) {
       NetworkInterface networkInterface = interfaces.nextElement();
+      if (!networkInterface.getName().equals(networkInterfaceName)) {
+        continue;
+      }
       Enumeration<java.net.InetAddress> addresses = networkInterface.getInetAddresses();
       while (addresses.hasMoreElements()) {
         java.net.InetAddress address = addresses.nextElement();

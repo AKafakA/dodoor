@@ -79,6 +79,8 @@ def parse_args():
                       help="Whether to replay the trace with disks requirements or just ignore it.")
     parser.add_option("--num_thread_concurrent_submitted_tasks", default=1000,
                       help="The number of threads concurrently submitting the tasks to scheduler from trace player.")
+    parser.add_option("--network_interface", default="eno1",
+                        help="The network interface to be used for the network communication")
 
     return parser.parse_args()
 
@@ -176,6 +178,8 @@ def main():
     file.write("scheduler.num.tasks.update = {} \n".format(options.scheduler_num_tasks_update))
     file.write("trace.num.thread.concurrent.submitted.tasks = {} \n"
                .format(options.num_thread_concurrent_submitted_tasks))
+
+    file.write("network.interface = {} \n".format(options.network_interface))
 
     file.close()
 

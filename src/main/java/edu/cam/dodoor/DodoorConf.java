@@ -160,4 +160,7 @@ public class DodoorConf {
     // Consider some trace like GCP is not recording the disk resources. We may disable this for better comparison across traces.
     public final static String REPLAY_WITH_DISK = "replay.with.disk";
     public final static boolean DEFAULT_REPLAY_WITH_DISK = false;
+
+    public final static String NETWORK_INTERFACE = "network.interface";
+    public final static String DEFAULT_NETWORK_INTERFACE = "eno1";
 }
