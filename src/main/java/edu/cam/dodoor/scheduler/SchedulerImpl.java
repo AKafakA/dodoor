@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -56,7 +57,7 @@ public class SchedulerImpl implements Scheduler{
         _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = localAddress;
         _loadMapEqueueSocketToNodeState = Maps.newConcurrentMap();
-        _taskReceivedTime = Maps.newConcurrentMap();
+        _taskReceivedTime = new HashMap<>();
         String schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         double beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
@@ -250,10 +251,13 @@ public class SchedulerImpl implements Scheduler{
 
     @Override
     public void taskFinished(TFullTaskId taskId) throws TException {
+        LOG.debug("Task {} finished", taskId.taskId);
+        if (!_taskReceivedTime.containsKey(taskId.taskId)) {
+            LOG.error("Task {} finished but not found in taskReceivedTime", taskId.taskId);
+            return;
+        }
         long taskDuration = System.currentTimeMillis() - _taskReceivedTime.get(taskId.taskId);
         _schedulerServiceMetrics.taskFinished(taskDuration);
-        LOG.debug("Task {} finished in {} ms", taskId.taskId, taskDuration);
-        _taskReceivedTime.remove(taskId.taskId);
     }
 
     private class EnqueueTaskReservationCallback implements AsyncMethodCallback<Boolean> {
