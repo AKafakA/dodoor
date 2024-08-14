@@ -6,83 +6,120 @@ from deploy.python.analysis.composited_nodes_metrics import CompositedNodesMetri
 from deploy.python.analysis.scheduler_metrics import SchedulerMetrics
 
 use_caelum = True
-experiment_name = "azure/dodoor"
+experiment_name = "azure"
 if use_caelum:
-    experiment_name += "_caelum"
-else:
-    experiment_name += "_cloud_lab"
+    experiment_name = "caelum_" + experiment_name
+
 target_dir = "deploy/resources/figure/{}".format(experiment_name)
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 300
-composited_node_host_file = "deploy/resources/log/node/{}".format(experiment_name)
+max_checkpoints = 3000
+composited_node_host_dir = "deploy/resources/log/node/{}".format(experiment_name)
 
-nodes_metrics = CompositedNodesMetrics(composited_node_host_file)
-average_resource_mean, var_resource_mean = nodes_metrics.get_average_resource_mean_and_variance()
+var_resource_mean_lists = {}
+average_resource_mean_lists = {}
+max_num_waiting_task_lists = {}
+average_num_waiting_task_lists = {}
+variance_waiting_task_lists = {}
 
-# plt.plot(average_cpu, label="average cpu usage")
+for scheduler_name in os.listdir(composited_node_host_dir):
+    node_file = os.path.join(composited_node_host_dir, scheduler_name)
+    nodes_metrics = CompositedNodesMetrics(node_file)
+    average_resource_mean, var_resource_mean = nodes_metrics.get_average_resource_mean_and_variance()
+    max_num_waiting_tasks = nodes_metrics.get_max_waiting_tasks()
+    average_num_waiting_tasks = nodes_metrics.get_average_waiting_tasks()
+    variance_waiting_tasks = nodes_metrics.get_variance_waiting_tasks()
+
+    scheduler_name = scheduler_name.split("_")[0]
+    average_num_waiting_task_lists[scheduler_name] = average_num_waiting_tasks
+    max_num_waiting_task_lists[scheduler_name] = max_num_waiting_tasks
+    var_resource_mean_lists[scheduler_name] = var_resource_mean
+    average_resource_mean_lists[scheduler_name] = average_resource_mean
+    variance_waiting_task_lists[scheduler_name] = variance_waiting_tasks
+
+    plt.figure(1)
+    plt.plot(var_resource_mean[:max_checkpoints], label=scheduler_name)
+
+    plt.figure(2)
+    plt.plot(average_resource_mean[:max_checkpoints], label=scheduler_name)
+
+    plt.figure(3)
+    plt.plot([max_num_waiting_tasks[i] - average_num_waiting_tasks[i] for i in range(max_checkpoints)],
+             label=scheduler_name)
+
+    plt.figure(4)
+    plt.plot(variance_waiting_tasks[:max_checkpoints], label=scheduler_name)
+
+    plt.figure(5)
+    average_waiting_time = nodes_metrics.get_average_task_waited_duration()
+    plt.plot(average_waiting_time[:max_checkpoints], label=scheduler_name)
+
 plt.figure(1)
-plt.plot(var_resource_mean[:max_checkpoints], label="average resource variance")
+plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("average resources usage variance")
 plt.savefig("{}/average_usage_variance.png".format(target_dir))
 
 plt.figure(2)
-plt.plot(average_resource_mean[:max_checkpoints], label="cpu usage")
+plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("average resources usage mean")
 plt.savefig("{}/average_resource_usage_mean.png".format(target_dir))
 
-max_num_waiting_tasks = nodes_metrics.get_max_waiting_tasks()
-average_num_waiting_tasks = nodes_metrics.get_average_waiting_tasks()
-
 plt.figure(3)
-plt.plot([max_num_waiting_tasks[i] - average_num_waiting_tasks[i] for i in range(max_checkpoints)],
-         label="(max - average) waiting tasks")
+plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("waiting tasks difference")
 plt.savefig("{}/waiting_tasks_max_average_difference.png".format(target_dir))
 
 plt.figure(4)
-variance_waiting_tasks = nodes_metrics.get_variance_waiting_tasks()
-plt.plot(variance_waiting_tasks[:max_checkpoints], label="waiting tasks variance")
+plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("waiting tasks variance")
 plt.savefig("{}/waiting_tasks_variance.png".format(target_dir))
 
 plt.figure(5)
-average_waiting_time = nodes_metrics.get_average_task_waited_duration()
-plt.plot(average_waiting_time[:max_checkpoints], label="average waiting time in milliseconds")
+plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("average waiting time")
+plt.savefig("{}/average_waiting_time.png".format(target_dir))
 
-scheduler_host_file = "deploy/resources/log/scheduler/{}".format(experiment_name)
-scheduler_metrics = None
-for scheduler_log in os.listdir(scheduler_host_file):
-    scheduler_metrics = SchedulerMetrics(os.path.join(scheduler_host_file, scheduler_log))
-scheduler_metrics.parse()
+scheduler_host_dir = "deploy/resources/log/scheduler/{}".format(experiment_name)
+for scheduler_name in os.listdir(scheduler_host_dir):
+    for scheduler_log_file in os.listdir(os.path.join(scheduler_host_dir, scheduler_name)):
+        if "scheduler_metrics" in scheduler_log_file:
+            scheduler_metrics = SchedulerMetrics(os.path.join(scheduler_host_dir, scheduler_name, scheduler_log_file))
+            scheduler_name = scheduler_name.split("_")[0]
 
-num_messages = scheduler_metrics.get_num_messages()
-task_rate_m1 = scheduler_metrics.get_task_rate_m1()
-e2e_latency_avg = scheduler_metrics.get_e2e_latency_avg()
+            num_messages = scheduler_metrics.get_num_messages()
+            task_rate_m1 = scheduler_metrics.get_task_rate_m1()
+            e2e_latency_avg = scheduler_metrics.get_e2e_latency_avg()
+
+            plt.figure(6)
+            plt.plot(num_messages[:max_checkpoints], label=scheduler_name)
+
+            plt.figure(7)
+            plt.plot(task_rate_m1[:max_checkpoints], label=scheduler_name)
+
+            plt.figure(8)
+            plt.plot(e2e_latency_avg[:max_checkpoints], label=scheduler_name)
 
 plt.figure(6)
-plt.plot(num_messages[:max_checkpoints], label="num messages")
+plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
-plt.ylabel("scheduler num messages")
-plt.savefig("{}/scheduler_num_messages.png".format(target_dir))
+plt.ylabel("num messages")
+plt.savefig("{}/num_messages.png".format(target_dir))
 
 plt.figure(7)
-plt.plot(task_rate_m1[:max_checkpoints], label="task rate m1")
+plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
-plt.ylabel("scheduler task rate in last one minute")
-plt.savefig("{}/scheduler_task_rate_m1.png".format(target_dir))
+plt.ylabel("task rate m1")
+plt.savefig("{}/task_rate_m1.png".format(target_dir))
 
 plt.figure(8)
-e2e_latency_avg_in_seconds = [e2e_latency / 1000 for e2e_latency in e2e_latency_avg]
-plt.plot(e2e_latency_avg[:max_checkpoints], label="e2e latency avg in seconds")
+plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
-plt.ylabel("scheduler e2e latency avg")
-plt.savefig("{}/scheduler_e2e_latency_avg.png".format(target_dir))
+plt.ylabel("e2e latency avg")
+plt.savefig("{}/e2e_latency_avg.png".format(target_dir))

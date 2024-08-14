@@ -30,6 +30,7 @@ class SchedulerMetrics:
                         "task_rate_mean": [],
                         "task_rate_m1": []}
         self.log_file = log_file
+        self.parse()
 
     def parse(self):
         with open(self.log_file, 'r') as f:
