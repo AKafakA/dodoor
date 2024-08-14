@@ -253,6 +253,7 @@ public class SchedulerImpl implements Scheduler{
         long taskDuration = System.currentTimeMillis() - _taskReceivedTime.get(taskId.taskId);
         _schedulerServiceMetrics.taskFinished(taskDuration);
         LOG.debug("Task {} finished in {} ms", taskId.taskId, taskDuration);
+        _taskReceivedTime.remove(taskId.taskId);
     }
 
     private class EnqueueTaskReservationCallback implements AsyncMethodCallback<Boolean> {

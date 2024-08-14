@@ -113,17 +113,15 @@ public class NodeImpl implements Node {
         int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
         InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);
         if (schedulerSocketAddress != null) {
-            LOG.debug("Task {} finished, sending task finished signal to scheduler {}:{}",
-                    new Object[] { task.taskId,
-                    schedulerSocketAddress.getHostName(), schedulerSocketAddress.getPort()
-            });
             SchedulerService.AsyncClient schedulerClient;
             try {
+                LOG.debug("Task {} finished, sending task finished signal to scheduler {}",
+                        new Object[] { task.taskId, schedulerSocketAddress});
                 schedulerClient = _schedulerClientPool.borrowClient(schedulerSocketAddress);
+                schedulerClient.taskFinished(task, new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            schedulerClient.taskFinished(task, new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
         } else {
             LOG.warn("Task {} finished, but no scheduler address found", task.taskId);
             LOG.debug("Current task source scheduler address map: {}", _taskSourceSchedulerAddress);

@@ -9,6 +9,7 @@ import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.TServers;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.logging.Log;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.PatternLayout;
 import org.apache.thrift.TException;

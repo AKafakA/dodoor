@@ -36,11 +36,11 @@ def parse_args():
                            "same as scheduler ports to create multiple data stores instances")
     parser.add_option("--node-enqueue-ports", default="20502",
                       help="The port number of the internal service to enqueue and dequeue the tasks")
-    parser.add_option("--scheduler-thrift-threads", default=1,
+    parser.add_option("--scheduler-thrift-threads", default=4,
                       help="The number of threads running in scheduler service to listen to the thrift requests")
     parser.add_option("--node-monitor-thrift-threads", default=1,
                       help="The number of threads running in node monitor to listen to the thrift requests")
-    parser.add_option("--data-store-thrift-threads", default=1,
+    parser.add_option("--data-store-thrift-threads", default=4,
                       help="The number of threads running in data store to listen to the thrift requests")
     parser.add_option("--node-enqueue-thrift-threads", default=1,
                       help="The number of threads running in internal service to listen to the thrift requests")
