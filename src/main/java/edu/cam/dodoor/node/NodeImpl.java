@@ -98,8 +98,10 @@ public class NodeImpl implements Node {
                         dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
             }
         }
+
         InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);
         if (schedulerSocketAddress != null) {
+            LOG.debug("Task {} finished, sending task finished signal to scheduler {}", task.taskId, schedulerSocketAddress);
             SchedulerService.AsyncClient schedulerClient;
             try {
                 schedulerClient = _schedulerClientPool.borrowClient(schedulerSocketAddress);
