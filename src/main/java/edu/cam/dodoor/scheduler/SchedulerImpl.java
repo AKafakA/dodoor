@@ -190,6 +190,7 @@ public class SchedulerImpl implements Scheduler{
                 } else {
                     LOG.error("Adding load for unregistered node: {}", nodeEnqueueSocket.getHostName());
                 }
+                LOG.debug("new load: {} with {} task scheduled", entry.getValue().toString(), _counter.get());
                 _loadMapEqueueSocketToNodeState.put(nodeEnqueueSocket, entry.getValue());
             } else {
                 LOG.error("Invalid address: {}", entry.getKey());

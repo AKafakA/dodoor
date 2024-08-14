@@ -42,7 +42,7 @@ public class BasicDataStoreImpl implements DataStore{
         }
     }
 
-    private void addSingleNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector, int numTasks, int sign) {
+    private synchronized void addSingleNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector, int numTasks, int sign) {
         TNodeState nodeState = _nodeStates.get(nodeEnqueueAddress);
         if (nodeState == null) {
             LOG.warn("Node {} not found in the data store. Creating a new entry.", nodeEnqueueAddress);
