@@ -7,8 +7,11 @@ import org.apache.commons.configuration.Configuration;
 
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.THostPort;
+import org.apache.log4j.Logger;
 
 public class Network {
+
+  public static Logger LOG = Logger.getLogger(Network.class);
   
   public static THostPort socketAddressToThrift(InetSocketAddress address) {
     return new THostPort(address.getAddress().getHostAddress(), address.getPort());
@@ -52,6 +55,7 @@ public class Network {
     Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
     String networkInterfaceName = config.getString(DodoorConf.NETWORK_INTERFACE, DodoorConf.DEFAULT_NETWORK_INTERFACE);
     while (interfaces.hasMoreElements()) {
+      LOG.debug("Checking network interface: " + networkInterfaceName);
       NetworkInterface networkInterface = interfaces.nextElement();
       if (!networkInterface.getName().equals(networkInterfaceName)) {
         continue;
@@ -62,7 +66,7 @@ public class Network {
         if (address.isLoopbackAddress()) {
           continue;
         }
-        if (address.isSiteLocalAddress()) {
+        if (address instanceof Inet4Address) {
           return new THostPort(address.getHostAddress(), port);
         }
       }
