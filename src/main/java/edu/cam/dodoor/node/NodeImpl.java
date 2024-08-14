@@ -77,42 +77,9 @@ public class NodeImpl implements Node {
         _requested_memory.getAndAdd(-task.resourceRequest.memory);
         _requested_disk.getAndAdd(-task.resourceRequest.disks);
         _nodeResources.freeTask(task.resourceRequest.cores, task.resourceRequest.memory, task.resourceRequest.disks);
-        _taskScheduler.tasksFinished(task);
-
         _waitingOrRunningTasksCounter.getAndAdd(-1);
-
-        int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
-
-        if (numFinishedTasks % _numTasksToUpdate == 0) {
-            for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
-                DataStoreService.AsyncClient dataStoreClient;
-                try {
-                    dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
-                dataStoreClient.overrideNodeState(_neAddress, nodeState,
-                        new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
-                LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
-                        dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
-            }
-        }
-
-        InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);
-        if (schedulerSocketAddress != null) {
-            LOG.debug("Task {} finished, sending task finished signal to scheduler {}", task.taskId, schedulerSocketAddress);
-            SchedulerService.AsyncClient schedulerClient;
-            try {
-                schedulerClient = _schedulerClientPool.borrowClient(schedulerSocketAddress);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            schedulerClient.taskFinished(task, new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
-        } else {
-            LOG.warn("Task {} finished, but no scheduler address found", task.taskId);
-            LOG.debug("Current task source scheduler address map: {}", _taskSourceSchedulerAddress);
-        }
+        sendRequestsPostTaskFinished(task);
+        _taskScheduler.tasksFinished(task);
     }
 
 
@@ -139,6 +106,41 @@ public class NodeImpl implements Node {
 
         _waitingOrRunningTasksCounter.getAndAdd(1);
         return true;
+    }
+
+    private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {
+        LOG.debug(Logging.functionCall(task));
+        int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
+        InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);
+        if (schedulerSocketAddress != null) {
+            LOG.debug("Task {} finished, sending task finished signal to scheduler {}", task.taskId, schedulerSocketAddress);
+            SchedulerService.AsyncClient schedulerClient;
+            try {
+                schedulerClient = _schedulerClientPool.borrowClient(schedulerSocketAddress);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            schedulerClient.taskFinished(task, new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
+        } else {
+            LOG.warn("Task {} finished, but no scheduler address found", task.taskId);
+            LOG.debug("Current task source scheduler address map: {}", _taskSourceSchedulerAddress);
+        }
+
+        if (numFinishedTasks % _numTasksToUpdate == 0) {
+            for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
+                DataStoreService.AsyncClient dataStoreClient;
+                try {
+                    dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
+                dataStoreClient.overrideNodeState(_neAddress, nodeState,
+                        new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
+                LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
+                        dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
+            }
+        }
     }
 
     private class UpdateNodeLoadCallBack implements AsyncMethodCallback<Void> {
@@ -171,7 +173,6 @@ public class NodeImpl implements Node {
                 throw new RuntimeException(e);
             }
         }
-
     }
 
     private class TaskFinishedCallBack implements AsyncMethodCallback<Void> {
@@ -204,6 +205,5 @@ public class NodeImpl implements Node {
                 throw new RuntimeException(e);
             }
         }
-
     }
 }
