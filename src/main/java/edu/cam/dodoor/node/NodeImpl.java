@@ -71,7 +71,7 @@ public class NodeImpl implements Node {
     }
 
     @Override
-    public synchronized void taskFinished(TFullTaskId task) throws TException {
+    public void taskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
         _requested_cores.getAndAdd(-task.resourceRequest.cores);
         _requested_memory.getAndAdd(-task.resourceRequest.memory);
@@ -109,6 +109,9 @@ public class NodeImpl implements Node {
                 throw new RuntimeException(e);
             }
             schedulerClient.taskFinished(task, new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
+        } else {
+            LOG.warn("Task {} finished, but no scheduler address found", task.taskId);
+            LOG.debug("Current task source scheduler address map: {}", _taskSourceSchedulerAddress);
         }
     }
 
