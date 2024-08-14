@@ -91,7 +91,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
             THostPort nodeAddress = request.nodeEnqueueAddress;
             InetSocketAddress neAddressSocket = Network.thriftToSocket(nodeAddress);
             _hostName = neAddressSocket.getHostName();
-            _neAddress = nodeAddress.host + ":" + nodeAddress.port;
+            _neAddress = Network.thriftToSocketStr(nodeAddress);
         } else if (!_neAddress.equals(Network.thriftToSocketStr(request.nodeEnqueueAddress))) {
             throw new TException("Node enqueue address mismatch: " + _neAddress + " vs " + request.nodeEnqueueAddress);
         }
