@@ -131,6 +131,8 @@ public class DodoorConf {
     public final static String DEFAULT_SCHEDULER_METRICS_LOG_FILE_SUFFIX = "scheduler_metrics.log";
     public final static String SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS =
             "scheduler.metrics.tasks.e2e.scheduling.latency.histograms";
+    public final static String SCHEDULER_METRICS_END_TO_END_TASK_MAKESPAN_LATENCY_HISTOGRAMS =
+            "scheduler.metrics.tasks.e2e.makespan.latency.histograms";
     public final static String SCHEDULER_METRICS_TASK_RATE = "scheduler.metrics.tasks.rate";
     public final static String SCHEDULER_METRICS_LOAD_UPDATE_RATE = "scheduler.metrics.load.update.rate";
     public final static String SCHEDULER_METRICS_NUM_MESSAGES = "scheduler.metrics.num.messages";

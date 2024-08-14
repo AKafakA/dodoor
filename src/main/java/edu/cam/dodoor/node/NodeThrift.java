@@ -25,6 +25,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     final Node _node = new NodeImpl();
     List<InetSocketAddress> _dataStoreAddress;
     ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
+    ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool;
     String _neAddress;
     String _hostName;
     NodeServiceMetrics _nodeServiceMetrics;
@@ -70,6 +71,8 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _dataStoreAddress = new ArrayList<>();
 
+        _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
+
         if (cachedEnabled) {
             for (String dataStoreAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_DATA_STORE,
                     DodoorConf.DATA_STORE_THRIFT_PORTS)) {
@@ -85,15 +88,11 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
         _numMessages.inc();
         if (_neAddress == null) {
-            Optional<InetSocketAddress> neAddressSocketOptional = Serialization.strToSocket(request.nodeEnqueueAddress);
-            if (neAddressSocketOptional.isPresent()) {
-                _neAddress = request.nodeEnqueueAddress;
-                _hostName = neAddressSocketOptional.get().getHostName();
-            } else {
-                throw new TException("Node enqueue address " + _neAddress + " not valid");
-            }
-            LOG.info(Logging.auditEventString("register_ne_address_local_host", _hostName));
-        } else if (!_neAddress.equals(request.nodeEnqueueAddress)) {
+            THostPort nodeAddress = request.nodeEnqueueAddress;
+            InetSocketAddress neAddressSocket = Network.thriftToSocket(nodeAddress);
+            _hostName = neAddressSocket.getHostName();
+            _neAddress = nodeAddress.host + ":" + nodeAddress.port;
+        } else if (!_neAddress.equals(Network.thriftToSocketStr(request.nodeEnqueueAddress))) {
             throw new TException("Node enqueue address mismatch: " + _neAddress + " vs " + request.nodeEnqueueAddress);
         }
         _nodeServiceMetrics.taskEnqueued();

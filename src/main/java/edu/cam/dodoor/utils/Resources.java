@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.commons.configuration.Configuration;
 
 import edu.cam.dodoor.DodoorConf;
@@ -45,5 +46,13 @@ public class Resources {
 
   public static int getSystemDiskGbCapacity(Configuration conf) {
     return conf.getInt(DodoorConf.SYSTEM_DISK, DodoorConf.DEFAULT_SYSTEM_DISK);
+  }
+
+  public static TResourceVector getSystemResourceVector(Configuration conf) {
+    if (conf.getBoolean(DodoorConf.REPLAY_WITH_DISK, DodoorConf.DEFAULT_REPLAY_WITH_DISK)) {
+      return new TResourceVector(getSystemCoresCapacity(conf), getMemoryMbCapacity(conf), getSystemDiskGbCapacity(conf));
+    } else {
+        return new TResourceVector(getSystemCoresCapacity(conf), getMemoryMbCapacity(conf), 0);
+    }
   }
 }

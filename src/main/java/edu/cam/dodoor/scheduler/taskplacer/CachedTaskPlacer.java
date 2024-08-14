@@ -1,8 +1,6 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
-import edu.cam.dodoor.datastore.BasicDataStoreImpl;
 import edu.cam.dodoor.thrift.*;
-import org.apache.logging.log4j.LogBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,10 +11,13 @@ public class CachedTaskPlacer extends TaskPlacer{
     public static final Logger LOG = LoggerFactory.getLogger(CachedTaskPlacer.class);
 
     private final boolean _useLoadScores;
+
+    private final TResourceVector _resourceCapacity;
     
-    public CachedTaskPlacer(double beta, boolean useLoadScores) {
+    public CachedTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity) {
         super(beta);
         _useLoadScores = useLoadScores;
+        _resourceCapacity = resourceCapacity;
     }
 
     @Override
@@ -57,7 +58,12 @@ public class CachedTaskPlacer extends TaskPlacer{
     }
 
     private double getLoadScores(TResourceVector requestedResources, TResourceVector taskResources) {
-        return (double) requestedResources.cores * taskResources.cores + requestedResources.memory * taskResources.memory +
-                requestedResources.disks * taskResources.disks;
+        double cpuLoad = (double) requestedResources.cores * taskResources.cores / (_resourceCapacity.cores * _resourceCapacity.cores);
+        double memLoad = (double) requestedResources.memory * taskResources.memory / (_resourceCapacity.memory * _resourceCapacity.memory);
+        double diskLoad = 0.0;
+        if (_resourceCapacity.disks > 0) {
+            diskLoad = (double) requestedResources.disks * taskResources.disks / (_resourceCapacity.disks * _resourceCapacity.disks);
+        }
+        return cpuLoad + memLoad + diskLoad;
     }
 }

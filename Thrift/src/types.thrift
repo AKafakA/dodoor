@@ -84,5 +84,5 @@ struct TEnqueueTaskReservationRequest {
   3: THostPort schedulerAddress;
   4: TResourceVector resourceRequested;
   5: i64 durationInMs;
-  6: string nodeEnqueueAddress;
+  6: THostPort nodeEnqueueAddress;
 }

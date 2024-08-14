@@ -1,7 +1,9 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
 import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.scheduler.SchedulerServiceMetrics;
 import edu.cam.dodoor.thrift.*;
+import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.Serialization;
 
 import java.net.InetSocketAddress;
@@ -21,12 +23,14 @@ public abstract class TaskPlacer {
     }
 
     public static TaskPlacer createTaskPlacer(double beta, String schedulingStrategy,
-                                              Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients) {
+                                              Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
+                                              TResourceVector resourceCapacity,
+                                              SchedulerServiceMetrics schedulerMetrics) {
         return switch (schedulingStrategy) {
-            case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true);
-            case DodoorConf.SPARROW_SCHEDULER -> new SparrowTaskPlacer(beta, nodeMonitorClients);
-            case DodoorConf.CACHED_SPARROW_SCHEDULER -> new CachedTaskPlacer(beta, false);
-            case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false);
+            case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity);
+            case DodoorConf.SPARROW_SCHEDULER -> new SparrowTaskPlacer(beta, nodeMonitorClients, schedulerMetrics);
+            case DodoorConf.CACHED_SPARROW_SCHEDULER -> new CachedTaskPlacer(beta, false, resourceCapacity);
+            case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }
@@ -43,7 +47,7 @@ public abstract class TaskPlacer {
                 schedulerAddress,
                 taskResources,
                 taskSpec.durationInMs,
-                Serialization.getStrFromSocket(nodeAddress)
+                Network.socketAddressToThrift(nodeAddress)
         ), nodeAddress);
     }
 }

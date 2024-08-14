@@ -1,5 +1,6 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
+import edu.cam.dodoor.scheduler.SchedulerServiceMetrics;
 import edu.cam.dodoor.thrift.*;
 import org.apache.thrift.TException;
 
@@ -8,9 +9,12 @@ import java.util.*;
 
 public class SparrowTaskPlacer extends TaskPlacer{
     Map<InetSocketAddress, NodeMonitorService.Client> _nodeMonitorClients;
+    SchedulerServiceMetrics _schedulerMetrics;
     public SparrowTaskPlacer(double beta,
-                             Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients) {
+                             Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
+                             SchedulerServiceMetrics schedulerMetrics) {
         super(beta);
+        _schedulerMetrics = schedulerMetrics;
         _nodeMonitorClients = nodeMonitorClients;
     }
 
@@ -29,7 +33,9 @@ public class SparrowTaskPlacer extends TaskPlacer{
                 int secondIndex = ran.nextInt(loadMaps.size());
                 try {
                     int numPendingTasks1 = _nodeMonitorClients.get(nodeAddresses.get(firstIndex)).getNumTasks();
+                    _schedulerMetrics.probeNode();
                     int numPendingTasks2 = _nodeMonitorClients.get(nodeAddresses.get(secondIndex)).getNumTasks();
+                    _schedulerMetrics.probeNode();
                     if (numPendingTasks1 > numPendingTasks2) {
                         firstIndex = secondIndex;
                     }

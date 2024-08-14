@@ -40,14 +40,17 @@ public class SchedulerThrift implements SchedulerService.Iface{
 
     @Override
     public void registerNode(String nodeAddress) throws TException {
-        _numMessages.inc();
         _scheduler.registerNode(nodeAddress);
     }
 
     @Override
     public void registerDataStore(String dataStoreAddress) throws TException {
-        _numMessages.inc();
         _scheduler.registerDataStore(dataStoreAddress);
+    }
+
+    @Override
+    public void taskFinished(TFullTaskId task) throws TException {
+        _scheduler.taskFinished(task);
     }
 
     public void initialize(Configuration config, int port, boolean logKicked) throws TException, IOException {
@@ -60,7 +63,7 @@ public class SchedulerThrift implements SchedulerService.Iface{
         InetSocketAddress addr = new InetSocketAddress(hostname, port);
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
         SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics);
-        _numMessages = metrics.counter(DodoorConf.SCHEDULER_METRICS_NUM_MESSAGES);
+        _numMessages = schedulerMetrics.getTotalMessages();
         _scheduler.initialize(config, addr, schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
 

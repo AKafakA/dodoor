@@ -15,6 +15,15 @@ public class Network {
     return new THostPort(address.getAddress().getHostAddress(), address.getPort());
   }
 
+  public static InetSocketAddress thriftToSocket(THostPort address) {
+    return new InetSocketAddress(address.host, address.port);
+  }
+
+  public static String thriftToSocketStr(THostPort address) {
+    return address.port + ":" + address.host;
+  }
+
+
   /** Return the hostname of this machine, based on configured value, or system
    * Interrogation. */
   public static String getHostName(Configuration conf) {

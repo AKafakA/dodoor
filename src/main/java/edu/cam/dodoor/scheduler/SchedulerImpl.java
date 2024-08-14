@@ -47,6 +47,7 @@ public class SchedulerImpl implements Scheduler{
     private int _numTasksToUpdateDataStore;
     private Map<String, TNodeState> _nodeLoadChanges;
     private Map<InetSocketAddress, TNodeState> _loadMapEqueueSocketToNodeState;
+    private Map<String, Long> _taskReceivedTime;
 
     @Override
     public void initialize(Configuration config, InetSocketAddress socket,
@@ -55,6 +56,7 @@ public class SchedulerImpl implements Scheduler{
         _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = Network.socketAddressToThrift(socket);
         _loadMapEqueueSocketToNodeState = Maps.newConcurrentMap();
+        _taskReceivedTime = Maps.newConcurrentMap();
         String schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         double beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
@@ -97,7 +99,8 @@ public class SchedulerImpl implements Scheduler{
         }
 
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
-                schedulingStrategy, _nodeEqueueSocketToNodeMonitorClients);
+                schedulingStrategy, _nodeEqueueSocketToNodeMonitorClients, Resources.getSystemResourceVector(config),
+                schedulerServiceMetrics);
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
     }
@@ -109,6 +112,9 @@ public class SchedulerImpl implements Scheduler{
             return;
         }
         int numTasksBefore = _counter.get();
+        for (TTaskSpec task : request.tasks) {
+            _taskReceivedTime.put(task.taskId, System.currentTimeMillis());
+        }
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = handleJobSubmission(request);
         _counter.getAndAdd(request.tasks.size());
         _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
@@ -130,6 +136,7 @@ public class SchedulerImpl implements Scheduler{
                         client.addNodeLoads(_nodeLoadChanges, 1,
                                 new addNodeLoadsCallback(request.requestId, dataStoreAddress, client));
                         resetNodeLoadChanges();
+                        _schedulerServiceMetrics.updateToDataStore();
                     } catch (TException e) {
                         LOG.error("Error updating node state for node: {}", nodeEnqueueAddress.getHostName(), e);
                     } catch (Exception e) {
@@ -239,6 +246,13 @@ public class SchedulerImpl implements Scheduler{
         } else {
             throw new TException("Invalid address: " + dataStoreAddress);
         }
+    }
+
+    @Override
+    public void taskFinished(TFullTaskId taskId) throws TException {
+        long taskDuration = System.currentTimeMillis() - _taskReceivedTime.get(taskId.taskId);
+        _schedulerServiceMetrics.taskFinished(taskDuration);
+        LOG.debug("Task {} finished in {} ms", taskId.taskId, taskDuration);
     }
 
     private class EnqueueTaskReservationCallback implements AsyncMethodCallback<Boolean> {
