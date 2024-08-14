@@ -47,8 +47,8 @@ public class CachedTaskPlacer extends TaskPlacer{
                                 nodeAddresses.get(secondIndex).getHostName(), score2});
                 if (score1 > score2) {
                     firstIndex = secondIndex;
-                    LOG.debug("node {} is selected", nodeAddresses.get(firstIndex).getHostName());
                 }
+                LOG.debug("node {} is selected", nodeAddresses.get(firstIndex).getHostName());
             }
             updateSchedulingResults(allocations, nodeAddresses.get(firstIndex),
                     schedulingRequest, taskSpec, schedulerAddress, taskResources);
