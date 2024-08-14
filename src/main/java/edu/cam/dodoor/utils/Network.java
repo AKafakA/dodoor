@@ -1,8 +1,7 @@
 package edu.cam.dodoor.utils;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
+import java.net.*;
+import java.util.Enumeration;
 
 import org.apache.commons.configuration.Configuration;
 
@@ -47,5 +46,23 @@ public class Network {
     } catch (UnknownHostException e) {
       return "IP UNKNOWN";
     }
+  }
+
+  public static THostPort getInternalHostPort(int port, Configuration config) throws SocketException {
+    Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+    while (interfaces.hasMoreElements()) {
+      NetworkInterface networkInterface = interfaces.nextElement();
+      Enumeration<java.net.InetAddress> addresses = networkInterface.getInetAddresses();
+      while (addresses.hasMoreElements()) {
+        java.net.InetAddress address = addresses.nextElement();
+        if (address.isLoopbackAddress()) {
+          continue;
+        }
+        if (address.isSiteLocalAddress()) {
+          return new THostPort(address.getHostAddress(), port);
+        }
+      }
+    }
+    return new THostPort(Network.getLocalIPAddress(config), port);
   }
 }

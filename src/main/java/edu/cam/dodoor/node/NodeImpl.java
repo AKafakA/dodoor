@@ -113,7 +113,8 @@ public class NodeImpl implements Node {
         int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
         InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);
         if (schedulerSocketAddress != null) {
-            LOG.debug("Task {} finished, sending task finished signal to scheduler {}", task.taskId, schedulerSocketAddress);
+            LOG.debug("Task {} finished, sending task finished signal to scheduler {}", task.taskId,
+                    schedulerSocketAddress.getHostName());
             SchedulerService.AsyncClient schedulerClient;
             try {
                 schedulerClient = _schedulerClientPool.borrowClient(schedulerSocketAddress);

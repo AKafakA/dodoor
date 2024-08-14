@@ -50,11 +50,11 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, Long> _taskReceivedTime;
 
     @Override
-    public void initialize(Configuration config, InetSocketAddress socket,
+    public void initialize(Configuration config, THostPort localAddress,
                            SchedulerServiceMetrics schedulerServiceMetrics) throws IOException {
         _nodeLoadChanges = Maps.newConcurrentMap();
         _schedulerServiceMetrics = schedulerServiceMetrics;
-        _address = Network.socketAddressToThrift(socket);
+        _address = localAddress;
         _loadMapEqueueSocketToNodeState = Maps.newConcurrentMap();
         _taskReceivedTime = Maps.newConcurrentMap();
         String schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);

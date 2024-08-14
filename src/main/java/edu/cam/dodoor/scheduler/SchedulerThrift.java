@@ -17,6 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -59,12 +62,10 @@ public class SchedulerThrift implements SchedulerService.Iface{
                 new SchedulerService.Processor<>(this);
         int threads = config.getInt(DodoorConf.SCHEDULER_THRIFT_THREADS,
                 DodoorConf.DEFAULT_SCHEDULER_THRIFT_THREADS);
-        String hostname = Network.getHostName(config);
-        InetSocketAddress addr = new InetSocketAddress(hostname, port);
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
         SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics);
         _numMessages = schedulerMetrics.getTotalMessages();
-        _scheduler.initialize(config, addr, schedulerMetrics);
+        _scheduler.initialize(config, Network.getInternalHostPort(port, config), schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
 
         // Avoid one log kicked duplicated from different scheduler instances
