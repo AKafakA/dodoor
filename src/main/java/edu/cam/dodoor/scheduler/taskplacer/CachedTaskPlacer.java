@@ -1,12 +1,17 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
+import edu.cam.dodoor.datastore.BasicDataStoreImpl;
 import edu.cam.dodoor.thrift.*;
 import org.apache.logging.log4j.LogBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.*;
 
 public class CachedTaskPlacer extends TaskPlacer{
+    public static final Logger LOG = LoggerFactory.getLogger(CachedTaskPlacer.class);
+
     private final boolean _useLoadScores;
     
     public CachedTaskPlacer(double beta, boolean useLoadScores) {
@@ -37,8 +42,12 @@ public class CachedTaskPlacer extends TaskPlacer{
                     score1 = loadMaps.get(nodeAddresses.get(firstIndex)).numTasks;
                     score2 = loadMaps.get(nodeAddresses.get(secondIndex)).numTasks;
                 }
+                LOG.debug("node {} with score {}, node {} with score {} ",
+                        new Object[]{nodeAddresses.get(firstIndex).getHostName(), score1,
+                                nodeAddresses.get(secondIndex).getHostName(), score2});
                 if (score1 > score2) {
                     firstIndex = secondIndex;
+                    LOG.debug("node {} is selected", nodeAddresses.get(firstIndex).getHostName());
                 }
             }
             updateSchedulingResults(allocations, nodeAddresses.get(firstIndex),
