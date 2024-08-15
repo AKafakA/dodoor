@@ -22,11 +22,10 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     private final static Logger LOG = LoggerFactory.getLogger(NodeThrift.class);
 
     // Defaults if not specified by configuration
-    final Node _node = new NodeImpl();
-    List<InetSocketAddress> _dataStoreAddress;
-    String _neAddress;
-    String _hostName;
-    NodeServiceMetrics _nodeServiceMetrics;
+    protected Node _node;
+    private List<InetSocketAddress> _dataStoreAddress;
+    private String _neAddressStr;
+    private NodeServiceMetrics _nodeServiceMetrics;
     private Counter _numMessages;
 
 
@@ -45,18 +44,10 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
         _nodeServiceMetrics = new NodeServiceMetrics(metrics);
         _numMessages = metrics.counter(DodoorConf.NODE_METRICS_NUM_MESSAGES);
-        _node.initialize(config, this);
+        _dataStoreAddress = new ArrayList<>();
 
         boolean cachedEnabled = SchedulerUtils.isCachedEnabled(
                 config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
-
-        // Setup application-facing agent service.
-        NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
-                new NodeMonitorService.Processor<>(this);
-
-        int threads = config.getInt(DodoorConf.NM_THRIFT_THREADS,
-                DodoorConf.DEFAULT_NM_THRIFT_THREADS);
-        TServers.launchThreadedThriftServer(nmPort, threads, processor);
 
         // Setup internal-facing agent service.
         NodeEnqueueService.Processor<NodeEnqueueService.Iface> nodeEnqueueProcessor =
@@ -65,7 +56,6 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
                 DodoorConf.INTERNAL_THRIFT_THREADS,
                 DodoorConf.DEFAULT_NM_INTERNAL_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(nePort,neThreads, nodeEnqueueProcessor);
-        _dataStoreAddress = new ArrayList<>();
 
         if (cachedEnabled) {
             for (String dataStoreAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_DATA_STORE,
@@ -73,21 +63,26 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
                handleRegisterDataStore(dataStoreAddress);
             }
         }
+        _neAddressStr = Network.thriftToSocketStr(Network.getInternalHostPort(nePort, config));
 
-        _neAddress = null;
-        _hostName = null;
+        _node = new NodeImpl();
+        _node.initialize(config, this);
+
+        // Setup application-facing agent service.
+        NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
+                new NodeMonitorService.Processor<>(this);
+
+        int threads = config.getInt(DodoorConf.NM_THRIFT_THREADS,
+                DodoorConf.DEFAULT_NM_THRIFT_THREADS);
+
+        TServers.launchThreadedThriftServer(nmPort, threads, processor);
     }
 
     @Override
     public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
         _numMessages.inc();
-        if (_neAddress == null) {
-            THostPort nodeAddress = request.nodeEnqueueAddress;
-            InetSocketAddress neAddressSocket = Network.thriftToSocket(nodeAddress);
-            _hostName = neAddressSocket.getHostName();
-            _neAddress = Network.thriftToSocketStr(nodeAddress);
-        } else if (!_neAddress.equals(Network.thriftToSocketStr(request.nodeEnqueueAddress))) {
-            throw new TException("Node enqueue address mismatch: " + _neAddress + " vs " + request.nodeEnqueueAddress);
+        if (!_neAddressStr.equals(Network.thriftToSocketStr(request.nodeEnqueueAddress))) {
+            throw new TException("Node enqueue address mismatch: " + _neAddressStr + " vs " + request.nodeEnqueueAddress);
         }
         _nodeServiceMetrics.taskEnqueued();
         return _node.enqueueTaskReservation(request);
@@ -114,12 +109,24 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     public void taskFinished(TFullTaskId task) throws TException {
         _numMessages.inc();
         _node.taskFinished(task);
-        LOG.debug(Logging.auditEventString("task_finished_from_node", task.taskId, _hostName));
+        LOG.debug(Logging.auditEventString("task_finished_from_node", task.taskId));
     }
 
     @Override
     public int getNumTasks() throws TException {
         _numMessages.inc();
         return _node.getNumTasks();
+    }
+
+    public List<InetSocketAddress> getDataStoreAddress() {
+        return _dataStoreAddress;
+    }
+
+    public String getNeAddressStr() {
+        return _neAddressStr;
+    }
+
+    public NodeServiceMetrics getNodeServiceMetrics() {
+        return _nodeServiceMetrics;
     }
 }

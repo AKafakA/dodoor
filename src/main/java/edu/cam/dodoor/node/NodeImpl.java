@@ -29,10 +29,9 @@ public class NodeImpl implements Node {
     private AtomicInteger _waitingOrRunningTasksCounter;
     ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
     ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool;
-    List<InetSocketAddress> _dataStoreAddress;
-    private String _neAddress;
     private volatile NodeResources _nodeResources;
     private Map<String, InetSocketAddress> _taskSourceSchedulerAddress;
+    private NodeThrift _nodeThrift;
 
     @Override
     public void initialize(Configuration config, NodeThrift nodeThrift) {
@@ -49,7 +48,7 @@ public class NodeImpl implements Node {
             int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,
                     DodoorConf.DEFAULT_TRACKING_INTERVAL);
             MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval, config,
-                    nodeThrift._nodeServiceMetrics, taskLauncherService);
+                    nodeThrift.getNodeServiceMetrics(), taskLauncherService);
             metricsTrackerService.start();
         }
 
@@ -60,8 +59,7 @@ public class NodeImpl implements Node {
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
         _taskSourceSchedulerAddress = Maps.newConcurrentMap();
-        _dataStoreAddress = nodeThrift._dataStoreAddress;
-        _neAddress = nodeThrift._neAddress;
+        _nodeThrift = nodeThrift;
     }
 
     @Override
@@ -104,8 +102,7 @@ public class NodeImpl implements Node {
 
     private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
-        LOG.debug("Current data store address: {}", _dataStoreAddress);
-        for (InetSocketAddress dataStoreSocket : _dataStoreAddress) {
+        for (InetSocketAddress dataStoreSocket : _nodeThrift.getDataStoreAddress()) {
             DataStoreService.AsyncClient dataStoreClient;
             LOG.debug("Update to the datastore service {} after task {} ",
                     new Object[] {dataStoreSocket.getHostName(), dataStoreSocket.getPort(), task.taskId});
@@ -114,11 +111,13 @@ public class NodeImpl implements Node {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+            String neAddress = _nodeThrift.getNeAddressStr();
+            if (neAddress == null) {
+                throw new TException("Node enqueue address is not set");
+            }
             TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
-            dataStoreClient.overrideNodeState(_neAddress, nodeState,
+            dataStoreClient.overrideNodeState(neAddress, nodeState,
                     new UpdateNodeLoadCallBack(dataStoreSocket, dataStoreClient));
-            LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
-                    dataStoreSocket.getAddress(), dataStoreSocket.getPort()));
         }
 
         InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);

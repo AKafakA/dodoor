@@ -75,7 +75,7 @@ public class TaskLauncherService {
             numSlots = Resources.getSystemCoresCapacity(conf);
         }
         _node = nodeThrift._node;
-        _nodeServiceMetrics = nodeThrift._nodeServiceMetrics;
+        _nodeServiceMetrics = nodeThrift.getNodeServiceMetrics();
         LOG.debug("Initializing task launcher service with {} slots", numSlots);
         _executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numSlots);
     }
