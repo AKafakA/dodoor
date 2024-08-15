@@ -24,8 +24,6 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     // Defaults if not specified by configuration
     final Node _node = new NodeImpl();
     List<InetSocketAddress> _dataStoreAddress;
-    ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
-    ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool;
     String _neAddress;
     String _hostName;
     NodeServiceMetrics _nodeServiceMetrics;
@@ -67,11 +65,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
                 DodoorConf.INTERNAL_THRIFT_THREADS,
                 DodoorConf.DEFAULT_NM_INTERNAL_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(nePort,neThreads, nodeEnqueueProcessor);
-
-        _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _dataStoreAddress = new ArrayList<>();
-
-        _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
 
         if (cachedEnabled) {
             for (String dataStoreAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_DATA_STORE,
@@ -110,7 +104,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         if (dataStoreAddressOptional.isPresent()) {
             _dataStoreAddress.add(dataStoreAddressOptional.get());
             LOG.debug(Logging.auditEventString("register_datastore",
-                    dataStoreAddressOptional.get().getHostName()));
+                    dataStoreAddressOptional.get().getHostName(), dataStoreAddressOptional.get().getPort()));
         } else {
             throw new TException("Data store address " + dataStoreAddress + " not found");
         }

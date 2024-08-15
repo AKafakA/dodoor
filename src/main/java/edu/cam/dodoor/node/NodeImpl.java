@@ -60,8 +60,8 @@ public class NodeImpl implements Node {
         _requested_disk = new AtomicLong();
         _waitingOrRunningTasksCounter = new AtomicInteger(0);
         _finishedTasksCounter = new AtomicInteger(0);
-        _dataStoreClientPool = nodeThrift._dataStoreClientPool;
-        _schedulerClientPool = nodeThrift._schedulerClientPool;
+        _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
+        _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
         _taskSourceSchedulerAddress = Maps.newConcurrentMap();
 
         _numTasksToUpdate = config.getInt(DodoorConf.NODE_NUM_TASKS_TO_UPDATE,
@@ -110,22 +110,22 @@ public class NodeImpl implements Node {
 
     private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
-        int numFinishedTasks = _finishedTasksCounter.getAndIncrement();
+        int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
         LOG.debug("Task {} finished, total finished tasks: {}, whether to update {}",
                 new Object[]{task.taskId, numFinishedTasks, numFinishedTasks % _numTasksToUpdate == 0});
         if (numFinishedTasks % _numTasksToUpdate == 0) {
-            for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
+            for (InetSocketAddress dataStoreSocket : _dataStoreAddress) {
                 DataStoreService.AsyncClient dataStoreClient;
                 try {
-                    dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreAddress);
+                    dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreSocket);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
                 TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
                 dataStoreClient.overrideNodeState(_neAddress, nodeState,
-                        new UpdateNodeLoadCallBack(dataStoreAddress, dataStoreClient));
+                        new UpdateNodeLoadCallBack(dataStoreSocket, dataStoreClient));
                 LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
-                        dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
+                        dataStoreSocket.getAddress(), dataStoreSocket.getPort()));
             }
         }
 
@@ -157,14 +157,14 @@ public class NodeImpl implements Node {
 
         @Override
         public void onComplete(Void unused) {
-            LOG.info(Logging.auditEventString("deliver_nodes_load_to_scheduler",
+            LOG.info(Logging.auditEventString("deliver_nodes_load_to_datastore",
                     _address.getHostName()));
             returnClient();
         }
 
         @Override
         public void onError(Exception e) {
-            LOG.warn(Logging.auditEventString("failed_deliver_nodes_load_to_scheduler",
+            LOG.warn(Logging.auditEventString("failed_deliver_nodes_load_to_datastore",
                     _address.getHostName()));
             returnClient();
         }

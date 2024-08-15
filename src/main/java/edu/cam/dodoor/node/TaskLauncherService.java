@@ -2,7 +2,6 @@ package edu.cam.dodoor.node;
 
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +47,7 @@ public class TaskLauncherService {
                 if (!stdError.readLine().isEmpty() || !terminated) {
                     LOG.error("Task {} failed to execute with error {} or unterminated", task._taskId, stdError.readLine());
                 }
-            } catch (IOException | InterruptedException | TException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
             LOG.debug("Completed task {} on application backend at system time {}", task._taskId, System.currentTimeMillis());
