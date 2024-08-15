@@ -114,6 +114,7 @@ public class NodeImpl implements Node {
         LOG.debug("Task {} finished, total finished tasks: {}, whether to update {}",
                 new Object[]{task.taskId, numFinishedTasks, numFinishedTasks % _numTasksToUpdate == 0});
         if (numFinishedTasks % _numTasksToUpdate == 0) {
+            LOG.debug("Current datastore length: {}", _dataStoreAddress.size());
             for (InetSocketAddress dataStoreSocket : _dataStoreAddress) {
                 DataStoreService.AsyncClient dataStoreClient;
                 LOG.debug("Update to the datastore service {} after task {} ",
