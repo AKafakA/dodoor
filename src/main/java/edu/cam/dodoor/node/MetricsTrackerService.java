@@ -2,7 +2,6 @@ package edu.cam.dodoor.node;
 
 import com.codahale.metrics.Slf4jReporter;
 import edu.cam.dodoor.DodoorConf;
-import edu.cam.dodoor.utils.Resources;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.*;
 
@@ -27,7 +26,6 @@ public class MetricsTrackerService {
     private long _timelineInSeconds;
     private final Slf4jReporter _slf4jReporter;
     private final TaskLauncherService _taskLauncherService;
-    private final long _memoryCapacity;
 
 
     public MetricsTrackerService(int trackingInterval, Configuration config, NodeServiceMetrics nodeServiceMetrics,
@@ -40,7 +38,6 @@ public class MetricsTrackerService {
         _systemMemory = _operatingSystemMXBean.getTotalMemorySize();
         // track how much memory is occupied before the task is launched so that we can calculate the memory usage by the tasks only later
         // The configured memory allowed to be scheduled for tasks should be lower than the actual system memory to avoid OOM
-        _memoryCapacity = Resources.getMemoryMbCapacity(config);
         String tracingFileSuffix = config.getString(DodoorConf.NODE_METRICS_LOG_FILE_SUFFIX, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE_SUFFIX);
         String tracingFile = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER) + "_" + tracingFileSuffix;
         org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);

@@ -68,6 +68,8 @@ def parse_args():
                       help="The beta value used for 1 + beta process for random scheduling")
     parser.add_option("--batch-size", default=82,
                       help="The batch size of the tasks to be scheduled by dodoor scheduler")
+    parser.add_option("--scheduler-num-tasks-update", default=8,
+                      help="The number of tasks to be scheduled before scheduler update its load views in datastore")
     parser.add_option("--replay_with_delay", default=True,
                       help="Whether to replay the trace following the provided timeline and "
                            "delay the tasks kicking off until the time comes.")
@@ -169,6 +171,7 @@ def main():
     file.write("node.enqueue.thrift.threads = {} \n".format(options.node_enqueue_thrift_threads))
     file.write("replay.with.delay = {} \n".format(options.replay_with_delay))
     file.write("replay.with.disk = {} \n".format(options.replay_with_disk))
+    file.write("scheduler.num.tasks.update = {} \n".format(options.scheduler_num_tasks_update))
 
     file.write("trace.num.thread.concurrent.submitted.tasks = {} \n"
                .format(options.num_thread_concurrent_submitted_tasks))
