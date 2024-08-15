@@ -116,6 +116,8 @@ public class NodeImpl implements Node {
         if (numFinishedTasks % _numTasksToUpdate == 0) {
             for (InetSocketAddress dataStoreSocket : _dataStoreAddress) {
                 DataStoreService.AsyncClient dataStoreClient;
+                LOG.debug("Update to the datastore service {} after task {} ",
+                        new Object[] {dataStoreSocket.getHostName(), dataStoreSocket.getPort(), task.taskId});
                 try {
                     dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreSocket);
                 } catch (Exception e) {

@@ -26,7 +26,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
     private static Logger LOG;
     DataStore _dataStore;
     Configuration _config;
-    THostPort _networkPort;
     private ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool;
     List<InetSocketAddress> _schedulerAddress;
     private AtomicLong _counter;
@@ -50,11 +49,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
         _dataStore = new BasicDataStoreImpl();
         _config = config;
-
-        String hostname = Network.getHostName(config);
-        InetSocketAddress addr = new InetSocketAddress(hostname, port);
-        _networkPort = Network.socketAddressToThrift(addr);
-
         _dataStore.initialize(_config);
         _counter = new AtomicLong(0);
         _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
