@@ -110,7 +110,9 @@ public class NodeImpl implements Node {
 
     private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
-        int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
+        int numFinishedTasks = _finishedTasksCounter.getAndIncrement();
+        LOG.debug("Task {} finished, total finished tasks: {}, whether to update {}",
+                new Object[]{task.taskId, numFinishedTasks, numFinishedTasks % _numTasksToUpdate == 0});
         if (numFinishedTasks % _numTasksToUpdate == 0) {
             for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
                 DataStoreService.AsyncClient dataStoreClient;
