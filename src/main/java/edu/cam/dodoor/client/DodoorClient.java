@@ -104,7 +104,7 @@ public class DodoorClient {
         return submitRequest(request);
     }
 
-    public synchronized boolean submitRequest(TSchedulingRequest request) throws TException {
+    public synchronized boolean submitRequest(TSchedulingRequest request) {
         try {
             InetSocketAddress schedulerAddr = _schedulerAddresses.get(_nextRequestId.getAndIncrement() % _schedulerAddresses.size());
             SchedulerService.AsyncClient client = _clientPool.borrowClient(schedulerAddr);

@@ -196,6 +196,8 @@ public class DataStoreThrift implements DataStoreService.Iface {
                     throw new RuntimeException(e);
                 }
                 client.updateNodeState(getNodeStates(), new UpdateNodeLoadCallBack(socket, client));
+                LOG.debug(Logging.auditEventString("override_node_load_to_scheduler",
+                        socket.getHostName()));
             }
         }
     }
