@@ -104,6 +104,7 @@ public class NodeImpl implements Node {
 
     private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
+        LOG.debug("Current data store address: {}", _dataStoreAddress);
         for (InetSocketAddress dataStoreSocket : _dataStoreAddress) {
             DataStoreService.AsyncClient dataStoreClient;
             LOG.debug("Update to the datastore service {} after task {} ",
