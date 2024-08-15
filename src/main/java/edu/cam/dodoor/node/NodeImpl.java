@@ -27,10 +27,8 @@ public class NodeImpl implements Node {
 
     // count number of enqueued tasks
     private AtomicInteger _waitingOrRunningTasksCounter;
-    private AtomicInteger _finishedTasksCounter;
     ThriftClientPool<DataStoreService.AsyncClient> _dataStoreClientPool;
     ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool;
-    private int _numTasksToUpdate;
     List<InetSocketAddress> _dataStoreAddress;
     private String _neAddress;
     private volatile NodeResources _nodeResources;
@@ -59,13 +57,9 @@ public class NodeImpl implements Node {
         _requested_memory = new AtomicLong();
         _requested_disk = new AtomicLong();
         _waitingOrRunningTasksCounter = new AtomicInteger(0);
-        _finishedTasksCounter = new AtomicInteger(0);
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
         _taskSourceSchedulerAddress = Maps.newConcurrentMap();
-
-        _numTasksToUpdate = config.getInt(DodoorConf.NODE_NUM_TASKS_TO_UPDATE,
-                DodoorConf.DEFAULT_NODE_NUM_TASKS_TO_UPDATE);
         _dataStoreAddress = nodeThrift._dataStoreAddress;
         _neAddress = nodeThrift._neAddress;
     }
@@ -110,26 +104,20 @@ public class NodeImpl implements Node {
 
     private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
-        int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
-        LOG.debug("Task {} finished, total finished tasks: {}, whether to update {}",
-                new Object[]{task.taskId, numFinishedTasks, numFinishedTasks % _numTasksToUpdate == 0});
-        if (numFinishedTasks % _numTasksToUpdate == 0) {
-            LOG.debug("Current datastore length: {}", _dataStoreAddress.size());
-            for (InetSocketAddress dataStoreSocket : _dataStoreAddress) {
-                DataStoreService.AsyncClient dataStoreClient;
-                LOG.debug("Update to the datastore service {} after task {} ",
-                        new Object[] {dataStoreSocket.getHostName(), dataStoreSocket.getPort(), task.taskId});
-                try {
-                    dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreSocket);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
-                dataStoreClient.overrideNodeState(_neAddress, nodeState,
-                        new UpdateNodeLoadCallBack(dataStoreSocket, dataStoreClient));
-                LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
-                        dataStoreSocket.getAddress(), dataStoreSocket.getPort()));
+        for (InetSocketAddress dataStoreSocket : _dataStoreAddress) {
+            DataStoreService.AsyncClient dataStoreClient;
+            LOG.debug("Update to the datastore service {} after task {} ",
+                    new Object[] {dataStoreSocket.getHostName(), dataStoreSocket.getPort(), task.taskId});
+            try {
+                dataStoreClient = _dataStoreClientPool.borrowClient(dataStoreSocket);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
+            TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
+            dataStoreClient.overrideNodeState(_neAddress, nodeState,
+                    new UpdateNodeLoadCallBack(dataStoreSocket, dataStoreClient));
+            LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
+                    dataStoreSocket.getAddress(), dataStoreSocket.getPort()));
         }
 
         InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);
