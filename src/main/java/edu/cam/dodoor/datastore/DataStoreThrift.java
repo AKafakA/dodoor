@@ -94,9 +94,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
             }
         }
 
-        DataStoreService.Processor<DataStoreService.Iface> processor = new DataStoreService.Processor<>(this);
-        int threads = _config.getInt(DodoorConf.DATA_STORE_THRIFT_THREADS, DodoorConf.DEFAULT_DATA_STORE_THRIFT_THREADS);
-        TServers.launchThreadedThriftServer(port, threads, processor);
 
         _numTasksPerUpdateFromNode = config.getInt(DodoorConf.NODE_NUM_TASKS_TO_UPDATE, DodoorConf.DEFAULT_NODE_NUM_TASKS_TO_UPDATE);
 
@@ -120,6 +117,10 @@ public class DataStoreThrift implements DataStoreService.Iface {
             reporter.start(config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS, DodoorConf.DEFAULT_TRACKING_INTERVAL),
                     TimeUnit.SECONDS);
         }
+
+        DataStoreService.Processor<DataStoreService.Iface> processor = new DataStoreService.Processor<>(this);
+        int threads = _config.getInt(DodoorConf.DATA_STORE_THRIFT_THREADS, DodoorConf.DEFAULT_DATA_STORE_THRIFT_THREADS);
+        TServers.launchThreadedThriftServer(port, threads, processor);
     }
 
     @Override
@@ -163,14 +164,9 @@ public class DataStoreThrift implements DataStoreService.Iface {
     }
 
     @Override
-    public void overrideNodeState(String nodeEnqueueAddress, TNodeState nodeState) throws TException {
+    public void overrideNodeState(String nodeEnqueueAddress, TNodeState nodeState) {
         _numMessages.inc();
-        Optional<InetSocketAddress> nodeEnqueueAddressSocket = Serialization.strToSocket(nodeEnqueueAddress);
-        if (!nodeEnqueueAddressSocket.isPresent()) {
-            throw new TException("Invalid address: " + nodeEnqueueAddress);
-        }
-        InetSocketAddress nodeEnqueueAddressInet = nodeEnqueueAddressSocket.get();
-        LOG.debug(Logging.auditEventString("update_node_load", nodeEnqueueAddressInet.getHostName()));
+        LOG.debug("Received node state update from {}", nodeEnqueueAddress);
         _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeState);
         _overrideRequestsRate.mark(_numTasksPerUpdateFromNode);
     }
