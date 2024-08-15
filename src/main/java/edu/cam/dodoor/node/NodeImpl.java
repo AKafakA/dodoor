@@ -111,22 +111,6 @@ public class NodeImpl implements Node {
     private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
         int numFinishedTasks = _finishedTasksCounter.incrementAndGet();
-        InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);
-        if (schedulerSocketAddress != null) {
-            SchedulerService.AsyncClient schedulerClient;
-            try {
-                LOG.debug("Task {} finished, sending task finished signal to scheduler {}",
-                        new Object[] { task.taskId, schedulerSocketAddress});
-                schedulerClient = _schedulerClientPool.borrowClient(schedulerSocketAddress);
-                schedulerClient.taskFinished(task, new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            LOG.warn("Task {} finished, but no scheduler address found", task.taskId);
-            LOG.debug("Current task source scheduler address map: {}", _taskSourceSchedulerAddress);
-        }
-
         if (numFinishedTasks % _numTasksToUpdate == 0) {
             for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
                 DataStoreService.AsyncClient dataStoreClient;
@@ -141,6 +125,22 @@ public class NodeImpl implements Node {
                 LOG.debug(Logging.auditEventString("update_node_load_to_datastore",
                         dataStoreAddress.getAddress(), dataStoreAddress.getPort()));
             }
+        }
+
+        InetSocketAddress schedulerSocketAddress = _taskSourceSchedulerAddress.get(task.taskId);
+        if (schedulerSocketAddress != null) {
+            SchedulerService.AsyncClient schedulerClient;
+            try {
+                LOG.debug("Task {} finished, sending task finished signal to scheduler {}",
+                        new Object[] { task.taskId, schedulerSocketAddress});
+                schedulerClient = _schedulerClientPool.borrowClient(schedulerSocketAddress);
+                schedulerClient.taskFinished(task, new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            LOG.warn("Task {} finished, but no scheduler address found", task.taskId);
+            LOG.debug("Current task source scheduler address map: {}", _taskSourceSchedulerAddress);
         }
     }
 
