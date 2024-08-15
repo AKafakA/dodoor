@@ -30,7 +30,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
     List<InetSocketAddress> _schedulerAddress;
     private AtomicLong _counter;
     private int _batchSize;
-    private int _numTasksPerUpdateFromNode;
     MetricRegistry _metrics;
     private Meter _overrideRequestsRate;
     private Meter _addRequestsRate;
@@ -124,8 +123,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
         Optional<InetSocketAddress> schedulerAddressOptional = Serialization.strToSocket(schedulerAddress);
         if (schedulerAddressOptional.isPresent()) {
             _schedulerAddress.add(schedulerAddressOptional.get());
-            LOG.debug(Logging.auditEventString("register_scheduler",
-                    schedulerAddressOptional.get().getHostName(), schedulerAddressOptional.get().getPort()));
         } else {
             throw new TException("Scheduler address " + schedulerAddress + " not found");
         }
@@ -157,7 +154,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
     @Override
     public void overrideNodeState(String nodeEnqueueAddress, TNodeState nodeState) {
         _numMessages.inc();
-        LOG.debug("Received node state update from {}", nodeEnqueueAddress);
         _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeState);
         _overrideRequestsRate.mark(1);
     }
@@ -183,8 +179,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
                     throw new RuntimeException(e);
                 }
                 client.updateNodeState(getNodeStates(), new UpdateNodeLoadCallBack(socket, client));
-                LOG.debug(Logging.auditEventString("override_node_load_to_scheduler",
-                        socket.getHostName()));
             }
         }
     }
@@ -206,8 +200,6 @@ public class DataStoreThrift implements DataStoreService.Iface {
         }
         @Override
         public void onComplete(Void unused) {
-            LOG.info(Logging.auditEventString("deliver_nodes_load_to_scheduler",
-                    _address.getHostName()));
             try {
                 _schedulerClientPool.returnClient(_address, _client);
             } catch (Exception e) {
@@ -217,8 +209,12 @@ public class DataStoreThrift implements DataStoreService.Iface {
 
         @Override
         public void onError(Exception e) {
-            LOG.warn(Logging.auditEventString("failed_deliver_nodes_load_to_scheduler",
-                    _address.getHostName()));
+            LOG.error("Error updating node state", e);
+            try {
+                _schedulerClientPool.returnClient(_address, _client);
+            } catch (Exception e1) {
+                throw new RuntimeException(e1);
+            }
         }
     }
 }
