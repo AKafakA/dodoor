@@ -54,9 +54,9 @@ public class SchedulerThrift implements SchedulerService.Iface{
     }
 
     @Override
-    public void taskFinished(TFullTaskId task) throws TException {
+    public void taskFinished(TFullTaskId task, long nodeWallTime) throws TException {
         _numFinishedTasks.inc();
-        _scheduler.taskFinished(task);
+        _scheduler.taskFinished(task, nodeWallTime);
     }
 
     public void initialize(Configuration config, int port, boolean logKicked) throws TException, IOException {

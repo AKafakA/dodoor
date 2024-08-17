@@ -29,7 +29,7 @@ service SchedulerService {
     # Register a datastore with the given socket address (IP: Port)
   void registerDataStore(1: string dataStoreAddress);
   # used to caculate the end 2 end latency
-  void taskFinished(1: types.TFullTaskId task);
+  void taskFinished(1: types.TFullTaskId task, 2: i64 nodeWallTime);
 }
 
 # DataStoreService for storing the state of the nodes

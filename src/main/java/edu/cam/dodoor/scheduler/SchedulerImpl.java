@@ -250,14 +250,14 @@ public class SchedulerImpl implements Scheduler{
     }
 
     @Override
-    public void taskFinished(TFullTaskId taskId) throws TException {
+    public void taskFinished(TFullTaskId taskId, long nodeWallTime) throws TException {
         LOG.debug("Task {} finished", taskId.taskId);
         if (!_taskReceivedTime.containsKey(taskId.taskId)) {
             LOG.error("Task {} finished but not found in taskReceivedTime", taskId.taskId);
             return;
         }
         long taskDuration = System.currentTimeMillis() - _taskReceivedTime.get(taskId.taskId);
-        _schedulerServiceMetrics.taskFinished(taskDuration);
+        _schedulerServiceMetrics.taskFinished(taskDuration, nodeWallTime);
     }
 
     private class EnqueueTaskReservationCallback implements AsyncMethodCallback<Boolean> {
@@ -282,10 +282,8 @@ public class SchedulerImpl implements Scheduler{
             if (!aBoolean) {
                 LOG.error("Error enqueuing task on node {}", _nodeEnqueueAddress.getHostName());
             }
-            long totalTime = System.currentTimeMillis() - _startTimeMillis;
-            _schedulerServiceMetrics.taskScheduled(totalTime);
             LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
-                    new Object[]{_nodeEnqueueAddress.getHostName(), _taskId, totalTime});
+                    new Object[]{_nodeEnqueueAddress.getHostName(), _taskId, System.currentTimeMillis() - _startTimeMillis});
             returnClient();
         }
 

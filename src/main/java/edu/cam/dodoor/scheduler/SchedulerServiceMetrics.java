@@ -32,10 +32,6 @@ public class SchedulerServiceMetrics {
         _loadUpdateRate.mark();
     }
 
-    public void taskScheduled(long latency) {
-        _endToEndLatencyHistogram.update(latency);
-    }
-
     public Counter getTotalMessages() {
         return _totalMessages;
     }
@@ -48,7 +44,8 @@ public class SchedulerServiceMetrics {
         _totalMessages.inc();
     }
 
-    public void taskFinished(long makespan) {
+    public void taskFinished(long makespan, long nodeWallTime) {
         _endToEndMakespanHistogram.update(makespan);
+        _endToEndLatencyHistogram.update(makespan - nodeWallTime);
     }
 }

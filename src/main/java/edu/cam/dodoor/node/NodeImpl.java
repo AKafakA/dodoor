@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -32,10 +31,12 @@ public class NodeImpl implements Node {
     private volatile NodeResources _nodeResources;
     private Map<String, InetSocketAddress> _taskSourceSchedulerAddress;
     private NodeThrift _nodeThrift;
+    private Map<String, Long> _taskReceivedTime;
 
     @Override
     public void initialize(Configuration config, NodeThrift nodeThrift) {
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
+        _taskReceivedTime = Maps.newConcurrentMap();
         // TODO(wda): add more task scheduler
         _nodeResources = new NodeResources(Resources.getSystemCoresCapacity(config),
                 Resources.getMemoryMbCapacity(config), Resources.getSystemDiskGbCapacity(config));
@@ -90,7 +91,7 @@ public class NodeImpl implements Node {
         LOG.debug(Logging.functionCall(request));
         LOG.info(Logging.auditEventString("node_monitor_enqueue_task_reservation", request.taskId));
         _taskSourceSchedulerAddress.put(request.taskId, Network.thriftToSocket(request.schedulerAddress));
-
+        _taskReceivedTime.put(request.taskId, System.currentTimeMillis());
         _taskScheduler.submitTaskReservation(request);
         _requested_cores.getAndAdd(request.resourceRequested.cores);
         _requested_memory.getAndAdd(request.resourceRequested.memory);
@@ -127,7 +128,9 @@ public class NodeImpl implements Node {
                 LOG.debug("Task {} finished, sending task finished signal to scheduler {}",
                         new Object[] { task.taskId, schedulerSocketAddress});
                 schedulerClient = _schedulerClientPool.borrowClient(schedulerSocketAddress);
-                schedulerClient.taskFinished(task, new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
+                long nodeWallTime = System.currentTimeMillis() - _taskReceivedTime.get(task.taskId);
+                schedulerClient.taskFinished(task, nodeWallTime,
+                        new TaskFinishedCallBack(schedulerSocketAddress, schedulerClient));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
