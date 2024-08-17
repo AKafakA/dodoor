@@ -10,7 +10,7 @@ SCHEDULER_NUM_TASKS_UPDATE=30
 SCHEDULER_TYPE=$1
 NETWORK_INTERFACE="enp1s0"
 
-parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor/* & git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh && rm ~/*.log && rm ~/*.out"
+parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh && rm ~/*.out"
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f dodoor"
 

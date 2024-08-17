@@ -49,6 +49,7 @@ target/
 *__pycache__/
 
 deploy/resources/cl_manifest.xml
+deploy/resources/host_addresses/cloud_lab
 
 deploy/resources/figure/
 
