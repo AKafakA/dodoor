@@ -78,7 +78,7 @@ def parse_args():
     parser.add_option("--num_thread_concurrent_submitted_tasks", default=1000,
                       help="The number of threads concurrently submitting the tasks to scheduler from trace player.")
     parser.add_option("--network_interface", default="eno1",
-                        help="The network interface to be used for the network communication")
+                      help="The network interface to be used for the network communication")
 
     return parser.parse_args()
 

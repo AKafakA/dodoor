@@ -5,17 +5,19 @@ import matplotlib.pyplot as plt
 from deploy.python.analysis.composited_nodes_metrics import CompositedNodesMetrics
 from deploy.python.analysis.scheduler_metrics import SchedulerMetrics
 
-use_caelum = True
+use_caelum = False
 experiment_name = "azure"
 if use_caelum:
     experiment_name = "caelum_" + experiment_name
+else:
+    experiment_name = "cloud_lab_" + experiment_name
 
 target_dir = "deploy/resources/figure/{}".format(experiment_name)
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 3000
+max_checkpoints = 1000
 composited_node_host_dir = "deploy/resources/log/node/{}".format(experiment_name)
 
 var_resource_mean_lists = {}
@@ -96,6 +98,7 @@ for scheduler_name in os.listdir(scheduler_host_dir):
             num_messages = scheduler_metrics.get_num_messages()
             task_rate_m1 = scheduler_metrics.get_task_rate_m1()
             e2e_latency_avg = scheduler_metrics.get_e2e_latency_avg()
+            task_e2e_makespan_duration_avg = scheduler_metrics.get_task_makespan_duration_avg()
 
             plt.figure(6)
             plt.plot(num_messages[:max_checkpoints], label=scheduler_name)
@@ -105,6 +108,10 @@ for scheduler_name in os.listdir(scheduler_host_dir):
 
             plt.figure(8)
             plt.plot(e2e_latency_avg[:max_checkpoints], label=scheduler_name)
+
+            plt.figure(9)
+            plt.plot([duration / 1000 for duration in task_e2e_makespan_duration_avg[:max_checkpoints]],
+                     label=scheduler_name)
 
 plt.figure(6)
 plt.legend(loc='upper left', handlelength=1, frameon=False)
@@ -123,3 +130,9 @@ plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("e2e latency avg")
 plt.savefig("{}/e2e_latency_avg.png".format(target_dir))
+
+plt.figure(9)
+plt.legend(loc='upper left', handlelength=1, frameon=False)
+plt.xlabel("{} seconds".format(time_steps))
+plt.ylabel("task e2e makespan duration avg")
+plt.savefig("{}/task_e2e_makespan_duration_avg.png".format(target_dir))

@@ -14,9 +14,22 @@ class SchedulerMetrics:
                                      "p98=\d+.\d+, "
                                      "p99=\d+.\d+, "
                                      "p999=\d+.\d+")
+
     task_rate_pattern = re.compile("type=METER, name=scheduler.metrics.tasks.rate, count=\d+, "
                                    "m1_rate=\d+.\d+, m5_rate=\d+.\d+, m15_rate=\d+.\d+, mean_rate=\d+.\d+, "
                                    "rate_unit=events/second")
+
+    e2e_makespan_pattern = re.compile("type=HISTOGRAM, name=scheduler.metrics.tasks.e2e.makespan.latency.histograms, "
+                                     "count=\d+, min=\d+, "
+                                     "max=\d+, "
+                                     "mean=\d+.\d+, "
+                                     "stddev=\d+.\d+, "
+                                     "p50=\d+.\d+, "
+                                     "p75=\d+.\d+, "
+                                     "p95=\d+.\d+, "
+                                     "p98=\d+.\d+, "
+                                     "p99=\d+.\d+, "
+                                     "p999=\d+.\d+")
 
     def __init__(self, log_file):
         self.metrics = {"num_messages": [],
@@ -28,7 +41,8 @@ class SchedulerMetrics:
                         "e2e_latency_p99": [],
                         "e2e_latency_count": [],
                         "task_rate_mean": [],
-                        "task_rate_m1": []}
+                        "task_rate_m1": [],
+                        "task_makespan_duration_avg": []}
         self.log_file = log_file
         self.parse()
 
@@ -48,6 +62,8 @@ class SchedulerMetrics:
                     self.metrics["e2e_latency_p50"].append(float(line.split(",")[7].split("=")[1]))
                     self.metrics["e2e_latency_p99"].append(float(line.split(",")[11].split("=")[1]))
                     self.metrics["e2e_latency_count"].append(int(line.split(",")[2].split("=")[1]))
+                elif self.e2e_makespan_pattern.match(line):
+                    self.metrics["task_makespan_duration_avg"].append(float(line.split(",")[5].split("=")[1]))
         return self.metrics
 
     def get_num_messages(self):
@@ -73,3 +89,6 @@ class SchedulerMetrics:
 
     def get_e2e_latency_count(self):
         return self.metrics["e2e_latency_count"]
+
+    def get_task_makespan_duration_avg(self):
+        return self.metrics["task_makespan_duration_avg"]

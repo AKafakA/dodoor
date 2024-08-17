@@ -1,4 +1,5 @@
 import re
+import sys
 from deploy.python.analysis.utils import collect_logs
 
 
@@ -10,10 +11,12 @@ def get_host_address(host_input, test_on_caelum=False):
         return host_input.strip()
 
 
-scheduler_name = ["sparrow", "dodoor"]
-caelum_test = True
+scheduler_name = sys.argv[1]
+print("scheduler_name: ", scheduler_name)
+scheduler_names = [scheduler_name]
+caelum_test = False
 
-for scheduler in scheduler_name:
+for scheduler in scheduler_names:
     exp_name = "azure/{}".format(scheduler)
     node_host = []
     if caelum_test:
