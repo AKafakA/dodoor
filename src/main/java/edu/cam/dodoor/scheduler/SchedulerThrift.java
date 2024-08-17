@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 public class SchedulerThrift implements SchedulerService.Iface{
     private Scheduler _scheduler;
     private Counter _numMessages;
-    private Counter _numFinishedTasks;
 
 
     @Override
@@ -55,7 +54,6 @@ public class SchedulerThrift implements SchedulerService.Iface{
 
     @Override
     public void taskFinished(TFullTaskId task, long nodeWallTime) throws TException {
-        _numFinishedTasks.inc();
         _scheduler.taskFinished(task, nodeWallTime);
     }
 
@@ -68,7 +66,6 @@ public class SchedulerThrift implements SchedulerService.Iface{
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
         SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics);
         _numMessages = schedulerMetrics.getTotalMessages();
-        _numFinishedTasks = metrics.counter("num.finished.tasks");
         _scheduler.initialize(config, Network.getInternalHostPort(port, config), schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
 

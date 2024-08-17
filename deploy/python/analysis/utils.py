@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 
 
 def collect_logs(host_list,
@@ -8,6 +9,9 @@ def collect_logs(host_list,
                  node_log_target_file_prefix,
                  node_log_target_file_suffix=".log"):
     if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    else:
+        shutil.rmtree(output_dir, ignore_errors=True)
         os.makedirs(output_dir)
     for host in host_list:
         if host == None:

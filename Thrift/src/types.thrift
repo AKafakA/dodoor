@@ -40,6 +40,7 @@ struct TResourceVector {
 struct TFullTaskId {
   1: string taskId;
   2: TResourceVector resourceRequest;
+  3: i64 durationInMs;
 }
 
 struct TUserGroupInfo {

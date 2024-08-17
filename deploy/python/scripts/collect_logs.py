@@ -11,7 +11,8 @@ def get_host_address(host_input, test_on_caelum=False):
         return host_input.strip()
 
 
-scheduler_name = sys.argv[1]
+# scheduler_name = sys.argv[1]
+scheduler_name = "dodoor"
 print("scheduler_name: ", scheduler_name)
 scheduler_names = [scheduler_name]
 caelum_test = False
@@ -51,6 +52,7 @@ for scheduler in scheduler_names:
     target_scheduler_dir = "deploy/resources/log/scheduler/{}".format(exp_name)
     scheduler_log_name = scheduler + "_scheduler_metrics.log"
     scheduler_log_target_file_prefix = scheduler + "_scheduler_metrics"
+
 
     collect_logs(node_host, output_dir=target_dir,
                  node_log_name=node_log_name,

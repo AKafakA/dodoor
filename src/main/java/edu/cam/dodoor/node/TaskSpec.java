@@ -38,6 +38,6 @@ public class TaskSpec {
     }
 
     public TFullTaskId getFullTaskId() {
-        return new TFullTaskId(_taskId, _resourceVector);
+        return new TFullTaskId(_taskId, _resourceVector, _duration);
     }
 }
