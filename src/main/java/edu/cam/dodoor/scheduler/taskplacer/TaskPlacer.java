@@ -27,10 +27,11 @@ public abstract class TaskPlacer {
                                               TResourceVector resourceCapacity,
                                               SchedulerServiceMetrics schedulerMetrics) {
         return switch (schedulingStrategy) {
-            case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity);
+            case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity, false);
             case DodoorConf.SPARROW_SCHEDULER -> new SparrowTaskPlacer(beta, nodeMonitorClients, schedulerMetrics);
-            case DodoorConf.CACHED_SPARROW_SCHEDULER -> new CachedTaskPlacer(beta, false, resourceCapacity);
-            case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
+            case DodoorConf.CACHED_SPARROW_SCHEDULER -> new CachedTaskPlacer(beta, false, resourceCapacity, false);
+            case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity, false);
+            case DodoorConf.REVERSE_DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity, true);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }

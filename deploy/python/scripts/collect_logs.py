@@ -11,8 +11,7 @@ def get_host_address(host_input, test_on_caelum=False):
         return host_input.strip()
 
 
-# scheduler_name = sys.argv[1]
-scheduler_name = "dodoor"
+scheduler_name = sys.argv[1]
 batch_size = 100
 print("scheduler_name: ", scheduler_name)
 scheduler_names = [scheduler_name]

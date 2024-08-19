@@ -5,12 +5,12 @@ SLOT_SIZE=3
 BETA=1
 CORES=8
 MEMORY=61440
-SCHEDULER_PORTS=20503,20504,20505,20506,20507
-SCHEDULER_NUM_TASKS_UPDATE=10
+SCHEDULER_PORTS=20503,20504,20505,20506,20507,20508,20509,20511,20512,20513
+SCHEDULER_NUM_TASKS_UPDATE=8
 SCHEDULER_TYPE=$1
 NETWORK_INTERFACE="enp1s0"
 
-parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
+#parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f dodoor"
 
@@ -22,6 +22,6 @@ parallel-ssh -t 0 -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "no
 
 parallel-ssh -t 0 -h deploy/resources/host_addresses/cloud_lab/test_scheduler -i "nohup java -cp dodoor/target/dodoor-1.0-SNAPSHOT.jar edu.cam.dodoor.ServiceDaemon -c ~/dodoor/config.conf -d true -s true -n false  1>service.out 2>/dev/null &"
 
-sleep 10
+sleep 20
 
 parallel-ssh -t 0 -h deploy/resources/host_addresses/cloud_lab/test_scheduler -i "nohup java -cp dodoor/target/dodoor-1.0-SNAPSHOT.jar edu.cam.dodoor.client.TaskTracePlayer -c dodoor/config.conf -f dodoor/deploy/resources/data/azure_data_cloudlab  1>replay.out 2>/dev/null &"

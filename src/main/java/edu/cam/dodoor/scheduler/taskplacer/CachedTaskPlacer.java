@@ -13,11 +13,15 @@ public class CachedTaskPlacer extends TaskPlacer{
     private final boolean _useLoadScores;
 
     private final TResourceVector _resourceCapacity;
+
+    private final boolean _reverse;
     
-    public CachedTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity) {
+    public CachedTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
+                            boolean reverse) {
         super(beta);
         _useLoadScores = useLoadScores;
         _resourceCapacity = resourceCapacity;
+        _reverse = reverse;
     }
 
     @Override
@@ -46,7 +50,9 @@ public class CachedTaskPlacer extends TaskPlacer{
                 LOG.debug("node {} with score {}, node {} with score {} ",
                         new Object[]{nodeAddresses.get(firstIndex).getHostName(), score1,
                                 nodeAddresses.get(secondIndex).getHostName(), score2});
-                if (score1 > score2) {
+                if (score1 > score2 && !_reverse) {
+                    firstIndex = secondIndex;
+                } else if (score1 < score2 && _reverse) {
                     firstIndex = secondIndex;
                 }
                 LOG.debug("node {} is selected", nodeAddresses.get(firstIndex).getHostName());
