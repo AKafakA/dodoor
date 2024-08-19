@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SLEEP_TIME="11000"
+parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
 for i in "sparrow" "random" "cached_sparrow" "dodoor" "reverse_dodoor";
 do
    echo "run the exp for $i"
