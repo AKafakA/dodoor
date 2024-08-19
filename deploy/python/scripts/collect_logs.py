@@ -13,12 +13,13 @@ def get_host_address(host_input, test_on_caelum=False):
 
 # scheduler_name = sys.argv[1]
 scheduler_name = "dodoor"
+batch_size = 100
 print("scheduler_name: ", scheduler_name)
 scheduler_names = [scheduler_name]
 caelum_test = False
 
 for scheduler in scheduler_names:
-    exp_name = "azure/{}".format(scheduler)
+    exp_name = "azure/{}_{}".format(scheduler, batch_size)
     node_host = []
     if caelum_test:
         node_host_file = "deploy/resources/host_addresses/caelum/caelum_host_ip"

@@ -3,8 +3,7 @@ import re
 
 class SchedulerMetrics:
     message_counter_pattern = re.compile("type=COUNTER, name=scheduler.metrics.num.messages, count=\d+")
-    e2e_latency_pattern = re.compile("type=HISTOGRAM, name=scheduler.metrics.tasks.e2e.scheduling.latency.histograms, "
-                                     "count=\d+, min=\d+, "
+    e2e_latency_pattern = re.compile("type=HISTOGRAM, name=scheduler.metrics.tasks.e2e.scheduling.latency.histograms, count=\d+, min=\-?\d+, "
                                      "max=\d+, "
                                      "mean=\d+.\d+, "
                                      "stddev=\d+.\d+, "

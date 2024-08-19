@@ -17,7 +17,7 @@ if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 time_steps = 10
-max_checkpoints = 1000
+max_checkpoints = 110
 composited_node_host_dir = "deploy/resources/log/node/{}".format(experiment_name)
 
 var_resource_mean_lists = {}
@@ -58,6 +58,10 @@ for scheduler_name in os.listdir(composited_node_host_dir):
     average_waiting_time = nodes_metrics.get_average_task_waited_duration()
     plt.plot(average_waiting_time[:max_checkpoints], label=scheduler_name)
 
+    plt.figure(10)
+    average_cpu_usage, cpu_variance = nodes_metrics.get_cpu_usage_mean_and_variance()
+    plt.plot(average_cpu_usage[:max_checkpoints], label=scheduler_name)
+
 plt.figure(1)
 plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
@@ -87,6 +91,13 @@ plt.legend(loc='upper left', handlelength=1, frameon=False)
 plt.xlabel("{} seconds".format(time_steps))
 plt.ylabel("average waiting time")
 plt.savefig("{}/average_waiting_time.png".format(target_dir))
+
+plt.figure(10)
+plt.legend(loc='upper left', handlelength=1, frameon=False)
+plt.xlabel("{} seconds".format(time_steps))
+plt.ylabel("average cpu usage")
+plt.savefig("{}/average_cpu_usage.png".format(target_dir))
+
 
 scheduler_host_dir = "deploy/resources/log/scheduler/{}".format(experiment_name)
 for scheduler_name in os.listdir(scheduler_host_dir):
