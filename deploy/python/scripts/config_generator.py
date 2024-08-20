@@ -79,6 +79,12 @@ def parse_args():
                       help="The number of threads concurrently submitting the tasks to scheduler from trace player.")
     parser.add_option("--network_interface", default="eno1",
                       help="The network interface to be used for the network communication")
+    parser.add_option("--cpu_weight", default="1.0",
+                      help="The weight of cpu in the dodoor load score calculation.")
+    parser.add_option("--memory_weight", default="1.0",
+                      help="The weight of memory in the dodoor load score calculation.")
+    parser.add_option("--disk_weight", default="1.0",
+                      help="The weight of disk in the dodoor load score calculation.")
 
     return parser.parse_args()
 
@@ -177,6 +183,9 @@ def main():
                .format(options.num_thread_concurrent_submitted_tasks))
 
     file.write("network.interface = {} \n".format(options.network_interface))
+    file.write("dodoor.cpu.weight = {} \n".format(options.cpu_weight))
+    file.write("dodoor.memory.weight = {} \n".format(options.memory_weight))
+    file.write("dodoor.disk.weight = {} \n".format(options.disk_weight))
 
     file.close()
 

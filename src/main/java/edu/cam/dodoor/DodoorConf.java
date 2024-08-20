@@ -45,6 +45,9 @@ public class DodoorConf {
     // beta value for 1 + beta process
     public final static String BETA = "dodoor.beta";
     public final static double DEFAULT_BETA = 0.75;
+    public final static String CPU_WEIGHT = "dodoor.cpu.weight";
+    public final static String MEMORY_WEIGHT = "dodoor.memory.weight";
+    public final static String DISK_WEIGHT = "dodoor.disk.weight";
 
 
 

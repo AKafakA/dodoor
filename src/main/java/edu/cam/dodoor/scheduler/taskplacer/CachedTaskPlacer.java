@@ -15,13 +15,34 @@ public class CachedTaskPlacer extends TaskPlacer{
     private final TResourceVector _resourceCapacity;
 
     private final boolean _reverse;
-    
+
+    private final float _cpuWeight;
+
+    private final float _memWeight;
+
+    private final float _diskWeight;
+
     public CachedTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
                             boolean reverse) {
         super(beta);
         _useLoadScores = useLoadScores;
         _resourceCapacity = resourceCapacity;
         _reverse = reverse;
+        _cpuWeight = 1;
+        _memWeight = 1;
+        _diskWeight = 1;
+    }
+
+    
+    public CachedTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
+                            boolean reverse, float cpuWeight, float memWeight, float diskWeight) {
+        super(beta);
+        _useLoadScores = useLoadScores;
+        _resourceCapacity = resourceCapacity;
+        _reverse = reverse;
+        _cpuWeight = cpuWeight;
+        _memWeight = memWeight;
+        _diskWeight = diskWeight;
     }
 
     @Override
@@ -64,11 +85,14 @@ public class CachedTaskPlacer extends TaskPlacer{
     }
 
     private double getLoadScores(TResourceVector requestedResources, TResourceVector taskResources) {
-        double cpuLoad = (double) requestedResources.cores * taskResources.cores / (_resourceCapacity.cores * _resourceCapacity.cores);
-        double memLoad = (double) requestedResources.memory * taskResources.memory / (_resourceCapacity.memory * _resourceCapacity.memory);
+        double cpuLoad = (double) requestedResources.cores * taskResources.cores /
+                (_resourceCapacity.cores * _resourceCapacity.cores) * _cpuWeight;
+        double memLoad = (double) requestedResources.memory * taskResources.memory / (_resourceCapacity.memory * _resourceCapacity.memory)
+                * _memWeight;
         double diskLoad = 0.0;
         if (_resourceCapacity.disks > 0) {
-            diskLoad = (double) requestedResources.disks * taskResources.disks / (_resourceCapacity.disks * _resourceCapacity.disks);
+            diskLoad = (double) requestedResources.disks * taskResources.disks / (_resourceCapacity.disks * _resourceCapacity.disks)
+                    * _diskWeight;
         }
         return cpuLoad + memLoad + diskLoad;
     }

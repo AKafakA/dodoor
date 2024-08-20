@@ -5,7 +5,7 @@ BETA=1
 CORES=6
 MEMORY=61440
 SCHEDULER_PORTS=20503,20504,20505,20506,20507
-SCHEDULER_NUM_TASKS_UPDATE=20
+SCHEDULER_NUM_TASKS_UPDATE=5
 SCHEDULER_TYPE=$1
 
 parallel-ssh -h deploy/resources/host_addresses/caelum/caelum  -i "pkill -f dodoor"

@@ -100,8 +100,9 @@ public class SchedulerImpl implements Scheduler{
         }
 
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
-                schedulingStrategy, _nodeEqueueSocketToNodeMonitorClients, Resources.getSystemResourceVector(config),
-                schedulerServiceMetrics);
+                _nodeEqueueSocketToNodeMonitorClients,
+                schedulerServiceMetrics,
+                config);
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
     }
