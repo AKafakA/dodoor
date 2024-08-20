@@ -4,6 +4,9 @@ SLEEP_TIME="10000"
 BETA=1
 BATCH_SIZE=100
 
+parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
+parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
+
 for i in "sparrow" "random";
   do
   for slot_size in 4
