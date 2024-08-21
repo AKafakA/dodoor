@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SLEEP_TIME="10000"
-BETA=1
+BETA=1.0
 BATCH_SIZE=100
 CPU_WEIGHT=1.0
 
@@ -44,14 +44,14 @@ for i in "cached_sparrow" "dodoor"
   # shellcheck disable=SC2043
   for slot_size in 4
     do
-    for batch_size_beta in "50 1.0" "100 1.0" "1000 0.82"
+    for batch_size in 50 100 500 1000
       do
       for cpu_weight in 1.0
         do
-           echo "run the exp for $i with cpu weight $cpu_weight and batch size $batch_size_beta"
-           sh deploy/script/single_test_cloudlab.sh $i "${batch_size_beta[0]}" $slot_size "${batch_size_beta[1]}" $cpu_weight
+           echo "run the exp for $i with cpu weight $cpu_weight and batch size $batch_size"
+           sh deploy/script/single_test_cloudlab.sh $i $batch_size $slot_size $BETA $cpu_weight
            sleep ${SLEEP_TIME}
-           python3 deploy/python/scripts/collect_logs.py $i "${batch_size_beta[0]}" "${batch_size_beta[1]}" $slot_size $cpu_weight
+           python3 deploy/python/scripts/collect_logs.py $i $batch_size $slot_size $BETA $cpu_weight
            parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
         done
       done
