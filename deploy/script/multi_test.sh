@@ -27,7 +27,7 @@ for i in "cached_sparrow" "dodoor"
     do
     for batch_size in 100
       do
-      for cpu_weight in 0.25 1.0 4.0
+      for cpu_weight in 1.0 10.0 1000.0
         do
            echo "run the exp for $i with cpu weight $cpu_weight"
            sh deploy/script/single_test_cloudlab.sh $i $batch_size $slot_size $BETA $cpu_weight
