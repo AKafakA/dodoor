@@ -13,8 +13,8 @@ def get_host_address(host_input, test_on_caelum=False):
 
 scheduler_name = sys.argv[1]
 batch_size = sys.argv[2]
-beta = sys.argv[3]
-slot_size = sys.argv[4]
+slot_size = sys.argv[3]
+beta = sys.argv[4]
 cpu_weight = sys.argv[5]
 scheduler_names = [scheduler_name]
 caelum_test = False
