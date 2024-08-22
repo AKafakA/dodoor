@@ -52,5 +52,6 @@ deploy/resources/cl_manifest.xml
 deploy/resources/host_addresses/cloud_lab
 
 deploy/resources/figure/
+deploy/resources/data/raw_data/
 
 *.out

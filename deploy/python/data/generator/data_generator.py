@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 from schema import Schema
 
+MIN_CORES = 1
+
 
 class DataGenerator(ABC):
     input_data_schema = Schema({
@@ -12,9 +14,6 @@ class DataGenerator(ABC):
         "duration": int,
         "startTime": int,
     })
-
-    def __init__(self, output_path):
-        self.output_path = output_path
 
     @abstractmethod
     def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None):
@@ -32,11 +31,11 @@ class DataGenerator(ABC):
         self.input_data_schema.validate(data)
         return True
 
-    def write_data(self, data):
-        with open(self.output_path, "w+") as f:
+    def write_data_target_output(self, data, output_path):
+        print("Data length: {}".format(len(data)))
+        with open(output_path, "w+") as f:
             for record in data:
                 self.validate_data(record)
                 output = ",".join([str(value) for value in record.values()])
                 f.write(output + "\n")
         return True
-

@@ -8,11 +8,12 @@ MIN_CORES = 1
 
 
 class AzureDataGenerator(DataGenerator, ABC):
-    def __init__(self, db_path, output_path, machine_ids=None,
+    def __init__(self, db_path, machine_ids=None,
                  max_cores=24,
                  max_memory=30720,
                  max_disk=307200, time_interval=86400000):
-        super().__init__(output_path)
+
+        super().__init__()
         self.machine_ids = [0]
         if machine_ids is not None:
             self.machine_ids = machine_ids
@@ -53,6 +54,7 @@ class AzureDataGenerator(DataGenerator, ABC):
                         continue
                 if time_shift > 0:
                     start_time = start_time % time_shift
+                start_time -= time_range_in_days[0]
                 start_time *= self.time_interval * timeline_compress_ratio
                 duration = (vm[TableKeys.END_TIME] - vm[TableKeys.START_TIME]) * self.time_interval
                 if 0 < max_duration < duration:
