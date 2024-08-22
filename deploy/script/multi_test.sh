@@ -10,7 +10,7 @@ parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.
 export PYTHONPATH=$PYTHONPATH:~/Code/scheduling/dodoor
 for i in "sparrow" "random";
   do
-  for slot_size in 4
+  for slot_size in 3
     do
        echo "run the exp for $i"
        sh deploy/script/single_test_cloudlab.sh $i $BATCH_SIZE $slot_size $BETA $CPU_WEIGHT
@@ -23,11 +23,11 @@ done
 for i in "cached_sparrow" "dodoor"
   do
   # shellcheck disable=SC2043
-  for slot_size in 4
+  for slot_size in 3
     do
     for batch_size in 100
       do
-      for cpu_weight in 1.0 10.0 1000.0
+      for cpu_weight in 1.0 10.0 50.0 1000.0
         do
            echo "run the exp for $i with cpu weight $cpu_weight"
            sh deploy/script/single_test_cloudlab.sh $i $batch_size $slot_size $BETA $cpu_weight
@@ -42,11 +42,11 @@ done
 for i in "cached_sparrow" "dodoor"
   do
   # shellcheck disable=SC2043
-  for slot_size in 4
+  for slot_size in 3
     do
-    for batch_size in 50 100 500 1000
+    for batch_size in 20 50
       do
-      for cpu_weight in 1.0
+      for cpu_weight in 10.0
         do
            echo "run the exp for $i with cpu weight $cpu_weight and batch size $batch_size"
            sh deploy/script/single_test_cloudlab.sh $i $batch_size $slot_size $BETA $cpu_weight
