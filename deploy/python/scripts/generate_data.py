@@ -10,13 +10,13 @@ if generate_azure:
     azure_data_generator = AzureDataGenerator(azure_data_path, machine_ids=range(1, 40),
                                               max_cores=24,
                                               max_memory=576 * 1024)
-    data_10m = azure_data_generator.generate(10000000, 0, 1000 * 60 * 10, [1 / 24, 1 / 8],
+    data_10m = azure_data_generator.generate(10000000, 0, 1000 * 60 * 10, [0, 1 / 12],
                                              time_shift=1.0,
                                              timeline_compress_ratio=1.0,
                                              max_cores=8, max_memory=60 * 1024, max_disk=-1)
     azure_data_generator.write_data_target_output(data_10m, azure_output_path_10m)
     azure_output_path_1m = "deploy/resources/data/azure_data_cloudlab_1m"
-    data_1m = azure_data_generator.generate(10000000, 0, 1000 * 60, [1 / 24, 1 / 8],
+    data_1m = azure_data_generator.generate(10000000, 0, 1000 * 60, [0, 1 / 12],
                                             time_shift=1.0,
                                             timeline_compress_ratio=1.0,
                                             max_cores=8, max_memory=60 * 1024, max_disk=-1)
@@ -33,11 +33,11 @@ if generate_gcp:
     gcp_data_generator = GoogleCloudTaskDataGenerator(gcp_event_path_dir,
                                                       max_cores=48,
                                                       max_memory=384 * 1024)
-    data_1m = gcp_data_generator.generate(10000000, 0, 1000 * 1, [0, 1 / 8],
+    data_1m = gcp_data_generator.generate(10000000, 0, 1000 * 1, [0, 1 / 12],
                                           max_cores=8, max_memory=60 * 1024, max_disk=-1)
     gcp_data_generator.write_data_target_output(data_1m, gcp_output_path_1m)
 
-    data_10m = gcp_data_generator.generate(10000000, 0, 1000 * 60 * 10, [0, 1 / 8],
+    data_10m = gcp_data_generator.generate(10000000, 0, 1000 * 60 * 10, [0, 1 / 12],
                                            max_cores=8, max_memory=60 * 1024, max_disk=-1)
     gcp_data_generator.write_data_target_output(data_10m, gcp_output_path_10m)
 
@@ -50,9 +50,9 @@ if generate_gcp_v2:
     gcp_datav2_generator = GoogleCloudV2TaskDataGenerator(gcp_event_path_dir,
                                                           max_cores=48,
                                                           max_memory=384 * 1024)
-    data_1m = gcp_datav2_generator.generate(10000000, 0, 1000 * 60 * 1, [0, 1 / 8],
+    data_1m = gcp_datav2_generator.generate(10000000, 0, 1000 * 60 * 1, [0, 1 / 12],
                                             max_cores=8, max_memory=60 * 1024, max_disk=-1)
     gcp_datav2_generator.write_data_target_output(data_1m, gcp_output_path_1m)
-    data_10m = gcp_datav2_generator.generate(10000000, 0, 1000 * 60 * 10, [0, 1 / 8],
+    data_10m = gcp_datav2_generator.generate(10000000, 0, 1000 * 60 * 10, [0, 1 / 12],
                                              max_cores=8, max_memory=60 * 1024, max_disk=-1)
     gcp_datav2_generator.write_data_target_output(data_10m, gcp_output_path_10m)

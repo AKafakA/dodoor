@@ -12,7 +12,7 @@ SLOT_SIZE=$3
 BETA=$4
 CPU_WEIGHT=$5
 NETWORK_INTERFACE="enp1s0"
-DATA_PATH="deploy/resources/data/azure_data_cloudlab_10m"
+DATA_PATH=$6
 
 #parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
 

@@ -47,7 +47,7 @@ class AzureDataGenerator(DataGenerator, ABC):
                 start_time = vm[TableKeys.START_TIME]
                 if start_time > time_range_in_days[1]:
                     continue
-                if start_time < time_range_in_days[0]:
+                if start_time <= time_range_in_days[0]:
                     if take_before_request:
                         start_time = time_range_in_days[0]
                     else:
