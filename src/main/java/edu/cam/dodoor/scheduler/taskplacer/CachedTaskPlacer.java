@@ -85,15 +85,16 @@ public class CachedTaskPlacer extends TaskPlacer{
     }
 
     private double getLoadScores(TResourceVector requestedResources, TResourceVector taskResources) {
-        double cpuLoad = (double) requestedResources.cores * taskResources.cores /
-                (_resourceCapacity.cores * _resourceCapacity.cores) * _cpuWeight;
-        double memLoad = (double) requestedResources.memory * taskResources.memory / (_resourceCapacity.memory * _resourceCapacity.memory)
-                * _memWeight;
+        double cpuLoad = _cpuWeight * (requestedResources.cores * taskResources.cores) /
+                (_resourceCapacity.cores * _resourceCapacity.cores) ;
+        double memLoad = _memWeight * ((double) (requestedResources.memory) / (_resourceCapacity.memory)) *
+                ((double) taskResources.memory / _resourceCapacity.memory);
         double diskLoad = 0.0;
         if (_resourceCapacity.disks > 0) {
-            diskLoad = (double) requestedResources.disks * taskResources.disks / (_resourceCapacity.disks * _resourceCapacity.disks)
-                    * _diskWeight;
+            diskLoad = _diskWeight * ((double) (requestedResources.disks) / (_resourceCapacity.disks)) *
+                    ((double) taskResources.disks / _resourceCapacity.disks);
         }
+        LOG.debug("cpuLoad: {}, memLoad: {}, diskLoad: {}", new Object[]{cpuLoad, memLoad, diskLoad});
         return cpuLoad + memLoad + diskLoad;
     }
 }

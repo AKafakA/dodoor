@@ -26,8 +26,10 @@ max_num_waiting_task_lists = {}
 average_num_waiting_task_lists = {}
 variance_waiting_task_lists = {}
 
-test_scheduler_type = ["sparrow", "dodoor"]
-test_cpu_weight = [10.0, 1.0]
+# uncached_scheduler_type = ["sparrow", "random"]
+uncached_scheduler_type = []
+cached_scheduler_type = ["dodoor"]
+test_cpu_weight = [1.0, 1000.0]
 
 for scheduler_name in os.listdir(composited_node_host_dir):
     node_file = os.path.join(composited_node_host_dir, scheduler_name)
@@ -40,8 +42,10 @@ for scheduler_name in os.listdir(composited_node_host_dir):
     scheduler_type = scheduler_name.split("_")[0]
     cpu = scheduler_name.split("_")[-3]
     scheduler_name = "{}_{}".format(scheduler_type, cpu)
+    print(scheduler_name)
 
-    if scheduler_type not in test_scheduler_type or float(cpu) not in test_cpu_weight:
+    if not (scheduler_type in uncached_scheduler_type or (scheduler_type in cached_scheduler_type and
+                                                          float(cpu) in test_cpu_weight)):
         continue
 
     average_num_waiting_task_lists[scheduler_name] = average_num_waiting_tasks
@@ -115,7 +119,8 @@ for scheduler_name in os.listdir(scheduler_host_dir):
             scheduler_type = scheduler_name.split("_")[0]
             cpu = scheduler_name.split("_")[-3]
             scheduler_name = "{}_{}".format(scheduler_type, cpu)
-            if scheduler_type not in test_scheduler_type or float(cpu) not in test_cpu_weight:
+            if not (scheduler_type in uncached_scheduler_type or (scheduler_type in cached_scheduler_type and
+                                                                    float(cpu) in test_cpu_weight)):
                 continue
 
             num_messages = scheduler_metrics.get_num_messages()

@@ -63,17 +63,20 @@ class AzureDataGenerator(DataGenerator, ABC):
                 memory = vm[TableKeys.RESOURCE_TYPE[1]] * self.max_memory
                 disk = vm[TableKeys.RESOURCE_TYPE[2]] * self.max_disk
                 if max_cores > 0:
-                    cores = min(cores * cores_scale, max_cores)
+                    cores = math.ceil(min(cores * cores_scale, max_cores))
                 if max_memory > 0:
-                    memory = min(memory * memory_scale, max_memory)
+                    memory = math.ceil(min(memory * memory_scale, max_memory))
                 if max_disk > 0:
-                    disk = min(disk * disk_scale, max_disk)
+                    disk = math.ceil(min(disk * disk_scale, max_disk))
+
+                if cores <= 0 or memory <= 0 or disk <= 0:
+                    continue
 
                 data.append({
                     "taskId": task_id,
-                    "cores": max(MIN_CORES, math.ceil(cores)),
-                    "memory": math.ceil(memory),
-                    "disk": math.ceil(disk),
+                    "cores": int(cores),
+                    "memory": int(memory),
+                    "disk": int(disk),
                     "duration": int(duration),
                     "startTime": int(start_time)
                 })
