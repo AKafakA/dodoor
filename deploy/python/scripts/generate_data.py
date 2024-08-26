@@ -6,8 +6,13 @@ import random
 generate_azure = True
 if generate_azure:
     # random pick one hour in the first day to collect the trace
-    time_window = 1 / 48
-    start_point = random.uniform(0, 1 - time_window)
+    # time_window = 1 / 48
+    # start_point = random.uniform(0, 1 - time_window)
+    # end_point = start_point + time_window
+
+    # pick 2 hour traces in the first day from 2:00 to 4:00
+    time_window = 1 / 12
+    start_point = 2 / 24
     end_point = start_point + time_window
 
     azure_data_path = "deploy/resources/data/raw_data/azure_trace.sqlite"
