@@ -94,7 +94,10 @@ public class CachedTaskPlacer extends TaskPlacer{
             diskLoad = _diskWeight * ((double) (requestedResources.disks) / (_resourceCapacity.disks)) *
                     ((double) taskResources.disks / _resourceCapacity.disks);
         }
-        LOG.debug("cpuLoad: {}, memLoad: {}, diskLoad: {}", new Object[]{cpuLoad, memLoad, diskLoad});
+        LOG.debug("cpuLoad: {}, memLoad: {}, diskLoad: {}, requested cpu: {}, task cpu: {}, cpu capacity: {}" +
+                "requested mem: {}, task mem: {}, mem capacity: {} ", new Object[]{cpuLoad, memLoad, diskLoad,
+                requestedResources.cores, taskResources.cores, _resourceCapacity.cores,
+                requestedResources.memory, taskResources.memory, _resourceCapacity.memory});
         return cpuLoad + memLoad + diskLoad;
     }
 }
