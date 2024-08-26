@@ -2,6 +2,7 @@ package edu.cam.dodoor.node;
 
 import edu.cam.dodoor.thrift.TEnqueueTaskReservationRequest;
 import edu.cam.dodoor.thrift.TFullTaskId;
+import edu.cam.dodoor.thrift.TNodeState;
 import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
@@ -16,5 +17,5 @@ public interface Node {
 
     TResourceVector getRequestedResourceVector();
 
-    int getNumTasks();
+    TNodeState getNodeState();
 }

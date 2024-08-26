@@ -22,7 +22,7 @@ public class Network {
   }
 
   public static String thriftToSocketStr(THostPort address) {
-    return address.port + ":" + address.host;
+    return address.host + ":" + address.port;
   }
 
 

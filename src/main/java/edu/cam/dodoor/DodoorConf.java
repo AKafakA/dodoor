@@ -31,9 +31,9 @@ public class DodoorConf {
     /** Current supported scheduling algorithm*/
     public final static String DODOOR_SCHEDULER = "dodoor";
     public final static String SPARROW_SCHEDULER = "sparrow";
-    public final static String CACHED_SPARROW_SCHEDULER = "cached_sparrow";
+    public final static String CACHED_SPARROW_SCHEDULER = "cachedSparrow";
     public final static String RANDOM_SCHEDULER = "random";
-    public final static String REVERSE_DODOOR_SCHEDULER = "reverse_dodoor";
+    public final static String LOAD_SCORE_SPARROW = "loadScoreSparrow";
 
     public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20503;

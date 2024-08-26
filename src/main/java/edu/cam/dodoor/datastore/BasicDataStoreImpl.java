@@ -28,7 +28,7 @@ public class BasicDataStoreImpl implements DataStore{
     }
 
     @Override
-    public void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) {
+    public void overrideNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates) {
         LOG.debug("Updating node load for {}", nodeEnqueueAddress);
         _nodeStates.put(nodeEnqueueAddress, nodeStates);
     }

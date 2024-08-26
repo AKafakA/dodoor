@@ -10,7 +10,7 @@ public interface DataStore {
 
     void initialize(Configuration config);
 
-    void updateNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates);
+    void overrideNodeLoad(String nodeEnqueueAddress, TNodeState nodeStates);
 
     void addNodeLoads(Map<String, TNodeState> additionalNodeLoad, int sign);
 

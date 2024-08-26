@@ -8,7 +8,7 @@ import java.util.Set;
 public class SchedulerUtils {
 
      private static final Set<String> CACHED_SCHEDULERS_SET
-             = Set.of(DodoorConf.DODOOR_SCHEDULER, DodoorConf.CACHED_SPARROW_SCHEDULER, DodoorConf.REVERSE_DODOOR_SCHEDULER);
+             = Set.of(DodoorConf.DODOOR_SCHEDULER, DodoorConf.CACHED_SPARROW_SCHEDULER);
 
     public static boolean isCachedEnabled(String schedulerType) {
         return CACHED_SCHEDULERS_SET.contains(schedulerType);

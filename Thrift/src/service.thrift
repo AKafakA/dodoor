@@ -53,8 +53,8 @@ service DataStoreService {
 service NodeMonitorService {
    # Register a datastore with the given socket address (IP: Port)
   void registerDataStore(1: string dataStoreAddress);
-  # called by the scheduler to get the number of tasks running on the node for sparrow test
-  i32 getNumTasks();
+  # called by the scheduler to status of the node
+  types.TNodeState getNodeState();
 }
 
 # Service of the node exposed to the scheduler to enqueue tasks

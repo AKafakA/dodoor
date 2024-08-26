@@ -113,9 +113,9 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     }
 
     @Override
-    public int getNumTasks() throws TException {
+    public TNodeState getNodeState() throws TException {
         _numMessages.inc();
-        return _node.getNumTasks();
+        return _node.getNodeState();
     }
 
     public List<InetSocketAddress> getDataStoreAddress() {

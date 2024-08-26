@@ -19,7 +19,6 @@ public class NodeImpl implements Node {
     private final static Logger LOG = LoggerFactory.getLogger(NodeImpl.class);
 
     private volatile TaskScheduler _taskScheduler;
-    TResourceVector _requestedResources;
     private AtomicInteger _requested_cores;
     private AtomicLong _requested_memory;
     private AtomicLong _requested_disk;
@@ -78,12 +77,12 @@ public class NodeImpl implements Node {
 
     @Override
     public TResourceVector getRequestedResourceVector() {
-        return _requestedResources;
+        return new TResourceVector(_requested_cores.get(), _requested_memory.get(), _requested_disk.get());
     }
 
     @Override
-    public int getNumTasks() {
-        return _waitingOrRunningTasksCounter.get();
+    public TNodeState getNodeState() {
+        return new TNodeState(getRequestedResourceVector(), _waitingOrRunningTasksCounter.get());
     }
 
     @Override
@@ -116,7 +115,7 @@ public class NodeImpl implements Node {
             if (neAddress == null) {
                 throw new TException("Node enqueue address is not set");
             }
-            TNodeState nodeState = new TNodeState(this.getRequestedResourceVector(), this.getNumTasks());
+            TNodeState nodeState = this.getNodeState();
             dataStoreClient.overrideNodeState(neAddress, nodeState,
                     new UpdateNodeLoadCallBack(dataStoreSocket, dataStoreClient));
         }

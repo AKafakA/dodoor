@@ -145,7 +145,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
         Optional<InetSocketAddress> neAddress = Serialization.strToSocket(nodeEnqueueAddress);
         if (neAddress.isPresent()) {
             LOG.debug(Logging.auditEventString("register_node", neAddress.get().getHostName()));
-            _dataStore.updateNodeLoad(nodeEnqueueAddress, new TNodeState(new TResourceVector(), 0));
+            _dataStore.overrideNodeLoad(nodeEnqueueAddress, new TNodeState(new TResourceVector(), 0));
         } else {
             throw new TException("Node monitor address " + nodeEnqueueAddress + " not found");
         }
@@ -154,7 +154,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
     @Override
     public void overrideNodeState(String nodeEnqueueAddress, TNodeState nodeState) {
         _numMessages.inc();
-        _dataStore.updateNodeLoad(nodeEnqueueAddress, nodeState);
+        _dataStore.overrideNodeLoad(nodeEnqueueAddress, nodeState);
         _overrideRequestsRate.mark(1);
     }
 
