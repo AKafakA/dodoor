@@ -17,7 +17,6 @@ for i in "dodoor" "loadScoreSparrow" "sparrow" "random" "cachedSparrow";
     sh deploy/script/single_test_cloudlab.sh $i $BATCH_SIZE $SLOT_SIZE $BETA $CPU_WEIGHT $DATA_PATH
     sleep ${SLEEP_TIME}
     python3 deploy/python/scripts/collect_logs.py $i $BATCH_SIZE $SLOT_SIZE $BETA $CPU_WEIGHT
-    parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
 done
 
 sleep 60
