@@ -26,10 +26,9 @@ max_num_waiting_task_lists = {}
 average_num_waiting_task_lists = {}
 variance_waiting_task_lists = {}
 
-# uncached_scheduler_type = ["sparrow", "random"]
-uncached_scheduler_type = []
-cached_scheduler_type = ["dodoor"]
-test_cpu_weight = [1.0, 1000.0]
+uncached_scheduler_type = ["loadScoreSparrow", "sparrow", "random"]
+cached_scheduler_type = ["dodoor", "cachedSparrow"]
+test_cpu_weight = [1.0, 10.0, 100.0]
 
 for scheduler_name in os.listdir(composited_node_host_dir):
     node_file = os.path.join(composited_node_host_dir, scheduler_name)
