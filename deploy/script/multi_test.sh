@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SLEEP_TIME="7000"
+SLEEP_TIME="14400"
 BETA=1.0
 #BATCH_SIZE=100
 #CPU_WEIGHT=1.0
@@ -37,7 +37,7 @@ for i in "dodoor";
               sh deploy/script/single_test_cloudlab.sh $i $batch_size $slot_size $BETA $cpu_weight $DATA_PATH $duration_weight
               sleep ${SLEEP_TIME}
               python3 deploy/python/scripts/collect_logs.py $i $batch_size $slot_size $BETA $cpu_weight $duration_weight
-              parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i "sudo chmod -R 777 /users/asdwb/dodoor && mkdir dodoor/deploy/resources/log/$i-$batch_size-$slot_size-$BETA-$cpu_weight-$duration_weight"
+              parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i "sudo chmod -R 777 /users/asdwb/dodoor && cd dodoor && mkdir deploy/resources/log/$i-$batch_size-$slot_size-$BETA-$cpu_weight-$duration_weight"
               parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "mv ~/*.log ~/dodoor/deploy/resources/log/$i-$batch_size-$slot_size-$BETA-$cpu_weight-$duration_weight/. && mv ~/*.out ~/dodoor/deploy/resources/log/$i-$batch_size-$slot_size-$BETA-$cpu_weight-$duration_weight/."
             done
         done
