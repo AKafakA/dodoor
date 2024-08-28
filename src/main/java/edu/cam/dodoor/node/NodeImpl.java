@@ -19,9 +19,10 @@ public class NodeImpl implements Node {
     private final static Logger LOG = LoggerFactory.getLogger(NodeImpl.class);
 
     private volatile TaskScheduler _taskScheduler;
-    private AtomicInteger _requested_cores;
-    private AtomicLong _requested_memory;
-    private AtomicLong _requested_disk;
+    private AtomicInteger _requestedCores;
+    private AtomicLong _requestedMemory;
+    private AtomicLong _requestedDisk;
+    private AtomicLong _totalDurations;
 
     // count number of enqueued tasks
     private AtomicInteger _waitingOrRunningTasksCounter;
@@ -52,9 +53,10 @@ public class NodeImpl implements Node {
             metricsTrackerService.start();
         }
 
-        _requested_cores = new AtomicInteger();
-        _requested_memory = new AtomicLong();
-        _requested_disk = new AtomicLong();
+        _requestedCores = new AtomicInteger();
+        _requestedMemory = new AtomicLong();
+        _requestedDisk = new AtomicLong();
+        _totalDurations = new AtomicLong();
         _waitingOrRunningTasksCounter = new AtomicInteger(0);
         _dataStoreClientPool = new ThriftClientPool<>(new ThriftClientPool.DataStoreServiceMakerFactory());
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
@@ -65,11 +67,12 @@ public class NodeImpl implements Node {
     @Override
     public void taskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
-        _requested_cores.getAndAdd(-task.resourceRequest.cores);
-        _requested_memory.getAndAdd(-task.resourceRequest.memory);
-        _requested_disk.getAndAdd(-task.resourceRequest.disks);
+        _requestedCores.getAndAdd(-task.resourceRequest.cores);
+        _requestedMemory.getAndAdd(-task.resourceRequest.memory);
+        _requestedDisk.getAndAdd(-task.resourceRequest.disks);
         _nodeResources.freeTask(task.resourceRequest.cores, task.resourceRequest.memory, task.resourceRequest.disks);
         _waitingOrRunningTasksCounter.getAndAdd(-1);
+        _totalDurations.getAndAdd(task.durationInMs);
         sendRequestsPostTaskFinished(task);
         _taskScheduler.tasksFinished(task);
     }
@@ -77,12 +80,12 @@ public class NodeImpl implements Node {
 
     @Override
     public TResourceVector getRequestedResourceVector() {
-        return new TResourceVector(_requested_cores.get(), _requested_memory.get(), _requested_disk.get());
+        return new TResourceVector(_requestedCores.get(), _requestedMemory.get(), _requestedDisk.get());
     }
 
     @Override
     public TNodeState getNodeState() {
-        return new TNodeState(getRequestedResourceVector(), _waitingOrRunningTasksCounter.get());
+        return new TNodeState(getRequestedResourceVector(), _waitingOrRunningTasksCounter.get(), _totalDurations.get());
     }
 
     @Override
@@ -92,9 +95,9 @@ public class NodeImpl implements Node {
         _taskSourceSchedulerAddress.put(request.taskId, Network.thriftToSocket(request.schedulerAddress));
         _taskReceivedTime.put(request.taskId, System.currentTimeMillis());
         _taskScheduler.submitTaskReservation(request);
-        _requested_cores.getAndAdd(request.resourceRequested.cores);
-        _requested_memory.getAndAdd(request.resourceRequested.memory);
-        _requested_disk.getAndAdd(request.resourceRequested.disks);
+        _requestedCores.getAndAdd(request.resourceRequested.cores);
+        _requestedMemory.getAndAdd(request.resourceRequested.memory);
+        _requestedDisk.getAndAdd(request.resourceRequested.disks);
 
         _waitingOrRunningTasksCounter.getAndAdd(1);
         return true;

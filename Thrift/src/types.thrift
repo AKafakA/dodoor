@@ -73,6 +73,7 @@ struct TSchedulingRequest {
 struct TNodeState {
   1: TResourceVector resourceRequested;  # Resources has been requested and pending
   2: i32 numTasks;  # Number of tasks running on the node
+  3: i64 totalDurations;  # Total duration of all tasks pending on the node
 }
 
 exception ServerNotReadyException {

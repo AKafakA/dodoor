@@ -1,8 +1,12 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
+import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.thrift.TNodeState;
 import edu.cam.dodoor.thrift.TResourceVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 public class LoadScore {
 
@@ -11,7 +15,7 @@ public class LoadScore {
     public LoadScore() {
     }
 
-    public static double getLoadScores(TResourceVector requestedResources, TResourceVector taskResources,
+    public static double getResourceLoadScores(TResourceVector requestedResources, TResourceVector taskResources,
                                        double cpuWeight, double memWeight, double diskWeight,
                                        TResourceVector resourceCapacity) {
         double cpuLoad = cpuWeight * (requestedResources.cores * taskResources.cores) /
@@ -23,10 +27,46 @@ public class LoadScore {
             diskLoad = diskWeight * ((double) (requestedResources.disks) / (resourceCapacity.disks)) *
                     ((double) taskResources.disks / resourceCapacity.disks);
         }
-        LOG.debug("cpuLoad: {}, memLoad: {}, diskLoad: {}, requested cpu: {}, task cpu: {}, cpu capacity: {}" +
-                "requested mem: {}, task mem: {}, mem capacity: {} ", new Object[]{cpuLoad, memLoad, diskLoad,
+        double normalizedResourceLoad = (cpuLoad + memLoad + diskLoad) / (cpuWeight + memWeight + diskWeight);
+        LOG.debug("cpuLoad: {}, memLoad: {}, diskLoad: {}, requested cpu: {}, task cpu: {}, cpu capacity: {} " +
+                "requested mem: {}, task mem: {}, mem capacity: {}, final resourceScore: {} ", new Object[]{cpuLoad, memLoad, diskLoad,
                 requestedResources.cores, taskResources.cores, resourceCapacity.cores,
-                requestedResources.memory, taskResources.memory, resourceCapacity.memory});
-        return cpuLoad + memLoad + diskLoad;
+                requestedResources.memory, taskResources.memory, resourceCapacity.memory, normalizedResourceLoad});
+        return normalizedResourceLoad;
+    }
+
+    public static Map.Entry<Double, Double> getLoadScoresPairs(TNodeState firstNodeState,
+                                                               TNodeState secondNodeState,
+                                                               TResourceVector taskResources,
+                                                               double cpuWeight,
+                                                               double memWeight,
+                                                               double diskWeight,
+                                                               double totalDurationWeight,
+                                                               TResourceVector resourceCapacity) {
+      if (totalDurationWeight < 0 || totalDurationWeight > 1) {
+        throw new IllegalArgumentException("totalDurationWeight must be between 0 and 1");
+      }
+
+      double firstResourceLoad = getResourceLoadScores(firstNodeState.resourceRequested, taskResources,
+                                                      cpuWeight, memWeight, diskWeight, resourceCapacity);
+      double secondResourceLoad = getResourceLoadScores(secondNodeState.resourceRequested, taskResources,
+                                                         cpuWeight, memWeight, diskWeight, resourceCapacity);
+
+      double firstNormalizedResourceLoad = firstResourceLoad / (firstResourceLoad + secondResourceLoad);
+      double secondNormalizedResourceLoad = secondResourceLoad / (firstResourceLoad + secondResourceLoad);
+
+      double firstTotalDuration = firstNodeState.totalDurations;
+      double secondTotalDuration = secondNodeState.totalDurations;
+
+      double firstNormalizedTotalDuration = firstTotalDuration / (firstTotalDuration + secondTotalDuration);
+      double secondNormalizedTotalDuration = secondTotalDuration / (firstTotalDuration + secondTotalDuration);
+
+      double firstLoadScore = firstNormalizedResourceLoad * (1 - totalDurationWeight) + firstNormalizedTotalDuration * totalDurationWeight;
+      double secondLoadScore = secondNormalizedResourceLoad * (1 - totalDurationWeight) + secondNormalizedTotalDuration * totalDurationWeight;
+
+      LOG.debug("firstResourceLoad: {}, firstTotalPendingDuration: {}, firstLoadScore: {}, "
+                      + "secondResourceLoad: {}, secondPendingTotalDuration: {}, secondLoadScore: {}",
+                new Object[]{firstResourceLoad, firstTotalDuration, firstLoadScore, secondResourceLoad, secondTotalDuration, secondLoadScore});
+      return Map.entry(firstLoadScore, secondLoadScore);
     }
 }

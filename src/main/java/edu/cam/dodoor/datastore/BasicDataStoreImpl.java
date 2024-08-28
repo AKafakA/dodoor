@@ -38,15 +38,17 @@ public class BasicDataStoreImpl implements DataStore{
         for (Map.Entry<String, TNodeState> entry : additionalNodeLoad.entrySet()) {
             String nodeEnqueueAddress = entry.getKey();
             TNodeState nodeState = entry.getValue();
-            addSingleNodeLoad(nodeEnqueueAddress, nodeState.resourceRequested, nodeState.numTasks, sign);
+            addSingleNodeLoad(nodeEnqueueAddress, nodeState.resourceRequested, nodeState.numTasks,
+                    nodeState.totalDurations, sign);
         }
     }
 
-    private synchronized void addSingleNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector, int numTasks, int sign) {
+    private synchronized void addSingleNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector,
+                                                int numTasks, long newTotalDurations, int sign) {
         TNodeState nodeState = _nodeStates.get(nodeEnqueueAddress);
         if (nodeState == null) {
             LOG.warn("Node {} not found in the data store. Creating a new entry.", nodeEnqueueAddress);
-            nodeState = new TNodeState(new TResourceVector(), 0);
+            nodeState = new TNodeState(new TResourceVector(), 0, 0);
         }
         if (numTasks < 0 || Math.abs(sign) != 1) {
             throw new IllegalArgumentException("numTasks should be positive and sign should be 1 or -1");
@@ -57,6 +59,7 @@ public class BasicDataStoreImpl implements DataStore{
         existedResources.memory += resourceVector.memory * sign;
         existedResources.disks += resourceVector.disks * sign;
         nodeState.numTasks += numTasks * sign;
+        nodeState.totalDurations += newTotalDurations * sign;
         _nodeStates.put(nodeEnqueueAddress, nodeState);
     }
 

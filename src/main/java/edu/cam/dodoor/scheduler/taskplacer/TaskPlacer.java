@@ -18,15 +18,17 @@ public abstract class TaskPlacer {
     final float _cpuWeight;
     final float _memWeight;
     final float _diskWeight;
+    final float _totalDurationWeight;
 
     public TaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
-                      float cpuWeight, float memWeight, float diskWeight) {
+                      float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
         _beta = beta;
         _useLoadScores = useLoadScores;
         _resourceCapacity = resourceCapacity;
         _cpuWeight = cpuWeight;
         _memWeight = memWeight;
         _diskWeight = diskWeight;
+        _totalDurationWeight = totalDurationWeight;
     }
 
     public Map<TEnqueueTaskReservationRequest, InetSocketAddress> getEnqueueTaskReservationRequests(
@@ -47,15 +49,16 @@ public abstract class TaskPlacer {
         if (configuration.getBoolean(DodoorConf.REPLAY_WITH_DISK, DodoorConf.DEFAULT_REPLAY_WITH_DISK)) {
             diskWeight = configuration.getFloat(DodoorConf.DISK_WEIGHT, 1);
         }
+        float totalDurationWeight = configuration.getFloat(DodoorConf.TOTAL_PENDING_DURATION_WEIGHT, DodoorConf.DEFAULT_TOTAL_PENDING_DURATION_WEIGHT);
         return switch (schedulingStrategy) {
             case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
-                    cpuWeight, memWeight, diskWeight);
+                    cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.SPARROW_SCHEDULER -> new SparrowTaskPlacer(beta, false, resourceCapacity,
                     nodeMonitorClients, schedulerMetrics);
             case DodoorConf.LOAD_SCORE_SPARROW -> new SparrowTaskPlacer(beta, true, resourceCapacity,
-                    nodeMonitorClients, schedulerMetrics, cpuWeight, memWeight, diskWeight);
+                    nodeMonitorClients, schedulerMetrics, cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.CACHED_SPARROW_SCHEDULER -> new CachedTaskPlacer(beta, false, resourceCapacity,
-                    cpuWeight, memWeight, diskWeight);
+                    cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };

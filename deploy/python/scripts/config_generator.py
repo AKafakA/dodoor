@@ -85,6 +85,8 @@ def parse_args():
                       help="The weight of memory in the dodoor load score calculation.")
     parser.add_option("--disk_weight", default="1.0",
                       help="The weight of disk in the dodoor load score calculation.")
+    parser.add_option("--duration_weight", default="0.95",
+                      help="The weight of total pending task duration in the dodoor load score calculation.")
 
     return parser.parse_args()
 
@@ -186,6 +188,7 @@ def main():
     file.write("dodoor.cpu.weight = {} \n".format(options.cpu_weight))
     file.write("dodoor.memory.weight = {} \n".format(options.memory_weight))
     file.write("dodoor.disk.weight = {} \n".format(options.disk_weight))
+    file.write("dodoor.total.pending.duration.weight = {} \n".format(options.duration_weight))
 
     file.close()
 

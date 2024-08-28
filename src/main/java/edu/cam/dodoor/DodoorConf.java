@@ -48,6 +48,8 @@ public class DodoorConf {
     public final static String CPU_WEIGHT = "dodoor.cpu.weight";
     public final static String MEMORY_WEIGHT = "dodoor.memory.weight";
     public final static String DISK_WEIGHT = "dodoor.disk.weight";
+    public final static String TOTAL_PENDING_DURATION_WEIGHT = "dodoor.total.pending.duration.weight";
+    public final static float DEFAULT_TOTAL_PENDING_DURATION_WEIGHT = 0.95f;
 
 
 

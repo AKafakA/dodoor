@@ -16,11 +16,13 @@ batch_size = sys.argv[2]
 slot_size = sys.argv[3]
 beta = sys.argv[4]
 cpu_weight = sys.argv[5]
+duration_weight = sys.argv[6]
 scheduler_names = [scheduler_name]
 caelum_test = False
 
 for scheduler in scheduler_names:
-    exp_name = "azure/{}_batch_{}_beta_{}_cpu_{}_slot_{}".format(scheduler, batch_size, beta, cpu_weight, slot_size)
+    exp_name = "azure/{}_batch_{}_beta_{}_cpu_{}_slot_{}_duration_{}".format(scheduler, batch_size, beta,
+                                                                             cpu_weight, slot_size, duration_weight)
     node_host = []
     if caelum_test:
         node_host_file = "deploy/resources/host_addresses/caelum/caelum_host_ip"
@@ -54,7 +56,6 @@ for scheduler in scheduler_names:
     target_scheduler_dir = "deploy/resources/log/scheduler/{}".format(exp_name)
     scheduler_log_name = scheduler + "_scheduler_metrics.log"
     scheduler_log_target_file_prefix = scheduler + "_scheduler_metrics"
-
 
     collect_logs(node_host, output_dir=target_dir,
                  node_log_name=node_log_name,

@@ -17,7 +17,7 @@ public class SparrowTaskPlacer extends TaskPlacer{
                              TResourceVector resourceCapacity,
                              Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
                              SchedulerServiceMetrics schedulerMetrics) {
-        super(beta, useLoadScores, resourceCapacity, 1, 1, 1);
+        super(beta, useLoadScores, resourceCapacity, 1, 1, 1, 1);
         _schedulerMetrics = schedulerMetrics;
         _nodeMonitorClients = nodeMonitorClients;
         _useLoadScores = useLoadScores;
@@ -28,8 +28,8 @@ public class SparrowTaskPlacer extends TaskPlacer{
                              TResourceVector resourceCapacity,
                              Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
                              SchedulerServiceMetrics schedulerMetrics,
-                             float cpuWeight, float memWeight, float diskWeight) {
-        super(beta, useLoadScores, resourceCapacity, cpuWeight, memWeight, diskWeight);
+                             float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
+        super(beta, useLoadScores, resourceCapacity, cpuWeight, memWeight, diskWeight, totalDurationWeight);
         _schedulerMetrics = schedulerMetrics;
         _nodeMonitorClients = nodeMonitorClients;
         _useLoadScores = useLoadScores;
@@ -55,10 +55,10 @@ public class SparrowTaskPlacer extends TaskPlacer{
                     TNodeState nodeState2 = _nodeMonitorClients.get(nodeAddresses.get(secondIndex)).getNodeState();
                     _schedulerMetrics.probeNode();
                     if (_useLoadScores) {
-                        double loadScore1 = LoadScore.getLoadScores(nodeState1.resourceRequested, taskResources,
-                                _cpuWeight, _memWeight, _diskWeight, _resourceCapacity);
-                        double loadScore2 = LoadScore.getLoadScores(nodeState2.resourceRequested, taskResources,
-                                _cpuWeight, _memWeight, _diskWeight, _resourceCapacity);
+                        Map.Entry<Double, Double> scores = LoadScore.getLoadScoresPairs(nodeState1, nodeState2, taskResources,
+                                _cpuWeight, _memWeight, _diskWeight, _totalDurationWeight, _resourceCapacity);
+                        double loadScore1 = scores.getKey();
+                        double loadScore2 = scores.getValue();
                         if (loadScore1 > loadScore2) {
                             firstIndex = secondIndex;
                         }

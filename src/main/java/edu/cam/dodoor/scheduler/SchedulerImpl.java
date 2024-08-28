@@ -124,11 +124,14 @@ public class SchedulerImpl implements Scheduler{
         for (InetSocketAddress nodeEnqueueAddress : mapOfNodesToPlacedTasks.keySet()) {
             String nodeEnqueueAddressStr = Serialization.getStrFromSocket(nodeEnqueueAddress);
             TResourceVector newRequestedResources = _nodeLoadChanges.get(nodeEnqueueAddressStr).resourceRequested;
+            long newTotalDurations = 0;
             for (TEnqueueTaskReservationRequest task : mapOfNodesToPlacedTasks.get(nodeEnqueueAddress)) {
                 newRequestedResources.cores += task.resourceRequested.cores;
                 newRequestedResources.memory += task.resourceRequested.memory;
                 newRequestedResources.disks += task.resourceRequested.disks;
+                newTotalDurations += task.durationInMs;
             }
+            _nodeLoadChanges.get(nodeEnqueueAddressStr).totalDurations += newTotalDurations;
             _nodeLoadChanges.get(nodeEnqueueAddressStr).numTasks += mapOfNodesToPlacedTasks.get(nodeEnqueueAddress).size();
             if (needToUpdateDataStore) {
                 LOG.debug("{} tasks scheduled. and need to update the datastore from scheduler side", _counter.get());
@@ -224,9 +227,9 @@ public class SchedulerImpl implements Scheduler{
             InetSocketAddress nmSocket = nmAddress.get();
             InetSocketAddress neSocket = neAddress.get();
             _loadMapEqueueSocketToNodeState.put(neSocket, new TNodeState(
-                    new TResourceVector(0, 0, 0), 0));
+                    new TResourceVector(0, 0, 0), 0, 0));
             _nodeLoadChanges.put(Serialization.getStrFromSocket(neSocket), new TNodeState(
-                    new TResourceVector(0, 0, 0), 0));
+                    new TResourceVector(0, 0, 0), 0, 0));
 
             try {
                 _nodeEqueueSocketToNodeMonitorClients.put(neSocket,
