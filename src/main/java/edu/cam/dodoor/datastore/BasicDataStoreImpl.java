@@ -55,11 +55,11 @@ public class BasicDataStoreImpl implements DataStore{
         }
 
         TResourceVector existedResources = nodeState.resourceRequested;
-        existedResources.cores += resourceVector.cores * sign;
-        existedResources.memory += resourceVector.memory * sign;
-        existedResources.disks += resourceVector.disks * sign;
-        nodeState.numTasks += numTasks * sign;
-        nodeState.totalDurations += newTotalDurations * sign;
+        existedResources.cores = resourceVector.cores * sign + existedResources.cores;
+        existedResources.memory = resourceVector.memory * sign + existedResources.memory;
+        existedResources.disks = resourceVector.disks * sign + existedResources.disks;
+        nodeState.numTasks = numTasks * sign + nodeState.numTasks;
+        nodeState.totalDurations = newTotalDurations * sign + nodeState.totalDurations;
         _nodeStates.put(nodeEnqueueAddress, nodeState);
     }
 

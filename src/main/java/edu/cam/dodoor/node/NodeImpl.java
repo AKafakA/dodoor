@@ -72,7 +72,7 @@ public class NodeImpl implements Node {
         _requestedDisk.getAndAdd(-task.resourceRequest.disks);
         _nodeResources.freeTask(task.resourceRequest.cores, task.resourceRequest.memory, task.resourceRequest.disks);
         _waitingOrRunningTasksCounter.getAndAdd(-1);
-        _totalDurations.getAndAdd(task.durationInMs);
+        _totalDurations.getAndAdd(-task.durationInMs);
         sendRequestsPostTaskFinished(task);
         _taskScheduler.tasksFinished(task);
     }
@@ -100,6 +100,7 @@ public class NodeImpl implements Node {
         _requestedDisk.getAndAdd(request.resourceRequested.disks);
 
         _waitingOrRunningTasksCounter.getAndAdd(1);
+        _totalDurations.getAndAdd(request.durationInMs);
         return true;
     }
 

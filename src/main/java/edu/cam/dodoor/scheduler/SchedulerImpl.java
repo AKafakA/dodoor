@@ -126,13 +126,13 @@ public class SchedulerImpl implements Scheduler{
             TResourceVector newRequestedResources = _nodeLoadChanges.get(nodeEnqueueAddressStr).resourceRequested;
             long newTotalDurations = 0;
             for (TEnqueueTaskReservationRequest task : mapOfNodesToPlacedTasks.get(nodeEnqueueAddress)) {
-                newRequestedResources.cores += task.resourceRequested.cores;
-                newRequestedResources.memory += task.resourceRequested.memory;
-                newRequestedResources.disks += task.resourceRequested.disks;
+                newRequestedResources.cores = task.resourceRequested.cores + newRequestedResources.cores;
+                newRequestedResources.memory = task.resourceRequested.memory + newRequestedResources.memory;
+                newRequestedResources.disks = task.resourceRequested.disks + newRequestedResources.disks;
                 newTotalDurations += task.durationInMs;
             }
-            _nodeLoadChanges.get(nodeEnqueueAddressStr).totalDurations += newTotalDurations;
-            _nodeLoadChanges.get(nodeEnqueueAddressStr).numTasks += mapOfNodesToPlacedTasks.get(nodeEnqueueAddress).size();
+            _nodeLoadChanges.get(nodeEnqueueAddressStr).totalDurations = newTotalDurations + _nodeLoadChanges.get(nodeEnqueueAddressStr).totalDurations;
+            _nodeLoadChanges.get(nodeEnqueueAddressStr).numTasks = mapOfNodesToPlacedTasks.get(nodeEnqueueAddress).size() + _nodeLoadChanges.get(nodeEnqueueAddressStr).numTasks;
             if (needToUpdateDataStore) {
                 LOG.debug("{} tasks scheduled. and need to update the datastore from scheduler side", _counter.get());
                 for (InetSocketAddress dataStoreAddress : _dataStoreAddress) {
