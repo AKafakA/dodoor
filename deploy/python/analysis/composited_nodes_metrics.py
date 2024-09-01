@@ -11,6 +11,7 @@ def get_nodes_metrics_lists(metrics_name, metrics_length, nodes: List[NodeMetric
     for i in range(metrics_length):
         nodes_metric = []
         for node in nodes:
+            # print(str(len(node.metrics[metrics_name])), metrics_length, metrics_name)
             nodes_metric.append(node.metrics[metrics_name][i])
         nodes_metrics.append(nodes_metric)
     return nodes_metrics
@@ -44,8 +45,7 @@ class CompositedNodesMetrics:
     def __init__(self, node_log_dir, id="default"):
         self.id = id
         self.node_metrics = []
-        self.min_start_step = 100000
-        self.max_length = 0
+        self.min_end_step = 100000
         for filename in os.listdir(os.path.join(os.getcwd(), node_log_dir)):
             if filename.endswith(".log"):
                 node_id = filename.split("_")[-1].split(".")[0]
@@ -53,12 +53,10 @@ class CompositedNodesMetrics:
                 node_metric = NodeMetrics(log_file_path, node_id)
                 node_metric.parse()
                 self.node_metrics.append(node_metric)
-                self.min_start_step = min(node_metric.start_step, self.min_start_step)
-                self.max_length = max(node_metric.length, self.max_length)
-
+                self.min_end_step = min(node_metric.length, self.min_end_step)
+        self.length = self.min_end_step
         for node_metric in self.node_metrics:
-            node_metric.calibrate(self.min_start_step, self.max_length)
-        self.length = self.max_length - self.min_start_step
+            node_metric.calibrate(0, self.length)
 
     def get_num_nodes(self):
         return len(self.node_metrics)

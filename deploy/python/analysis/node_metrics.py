@@ -12,7 +12,7 @@ class NodeMetrics:
     num_waiting_tasks_pattern = re.compile("type=COUNTER, name=node.metrics.tasks.waiting.count, count=\d+")
     num_finished_tasks_pattern = re.compile("type=COUNTER, name=node.metrics.tasks.finished.count, count=\d+")
     resource_usage_pattern = re.compile(
-        "Time\(in Seconds\) OSM: \d+ CPU usage: 0.\d+ Memory usage: 0.\d+ Disk usage: 0.\d+")
+        "Time\(in Seconds\) OSM: \d+ CPU usage: \d+.\d+(E-\d)? Memory usage: \d+.\d+(E-\d)? Disk usage: \d+.\d+(E-\d)?")
     task_rate_pattern = re.compile("type=METER, name=node.metrics.tasks.rate, count=\d+, "
                                    "m1_rate=\d+.\d+, m5_rate=\d+.\d+, m15_rate=\d+.\d+, mean_rate=\d+.\d+, "
                                    "rate_unit=events/second")
@@ -65,18 +65,8 @@ class NodeMetrics:
                     counted_tasks = int(line.split(",")[2].split("=")[1])
                     self.metrics["duration_task_waited_total"].append(average_duration * counted_tasks)
                     self.metrics["count_tasks_waited"].append(counted_tasks)
-        self.length = len(self.metrics["num_waiting_tasks"])
-        self.metrics_appending()
+        self.length = min([len(metric) for metric in self.metrics.values()])
 
-    def calibrate(self, start_point, end_point):
-        if start_point < 0 or end_point < self.length:
-            print("Invalid start_point {} or end_point {} with self length {}".format(start_point, end_point, self.length))
-            raise ValueError("Invalid start_point or end_point")
+    def calibrate(self, start_point, length):
         for key, metric in self.metrics.items():
-            new_metric = calibrate_metrics(start_point, end_point, metric)
-            self.metrics[key] = new_metric
-
-    def metrics_appending(self):
-        max_metrics_length = max([len(metric) for metric in self.metrics.values()])
-        for key, metric in self.metrics.items():
-            self.metrics[key].extend([metric[-1]] * (max_metrics_length - len(metric)))
+            self.metrics[key] = self.metrics[key][start_point:start_point + length]

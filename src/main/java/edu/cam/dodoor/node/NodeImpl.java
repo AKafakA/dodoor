@@ -62,6 +62,7 @@ public class NodeImpl implements Node {
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
         _taskSourceSchedulerAddress = Maps.newConcurrentMap();
         _nodeThrift = nodeThrift;
+
     }
 
     @Override

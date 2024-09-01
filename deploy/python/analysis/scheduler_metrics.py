@@ -15,7 +15,7 @@ class SchedulerMetrics:
                                      "p999=\d+.\d+")
 
     task_rate_pattern = re.compile("type=METER, name=scheduler.metrics.tasks.rate, count=\d+, "
-                                   "m1_rate=\d+.\d+, m5_rate=\d+.\d+, m15_rate=\d+.\d+, mean_rate=\d+.\d+, "
+                                   "m1_rate=\d+.\d+(E-\d)?, m5_rate=\d+.\d+, m15_rate=\d+.\d+, mean_rate=\d+.\d+, "
                                    "rate_unit=events/second")
 
     e2e_makespan_pattern = re.compile("type=HISTOGRAM, name=scheduler.metrics.tasks.e2e.makespan.latency.histograms, "
@@ -29,6 +29,7 @@ class SchedulerMetrics:
                                      "p98=\d+.\d+, "
                                      "p99=\d+.\d+, "
                                      "p999=\d+.\d+")
+    finished_tasks_pattern = re.compile("type=COUNTER, name=scheduler.metrics.tasks.finished.count, count=\d+")
 
     def __init__(self, log_file):
         self.metrics = {"num_messages": [],
@@ -41,7 +42,9 @@ class SchedulerMetrics:
                         "e2e_latency_count": [],
                         "task_rate_mean": [],
                         "task_rate_m1": [],
-                        "task_makespan_duration_avg": []}
+                        "task_makespan_duration_avg": [],
+                        "submitted_tasks": [],
+                        "finished_tasks": []}
         self.log_file = log_file
         self.parse()
 
@@ -50,9 +53,10 @@ class SchedulerMetrics:
             for line in f.readlines():
                 if self.message_counter_pattern.match(line):
                     self.metrics["num_messages"].append(int(line.split(",")[2].split("=")[1]))
-                elif self.task_rate_pattern.match(line):
+                elif line.startswith("type=METER, name=scheduler.metrics.tasks.rate"):
                     self.metrics["task_rate_mean"].append(float(line.split(",")[6].split("=")[1]))
                     self.metrics["task_rate_m1"].append(float(line.split(",")[3].split("=")[1]))
+                    self.metrics["submitted_tasks"].append(int(line.split(",")[2].split("=")[1]))
                 elif self.e2e_latency_pattern.match(line):
                     self.metrics["e2e_latency_avg"].append(float(line.split(",")[5].split("=")[1]))
                     self.metrics["e2e_latency_max"].append(float(line.split(",")[4].split("=")[1]))
@@ -63,6 +67,8 @@ class SchedulerMetrics:
                     self.metrics["e2e_latency_count"].append(int(line.split(",")[2].split("=")[1]))
                 elif self.e2e_makespan_pattern.match(line):
                     self.metrics["task_makespan_duration_avg"].append(float(line.split(",")[5].split("=")[1]))
+                elif self.finished_tasks_pattern.match(line):
+                    self.metrics["finished_tasks"].append(int(line.split(",")[2].split("=")[1]))
         return self.metrics
 
     def get_num_messages(self):
@@ -91,3 +97,9 @@ class SchedulerMetrics:
 
     def get_task_makespan_duration_avg(self):
         return self.metrics["task_makespan_duration_avg"]
+
+    def get_finished_tasks(self):
+        return self.metrics["finished_tasks"]
+
+    def get_submitted_tasks(self):
+        return self.metrics["submitted_tasks"]
