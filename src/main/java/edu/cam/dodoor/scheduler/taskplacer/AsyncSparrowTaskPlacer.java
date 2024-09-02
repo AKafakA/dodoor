@@ -91,7 +91,14 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
             }
         }
         try {
-            return _schedulingAllocations.take(schedulingRequest, MAX_WAIT_TIME_IN_MS, TimeUnit.MILLISECONDS);
+            LOG.debug("Waiting for scheduling allocations for {}", schedulingRequest);
+            Map<TEnqueueTaskReservationRequest, InetSocketAddress> results = _schedulingAllocations.take(schedulingRequest);
+            if (results != null) {
+                return results;
+            } else {
+                LOG.error("Get empty allocations for {}. Use random selected index instead", schedulingRequest);
+                return randomAllocations;
+            }
         } catch (InterruptedException e) {
             LOG.error("Failed to get scheduling allocations for {}. Use random selected index instead", schedulingRequest);
             return randomAllocations;
@@ -121,7 +128,7 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
         }
         updateSchedulingResults(allocations, selectedNodeAddress,
                 schedulingRequest, taskSpec, schedulerAddress, taskResources);
-        _schedulingAllocations.offer(schedulingRequest, allocations);
+        _schedulingAllocations.put(schedulingRequest, allocations);
     }
 
     private class GetNodeStateCallBack implements AsyncMethodCallback<edu.cam.dodoor.thrift.TNodeState> {
