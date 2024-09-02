@@ -14,7 +14,7 @@ NETWORK_INTERFACE="enp1s0"
 DATA_PATH=$6
 DURATION_WEIGHT=$7
 
-#parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
+parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f dodoor"
 

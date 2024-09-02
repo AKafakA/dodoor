@@ -3,6 +3,7 @@ package edu.cam.dodoor.scheduler.taskplacer;
 import edu.cam.dodoor.scheduler.SchedulerServiceMetrics;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.ThriftClientPool;
+import org.apache.logging.log4j.core.util.Assert;
 import org.apache.thrift.async.AsyncMethodCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
     // has to be a blocking map to ensure that the allocations are available when the scheduler needs them
     private final BlockingHashMap<TSchedulingRequest, Map<TEnqueueTaskReservationRequest, InetSocketAddress>> _schedulingAllocations;
     private final Map<String, InetSocketAddress> _nodeAddressToNeSocket;
+    private final Map<InetSocketAddress, InetSocketAddress> _neSocketToNmSocket;
     private final static Integer MAX_WAIT_TIME_IN_MS = 20;
 
     public AsyncSparrowTaskPlacer(double beta,
@@ -30,7 +32,8 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
                                   TResourceVector resourceCapacity,
                                   SchedulerServiceMetrics schedulerMetrics,
                                   ThriftClientPool<NodeMonitorService.AsyncClient> nodeMonitorClientPool,
-                                  Map<String, InetSocketAddress> nodeAddressToNeSocket) {
+                                  Map<String, InetSocketAddress> nodeAddressToNeSocket,
+                                  Map<InetSocketAddress, InetSocketAddress> neSocketToNmSocket) {
         super(beta, useLoadScores, resourceCapacity, 1, 1, 1, 1);
         _schedulerMetrics = schedulerMetrics;
         _nodeMonitorClientPool = nodeMonitorClientPool;
@@ -38,6 +41,7 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
         _probedNodeStates = new ConcurrentHashMap<>();
         _schedulingAllocations = new BlockingHashMap<>();
         _nodeAddressToNeSocket = nodeAddressToNeSocket;
+        _neSocketToNmSocket = neSocketToNmSocket;
     }
 
     public AsyncSparrowTaskPlacer(double beta,
@@ -46,6 +50,7 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
                                   SchedulerServiceMetrics schedulerMetrics,
                                   ThriftClientPool<NodeMonitorService.AsyncClient> nodeMonitorClientPool,
                                   Map<String, InetSocketAddress> nodeAddressToNeSocket,
+                                    Map<InetSocketAddress, InetSocketAddress> neSocketToNmSocket,
                                   float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
         super(beta, useLoadScores, resourceCapacity, cpuWeight, memWeight, diskWeight, totalDurationWeight);
         _schedulerMetrics = schedulerMetrics;
@@ -54,6 +59,7 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
         _probedNodeStates = new ConcurrentHashMap<>();
         _schedulingAllocations = new BlockingHashMap<>();
         _nodeAddressToNeSocket = nodeAddressToNeSocket;
+        _neSocketToNmSocket = neSocketToNmSocket;
     }
 
 
@@ -73,18 +79,26 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
             if (flag < _beta) {
                 int secondIndex = ran.nextInt(loadMaps.size());
                 try {
-                    NodeMonitorService.AsyncClient client1 = _nodeMonitorClientPool.borrowClient(nodeAddresses.get(firstIndex));
-                    _schedulerMetrics.probeNode();
-                    NodeMonitorService.AsyncClient client2 = _nodeMonitorClientPool.borrowClient(nodeAddresses.get(secondIndex));
-                    _schedulerMetrics.probeNode();
-                    client1.getNodeState(new GetNodeStateCallBack(
-                                    nodeAddresses.get(firstIndex), client1, schedulingRequest, allocations, taskResources, schedulerAddress,
-                                    taskSpec));
-                    client2.getNodeState(new GetNodeStateCallBack(
-                                    nodeAddresses.get(secondIndex), client2, schedulingRequest, allocations, taskResources, schedulerAddress,
-                                    taskSpec));
-                    updateSchedulingResults(randomAllocations, nodeAddresses.get(firstIndex),
-                            schedulingRequest, taskSpec, schedulerAddress, taskResources);
+                    if (_neSocketToNmSocket.containsKey(nodeAddresses.get(firstIndex)) &&
+                            _neSocketToNmSocket.containsKey(nodeAddresses.get(secondIndex))) {
+                        NodeMonitorService.AsyncClient client1 = _nodeMonitorClientPool.borrowClient(
+                                _neSocketToNmSocket.get(nodeAddresses.get(firstIndex)));
+                        _schedulerMetrics.probeNode();
+                        NodeMonitorService.AsyncClient client2 = _nodeMonitorClientPool.borrowClient(
+                                _neSocketToNmSocket.get(nodeAddresses.get(secondIndex)));
+                        _schedulerMetrics.probeNode();
+                        client1.getNodeState(new GetNodeStateCallBack(
+                                nodeAddresses.get(firstIndex), client1, schedulingRequest, allocations, taskResources, schedulerAddress,
+                                taskSpec));
+                        client2.getNodeState(new GetNodeStateCallBack(
+                                nodeAddresses.get(secondIndex), client2, schedulingRequest, allocations, taskResources, schedulerAddress,
+                                taskSpec));
+                    } else {
+                        LOG.error("Node monitor socket not found for {} or {}, using random assignment as replacement",
+                                nodeAddresses.get(firstIndex), nodeAddresses.get(secondIndex));
+                        updateSchedulingResults(randomAllocations, nodeAddresses.get(firstIndex),
+                                schedulingRequest, taskSpec, schedulerAddress, taskResources);
+                    }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -92,7 +106,8 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
         }
         try {
             LOG.debug("Waiting for scheduling allocations for {}", schedulingRequest);
-            Map<TEnqueueTaskReservationRequest, InetSocketAddress> results = _schedulingAllocations.take(schedulingRequest);
+            Map<TEnqueueTaskReservationRequest, InetSocketAddress> results = _schedulingAllocations.take(schedulingRequest,
+                    MAX_WAIT_TIME_IN_MS, TimeUnit.MILLISECONDS);
             if (results != null) {
                 return results;
             } else {
@@ -197,6 +212,7 @@ public class AsyncSparrowTaskPlacer extends TaskPlacer{
                     throw new RuntimeException(exception);
                 }
             }
+            _schedulerMetrics.failedToScheduling();
             returnClient();
         }
 

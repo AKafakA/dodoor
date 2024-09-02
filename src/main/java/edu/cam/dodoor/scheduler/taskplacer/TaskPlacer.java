@@ -43,7 +43,8 @@ public abstract class TaskPlacer {
                                               SchedulerServiceMetrics schedulerMetrics,
                                               Configuration configuration,
                                               ThriftClientPool<NodeMonitorService.AsyncClient> asyncNodeMonitorClientPool,
-                                              Map<String, InetSocketAddress> nodeAddressToNeSocket) {
+                                              Map<String, InetSocketAddress> nodeAddressToNeSocket,
+                                              Map<InetSocketAddress, InetSocketAddress> neSocketToNmSocket) {
         TResourceVector resourceCapacity = Resources.getSystemResourceVector(configuration);
         String schedulingStrategy = configuration.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         float cpuWeight = configuration.getFloat(DodoorConf.CPU_WEIGHT, 1);
@@ -64,9 +65,10 @@ public abstract class TaskPlacer {
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
             case DodoorConf.ASYNC_SPARROW_SCHEDULER -> new AsyncSparrowTaskPlacer(beta, false, resourceCapacity,
-                     schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket);
+                     schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket, neSocketToNmSocket);
             case DodoorConf.ASYNC_LOAD_SCORE_SPARROW -> new AsyncSparrowTaskPlacer(beta, true, resourceCapacity,
-                    schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket, cpuWeight, memWeight, diskWeight, totalDurationWeight);
+                    schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket, neSocketToNmSocket,
+                    cpuWeight, memWeight, diskWeight, totalDurationWeight);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }

@@ -13,6 +13,7 @@ public class SchedulerServiceMetrics {
     private final Meter _loadUpdateRate;
     private final Counter _totalMessages;
     private final Counter _numFinishedTasks;
+    private final Counter _numFailedToSchedule;
 
     public SchedulerServiceMetrics(MetricRegistry metrics) {
         _endToEndLatencyHistogram = metrics.histogram(
@@ -27,6 +28,7 @@ public class SchedulerServiceMetrics {
         _loadUpdateRate = metrics.meter(DodoorConf.SCHEDULER_METRICS_LOAD_UPDATE_RATE);
         _totalMessages = metrics.counter(DodoorConf.SCHEDULER_METRICS_NUM_MESSAGES);
         _numFinishedTasks = metrics.counter(DodoorConf.SCHEDULER_METRICS_FINISHED_TASKS);
+        _numFailedToSchedule = metrics.counter(DodoorConf.SCHEDULER_METRICS_FAILURE_COUNT);
     }
 
     public void taskSubmitted(int numTasks) {
@@ -54,5 +56,9 @@ public class SchedulerServiceMetrics {
         _endToEndMakespanHistogram.update(makespan);
         _endToEndLatencyHistogram.update(makespan - nodeWallTime);
         _endToEndExtraDurationHistogram.update(makespan - taskDuration);
+    }
+
+    public void failedToScheduling() {
+        _numFailedToSchedule.inc();
     }
 }

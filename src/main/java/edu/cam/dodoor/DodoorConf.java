@@ -146,6 +146,7 @@ public class DodoorConf {
     public final static String SCHEDULER_METRICS_NUM_MESSAGES = "scheduler.metrics.num.messages";
     public final static String SCHEDULER_METRICS_FINISHED_TASKS =
             "scheduler.metrics.tasks.finished.count";
+    public final static String SCHEDULER_METRICS_FAILURE_COUNT = "scheduler.metrics.tasks.failed.count";
 
     /**
      * Node Monitor Config

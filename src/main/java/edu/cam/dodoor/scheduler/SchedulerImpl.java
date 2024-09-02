@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SchedulerImpl implements Scheduler{
@@ -54,6 +53,7 @@ public class SchedulerImpl implements Scheduler{
     private Map<InetSocketAddress, TNodeState> _loadMapEqueueSocketToNodeState;
     private Map<String, Long> _taskReceivedTime;
     private Map<String, InetSocketAddress> _nodeAddressToNeSocket;
+    private Map<InetSocketAddress, InetSocketAddress> _neSocketToNmSocket;
     private String _schedulingStrategy;
 
     @Override
@@ -69,7 +69,7 @@ public class SchedulerImpl implements Scheduler{
         _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
         _dataStoreAddress = new ArrayList<>();
         _nodeAddressToNeSocket = Maps.newHashMap();
-
+        _neSocketToNmSocket = Maps.newHashMap();
         List<String> nmPorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)));
         List<String> nePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)));
 
@@ -111,7 +111,8 @@ public class SchedulerImpl implements Scheduler{
                 schedulerServiceMetrics,
                 config,
                 _nodeMonitorServiceAsyncClientPool,
-                _nodeAddressToNeSocket);
+                _nodeAddressToNeSocket,
+                _neSocketToNmSocket);
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
     }
@@ -240,6 +241,7 @@ public class SchedulerImpl implements Scheduler{
             _nodeLoadChanges.put(Serialization.getStrFromSocket(neSocket), new TNodeState(
                     new TResourceVector(0, 0, 0), 0, 0, nodeIp));
             _nodeAddressToNeSocket.put(nodeIp, neSocket);
+            _neSocketToNmSocket.put(neSocket, nmSocket);
             if (!SchedulerUtils.isCachedEnabled(_schedulingStrategy) && !SchedulerUtils.isAsyncScheduler(_schedulingStrategy)) {
                 try {
                     _nodeEqueueSocketToNodeMonitorClients.put(neSocket,
@@ -308,6 +310,7 @@ public class SchedulerImpl implements Scheduler{
         public void onError(Exception exception) {
             // Do not return error client to pool
             LOG.error("Error executing enqueueTaskReservation RPC:{}", exception.getMessage());
+            _schedulerServiceMetrics.failedToScheduling();
             returnClient();
         }
 
