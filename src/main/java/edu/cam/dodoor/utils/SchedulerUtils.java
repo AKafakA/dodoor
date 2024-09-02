@@ -13,4 +13,8 @@ public class SchedulerUtils {
     public static boolean isCachedEnabled(String schedulerType) {
         return CACHED_SCHEDULERS_SET.contains(schedulerType);
     }
+
+    public static boolean isAsyncScheduler(String schedulerType) {
+        return schedulerType.startsWith(DodoorConf.ASYNC_SCHEDULER_PREFIX);
+    }
 }

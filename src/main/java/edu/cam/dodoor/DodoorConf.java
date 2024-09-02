@@ -35,6 +35,10 @@ public class DodoorConf {
     public final static String RANDOM_SCHEDULER = "random";
     public final static String LOAD_SCORE_SPARROW = "loadScoreSparrow";
 
+    public final static String ASYNC_SCHEDULER_PREFIX = "async";
+    public final static String ASYNC_SPARROW_SCHEDULER = "asyncSparrow";
+    public final static String ASYNC_LOAD_SCORE_SPARROW = "asyncLoadScoreSparrow";
+
     public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20503;
     public final static String SCHEDULER_THRIFT_THREADS =
@@ -50,7 +54,6 @@ public class DodoorConf {
     public final static String DISK_WEIGHT = "dodoor.disk.weight";
     public final static String TOTAL_PENDING_DURATION_WEIGHT = "dodoor.total.pending.duration.weight";
     public final static float DEFAULT_TOTAL_PENDING_DURATION_WEIGHT = 0.95f;
-
 
 
     /**

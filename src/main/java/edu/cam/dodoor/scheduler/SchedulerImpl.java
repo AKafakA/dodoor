@@ -35,6 +35,10 @@ public class SchedulerImpl implements Scheduler{
             new ThriftClientPool<>(
                     new ThriftClientPool.NodeEnqueuServiceMakerFactory());
 
+    private final ThriftClientPool<NodeMonitorService.AsyncClient> _nodeMonitorServiceAsyncClientPool =
+            new ThriftClientPool<>(
+                    new ThriftClientPool.NodeMonitorServiceMakerFactory());
+
     private final ThriftClientPool<DataStoreService.AsyncClient> _dataStoreAsyncClientPool =
             new ThriftClientPool<>(
                     new ThriftClientPool.DataStoreServiceMakerFactory());
@@ -49,6 +53,8 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, TNodeState> _nodeLoadChanges;
     private Map<InetSocketAddress, TNodeState> _loadMapEqueueSocketToNodeState;
     private Map<String, Long> _taskReceivedTime;
+    private Map<String, InetSocketAddress> _nodeAddressToNeSocket;
+    private String _schedulingStrategy;
 
     @Override
     public void initialize(Configuration config, THostPort localAddress,
@@ -58,10 +64,11 @@ public class SchedulerImpl implements Scheduler{
         _address = localAddress;
         _loadMapEqueueSocketToNodeState = Maps.newConcurrentMap();
         _taskReceivedTime = new HashMap<>();
-        String schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
+        _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         double beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
         _dataStoreAddress = new ArrayList<>();
+        _nodeAddressToNeSocket = Maps.newHashMap();
 
         List<String> nmPorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)));
         List<String> nePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)));
@@ -102,7 +109,9 @@ public class SchedulerImpl implements Scheduler{
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
                 _nodeEqueueSocketToNodeMonitorClients,
                 schedulerServiceMetrics,
-                config);
+                config,
+                _nodeMonitorServiceAsyncClientPool,
+                _nodeAddressToNeSocket);
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
     }
@@ -227,15 +236,19 @@ public class SchedulerImpl implements Scheduler{
             InetSocketAddress nmSocket = nmAddress.get();
             InetSocketAddress neSocket = neAddress.get();
             _loadMapEqueueSocketToNodeState.put(neSocket, new TNodeState(
-                    new TResourceVector(0, 0, 0), 0, 0));
+                    new TResourceVector(0, 0, 0), 0, 0, nodeIp));
             _nodeLoadChanges.put(Serialization.getStrFromSocket(neSocket), new TNodeState(
-                    new TResourceVector(0, 0, 0), 0, 0));
-
-            try {
-                _nodeEqueueSocketToNodeMonitorClients.put(neSocket,
-                        TClients.createBlockingNodeMonitorClient(nmSocket));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                    new TResourceVector(0, 0, 0), 0, 0, nodeIp));
+            _nodeAddressToNeSocket.put(nodeIp, neSocket);
+            if (!SchedulerUtils.isCachedEnabled(_schedulingStrategy) && !SchedulerUtils.isAsyncScheduler(_schedulingStrategy)) {
+                try {
+                    _nodeEqueueSocketToNodeMonitorClients.put(neSocket,
+                            TClients.createBlockingNodeMonitorClient(nmSocket));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                LOG.info("Adding sync node monitor client for node: {} for scheduler {}", nmSocket.getHostName(),
+                        _schedulingStrategy);
             }
             LOG.info("Registering node at {}", nmAddress.get().getHostName());
         } else {

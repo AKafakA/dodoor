@@ -6,6 +6,7 @@ import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.Resources;
 import edu.cam.dodoor.utils.Serialization;
+import edu.cam.dodoor.utils.ThriftClientPool;
 import org.apache.commons.configuration.Configuration;
 
 import java.net.InetSocketAddress;
@@ -40,7 +41,9 @@ public abstract class TaskPlacer {
     public static TaskPlacer createTaskPlacer(double beta,
                                               Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
                                               SchedulerServiceMetrics schedulerMetrics,
-                                              Configuration configuration) {
+                                              Configuration configuration,
+                                              ThriftClientPool<NodeMonitorService.AsyncClient> asyncNodeMonitorClientPool,
+                                              Map<String, InetSocketAddress> nodeAddressToNeSocket) {
         TResourceVector resourceCapacity = Resources.getSystemResourceVector(configuration);
         String schedulingStrategy = configuration.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         float cpuWeight = configuration.getFloat(DodoorConf.CPU_WEIGHT, 1);
@@ -60,6 +63,10 @@ public abstract class TaskPlacer {
             case DodoorConf.CACHED_SPARROW_SCHEDULER -> new CachedTaskPlacer(beta, false, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
+            case DodoorConf.ASYNC_SPARROW_SCHEDULER -> new AsyncSparrowTaskPlacer(beta, false, resourceCapacity,
+                     schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket);
+            case DodoorConf.ASYNC_LOAD_SCORE_SPARROW -> new AsyncSparrowTaskPlacer(beta, true, resourceCapacity,
+                    schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket, cpuWeight, memWeight, diskWeight, totalDurationWeight);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }

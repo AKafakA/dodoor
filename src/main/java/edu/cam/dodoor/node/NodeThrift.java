@@ -27,6 +27,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     private String _neAddressStr;
     private NodeServiceMetrics _nodeServiceMetrics;
     private Counter _numMessages;
+    private String _nodeIp;
 
 
     /**
@@ -64,6 +65,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
             }
         }
         _neAddressStr = Network.thriftToSocketStr(Network.getInternalHostPort(nePort, config));
+        _nodeIp = Network.getInternalHostPort(nePort, config).host;
 
         _node = new NodeImpl();
         _node.initialize(config, this);
@@ -128,5 +130,9 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
 
     public NodeServiceMetrics getNodeServiceMetrics() {
         return _nodeServiceMetrics;
+    }
+
+    public String getNodeIp() {
+        return _nodeIp;
     }
 }

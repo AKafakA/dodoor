@@ -46,9 +46,13 @@ public class BasicDataStoreImpl implements DataStore{
     private synchronized void addSingleNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector,
                                                 int numTasks, long newTotalDurations, int sign) {
         TNodeState nodeState = _nodeStates.get(nodeEnqueueAddress);
+        String nodeIp = nodeEnqueueAddress.split(":")[0];
         if (nodeState == null) {
             LOG.warn("Node {} not found in the data store. Creating a new entry.", nodeEnqueueAddress);
-            nodeState = new TNodeState(new TResourceVector(), 0, 0);
+            nodeState = new TNodeState(new TResourceVector(), 0, 0, nodeIp);
+        } else if (!nodeState.nodeIp.equals(nodeIp)) {
+           LOG.error("Node {} already exists in the data store but with different IP address {}",
+                   nodeEnqueueAddress, nodeState.nodeIp);
         }
         if (numTasks < 0 || Math.abs(sign) != 1) {
             throw new IllegalArgumentException("numTasks should be positive and sign should be 1 or -1");

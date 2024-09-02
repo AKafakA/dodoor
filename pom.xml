@@ -46,6 +46,12 @@
         <version>2.4.1</version>
     </dependency>
     <dependency>
+        <groupId>com.github.sarveswaran-m</groupId>
+        <artifactId>util.concurrent.blockingMap</artifactId>
+        <version>0.91</version>
+    </dependency>
+    <!-- Thanks for using https://jar-download.com -->
+    <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
         <version>1.6.4</version>

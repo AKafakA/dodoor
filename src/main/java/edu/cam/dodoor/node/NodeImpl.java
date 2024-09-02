@@ -33,6 +33,7 @@ public class NodeImpl implements Node {
     private NodeThrift _nodeThrift;
     private Map<String, Long> _taskReceivedTime;
 
+
     @Override
     public void initialize(Configuration config, NodeThrift nodeThrift) {
         int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
@@ -86,7 +87,8 @@ public class NodeImpl implements Node {
 
     @Override
     public TNodeState getNodeState() {
-        return new TNodeState(getRequestedResourceVector(), _waitingOrRunningTasksCounter.get(), _totalDurations.get());
+        return new TNodeState(getRequestedResourceVector(), _waitingOrRunningTasksCounter.get(), _totalDurations.get(),
+                _nodeThrift.getNodeIp());
     }
 
     @Override
