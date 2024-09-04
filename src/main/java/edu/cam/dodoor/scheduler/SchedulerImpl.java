@@ -181,7 +181,7 @@ public class SchedulerImpl implements Scheduler{
         removeNodeFromPrequalPool();
     }
 
-    private void removeNodeFromPrequalPool() {
+    private synchronized void removeNodeFromPrequalPool() {
         // remove the probe which has been reused more than the budget
         for (Map.Entry<InetSocketAddress, Integer> entry : _probeReuseCount.entrySet()) {
             if (entry.getValue() > _probeReuseBudget) {
@@ -467,9 +467,12 @@ public class SchedulerImpl implements Scheduler{
         @Override
         public void onComplete(TNodeState nodeState) {
             LOG.info("Node state received from {}", _nmAddress.getHostName());
-            if (!_prequalpool.contains(_neAddress)) {
-                _prequalpool.add(_neAddress);
-                _probeReuseCount.put(_neAddress, 0);
+            synchronized (_prequalpool) {
+                synchronized (_probeReuseCount) {
+                    if (_probeReuseCount.containsKey(_neAddress)) {
+                        _probeReuseCount.put(_neAddress, 0);
+                    }
+                }
             }
             _loadMapEqueueSocketToNodeState.put(_neAddress, nodeState);
             returnClient();
