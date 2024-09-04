@@ -174,6 +174,7 @@ public class SchedulerImpl implements Scheduler{
                 client.getNodeState(new GetNodeStateWithUpdateCallBack(
                         neSocket, nmSocket, client
                 ));
+                _schedulerServiceMetrics.probeNode();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
