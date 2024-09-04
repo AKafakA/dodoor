@@ -16,7 +16,7 @@ DURATION_WEIGHT=0.5
 
 parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum  -i "rm ~/*.log && rm ~/*.out"
 
-parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum -i "cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
+parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum -i "cd dodoor && git add . && git stash && git checkout exp && git reset --hard HEAD~1 && git pull && sh rebuild.sh"
 
 parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum -i "pkill -f dodoor"
 

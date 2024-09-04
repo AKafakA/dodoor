@@ -9,7 +9,7 @@ public class MetricsUtils {
             return 0;
         }
         Arrays.sort(values);
-        int index = (int) Math.ceil(quantile * values.length);
+        int index = Math.max((int) Math.ceil(quantile * values.length) - 1, 0);
         return values[index];
     }
 }
