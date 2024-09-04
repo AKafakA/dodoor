@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.collect.EvictingQueue;
 
@@ -122,6 +123,7 @@ public class SchedulerImpl implements Scheduler{
             _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
             _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_MS,
                     DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_MS);
+            _probeReuseCount = new ConcurrentHashMap<>();
         }
 
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
