@@ -113,6 +113,17 @@ public class SchedulerImpl implements Scheduler{
             }
         }
 
+        if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
+            _prequalpool = EvictingQueue.create(config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE,
+                    DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE));
+            _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATIO, DodoorConf.DEFAULT_PREQUAL_PROBE_RATIO);
+            _lastUpdateTime = System.currentTimeMillis();
+            _probeReuseBudget = config.getInt(DodoorConf.PREQUAL_PROBE_REUSE_BUDGET, DodoorConf.DEFAULT_PREQUAL_PROBE_REUSE_BUDGET);
+            _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
+            _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_MS,
+                    DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_MS);
+        }
+
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
                 _nodeEqueueSocketToNodeMonitorClients,
                 schedulerServiceMetrics,
@@ -124,17 +135,6 @@ public class SchedulerImpl implements Scheduler{
                 _probeReuseCount);
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
-
-        if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
-            _prequalpool = EvictingQueue.create(config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE,
-                    DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE));
-            _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATIO, DodoorConf.DEFAULT_PREQUAL_PROBE_RATIO);
-            _lastUpdateTime = System.currentTimeMillis();
-            _probeReuseBudget = config.getInt(DodoorConf.PREQUAL_PROBE_REUSE_BUDGET, DodoorConf.DEFAULT_PREQUAL_PROBE_REUSE_BUDGET);
-            _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
-            _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_MS,
-                    DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_MS);
-        }
     }
 
 
