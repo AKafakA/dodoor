@@ -39,6 +39,18 @@ public class DodoorConf {
     public final static String ASYNC_SPARROW_SCHEDULER = "asyncSparrow";
     public final static String ASYNC_LOAD_SCORE_SPARROW = "asyncLoadScoreSparrow";
 
+    public final static String PREQUAL = "prequal";
+    public final static String PREQUAL_PROBE_RATIO = "prequal.probe.ratio";
+    public final static int DEFAULT_PREQUAL_PROBE_RATIO = 3;
+    public final static String PREQUAL_PROBE_POOL_SIZE = "prequal.probe.pool.size";
+    public final static int DEFAULT_PREQUAL_PROBE_POOL_SIZE = 16;
+    public final static String PREQUAL_RIF_QUANTILE = "prequal.rif.quantile";
+    public final static double DEFAULT_PREQUAL_RIF_QUANTILE = 0.75;
+    public final static String PREQUAL_PROBE_REUSE_BUDGET = "prequal.probe.reuse.budget";
+    public final static int DEFAULT_PREQUAL_PROBE_REUSE_BUDGET = 2;
+    public final static String PREQUAL_PROBE_REMOVE_INTERVAL_MS = "prequal.probe.remove.interval.ms";
+    public final static long DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_MS = 1000;
+
     public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20503;
     public final static String SCHEDULER_THRIFT_THREADS =

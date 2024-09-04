@@ -15,11 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import com.google.common.collect.EvictingQueue;
 
 public class SchedulerImpl implements Scheduler{
 
@@ -55,6 +53,15 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, InetSocketAddress> _nodeAddressToNeSocket;
     private Map<InetSocketAddress, InetSocketAddress> _neSocketToNmSocket;
     private String _schedulingStrategy;
+    // keep a smaller pool of prequal nodes
+    private Queue<InetSocketAddress> _prequalpool;
+    Map<InetSocketAddress, Integer> _probeReuseCount;
+    private int _probeRateForPrequal;
+    private double _rifQuantile;
+    private long _lastUpdateTime = 0;
+    private int _probeReuseBudget;
+    private long _prequalProbeRemoveInterval;
+
 
     @Override
     public void initialize(Configuration config, THostPort localAddress,
@@ -112,9 +119,22 @@ public class SchedulerImpl implements Scheduler{
                 config,
                 _nodeMonitorServiceAsyncClientPool,
                 _nodeAddressToNeSocket,
-                _neSocketToNmSocket);
+                _neSocketToNmSocket,
+                _prequalpool,
+                _probeReuseCount);
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
+
+        if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
+            _prequalpool = EvictingQueue.create(config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE,
+                    DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE));
+            _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATIO, DodoorConf.DEFAULT_PREQUAL_PROBE_RATIO);
+            _lastUpdateTime = System.currentTimeMillis();
+            _probeReuseBudget = config.getInt(DodoorConf.PREQUAL_PROBE_REUSE_BUDGET, DodoorConf.DEFAULT_PREQUAL_PROBE_REUSE_BUDGET);
+            _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
+            _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_MS,
+                    DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_MS);
+        }
     }
 
 
@@ -130,6 +150,68 @@ public class SchedulerImpl implements Scheduler{
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = handleJobSubmission(request);
         _counter.getAndAdd(request.tasks.size());
         _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
+        if (SchedulerUtils.isCachedEnabled(_schedulingStrategy)) {
+            updateDataStoreLoad(numTasksBefore, request, mapOfNodesToPlacedTasks);
+        } else if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
+            updatePrequalPool();
+        }
+    }
+
+    private void updatePrequalPool() {
+        Random ran = new Random();
+        Set<InetSocketAddress> neToProbe = new HashSet<>();
+        InetSocketAddress[] neAddresses = _neSocketToNmSocket.keySet().toArray(new InetSocketAddress[0]);
+        for (int i = 0; i < _probeRateForPrequal ; i++) {
+            int index = ran.nextInt(_neSocketToNmSocket.size());
+            neToProbe.add(neAddresses[index]);
+        }
+        for (InetSocketAddress neSocket : neToProbe) {
+            InetSocketAddress nmSocket = _neSocketToNmSocket.get(neSocket);
+            try {
+                NodeMonitorService.AsyncClient client = _nodeMonitorServiceAsyncClientPool.borrowClient(nmSocket);
+                client.getNodeState(new GetNodeStateWithUpdateCallBack(
+                        neSocket, nmSocket, client
+                ));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        removeNodeFromPrequalPool();
+    }
+
+    private void removeNodeFromPrequalPool() {
+        // remove the probe which has been reused more than the budget
+        for (Map.Entry<InetSocketAddress, Integer> entry : _probeReuseCount.entrySet()) {
+            if (entry.getValue() > _probeReuseBudget) {
+                _prequalpool.remove(entry.getKey());
+                _probeReuseCount.remove(entry.getKey());
+            }
+        }
+        // regularly remove the oldest and worst node from the pool
+        if (System.currentTimeMillis() - _lastUpdateTime > _prequalProbeRemoveInterval) {
+            LOG.debug("Remove the oldest and worst node from the prequal pool");
+            _prequalpool.poll();
+            int[] numPendingTasks = _loadMapEqueueSocketToNodeState.values().stream().mapToInt(e -> e.numTasks).toArray();
+            int cutoff = MetricsUtils.getQuantile(numPendingTasks, _rifQuantile);
+            Map<InetSocketAddress, TNodeState> prequalLoadMaps = new HashMap<>();
+            for (InetSocketAddress nodeAddress: _prequalpool) {
+                prequalLoadMaps.put(nodeAddress, _loadMapEqueueSocketToNodeState.get(nodeAddress));
+            }
+            java.util.Optional<Map.Entry<InetSocketAddress, TNodeState>> worstNode =  prequalLoadMaps.entrySet().stream()
+                    .filter(e -> e.getValue().numTasks >= cutoff)
+                    .max(Comparator.comparingLong(e -> e.getValue().totalDurations));
+            if (worstNode.isPresent()) {
+                _probeReuseCount.remove(worstNode.get().getKey());
+            } else {
+                worstNode = prequalLoadMaps.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().numTasks));
+                worstNode.ifPresent(e -> _probeReuseCount.remove(e.getKey()));
+            }
+            _lastUpdateTime = System.currentTimeMillis();
+        }
+    }
+
+    private void updateDataStoreLoad(int numTasksBefore, TSchedulingRequest request,
+                                     Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks) {
         boolean needToUpdateDataStore = numTasksBefore / _numTasksToUpdateDataStore != _counter.get() / _numTasksToUpdateDataStore;
         for (InetSocketAddress nodeEnqueueAddress : mapOfNodesToPlacedTasks.keySet()) {
             String nodeEnqueueAddressStr = Serialization.getStrFromSocket(nodeEnqueueAddress);
@@ -157,7 +239,7 @@ public class SchedulerImpl implements Scheduler{
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                 }
+                }
             }
         }
     }
@@ -202,6 +284,9 @@ public class SchedulerImpl implements Scheduler{
 
     @Override
     public void updateNodeState(Map<String, TNodeState> snapshot) {
+        if (!SchedulerUtils.isCachedEnabled(_schedulingStrategy)) {
+            throw new RuntimeException("updateNodeState should not be called for non-cached scheduler");
+        }
         _schedulerServiceMetrics.loadUpdated();
         for (Map.Entry<String, TNodeState> entry : snapshot.entrySet()) {
             Optional<InetSocketAddress> neAddressOptional = Serialization.strToSocket(entry.getKey());
@@ -354,6 +439,51 @@ public class SchedulerImpl implements Scheduler{
                 _dataStoreAsyncClientPool.returnClient(_dataStoreAddress, _client);
             } catch (Exception e) {
                 LOG.error("Error returning client to data store client pool: {}", e.getMessage());
+            }
+        }
+    }
+
+    private class GetNodeStateWithUpdateCallBack implements AsyncMethodCallback<edu.cam.dodoor.thrift.TNodeState> {
+        private final NodeMonitorService.AsyncClient _client;
+        private final InetSocketAddress _neAddress;
+        private final InetSocketAddress _nmAddress;
+
+        public GetNodeStateWithUpdateCallBack(InetSocketAddress neAddress,
+                                              InetSocketAddress nmAddress,
+                                              NodeMonitorService.AsyncClient client) {
+            if (client == null) {
+                throw new IllegalArgumentException("Client cannot be null");
+            }
+            if (!neAddress.getAddress().equals(nmAddress.getAddress())){
+                throw new IllegalArgumentException("Node monitor address and node enqueue address should have the same IP");
+            }
+            _client = client;
+            _neAddress = neAddress;
+            _nmAddress = nmAddress;
+        }
+
+        @Override
+        public void onComplete(TNodeState nodeState) {
+            LOG.info("Node state received from {}", _nmAddress.getHostName());
+            if (!_prequalpool.contains(_neAddress)) {
+                _prequalpool.add(_neAddress);
+                _probeReuseCount.put(_neAddress, 0);
+            }
+            _loadMapEqueueSocketToNodeState.put(_neAddress, nodeState);
+            returnClient();
+        }
+
+        @Override
+        public void onError(Exception e) {
+            LOG.warn("Failed to get node state from {}", _nmAddress.getHostName());
+            returnClient();
+        }
+
+        private void returnClient() {
+            try {
+                _nodeMonitorServiceAsyncClientPool.returnClient(_nmAddress, _client);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
     }

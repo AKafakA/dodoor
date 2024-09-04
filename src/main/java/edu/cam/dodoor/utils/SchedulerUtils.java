@@ -2,7 +2,6 @@ package edu.cam.dodoor.utils;
 
 import edu.cam.dodoor.DodoorConf;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class SchedulerUtils {
@@ -15,6 +14,6 @@ public class SchedulerUtils {
     }
 
     public static boolean isAsyncScheduler(String schedulerType) {
-        return schedulerType.startsWith(DodoorConf.ASYNC_SCHEDULER_PREFIX);
+        return schedulerType.startsWith(DodoorConf.ASYNC_SCHEDULER_PREFIX) || schedulerType.equals(DodoorConf.PREQUAL);
     }
 }

@@ -5,12 +5,12 @@ import edu.cam.dodoor.scheduler.SchedulerServiceMetrics;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.Resources;
-import edu.cam.dodoor.utils.Serialization;
 import edu.cam.dodoor.utils.ThriftClientPool;
 import org.apache.commons.configuration.Configuration;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Queue;
 
 public abstract class TaskPlacer {
     double _beta;
@@ -44,7 +44,9 @@ public abstract class TaskPlacer {
                                               Configuration configuration,
                                               ThriftClientPool<NodeMonitorService.AsyncClient> asyncNodeMonitorClientPool,
                                               Map<String, InetSocketAddress> nodeAddressToNeSocket,
-                                              Map<InetSocketAddress, InetSocketAddress> neSocketToNmSocket) {
+                                              Map<InetSocketAddress, InetSocketAddress> neSocketToNmSocket,
+                                              Queue<InetSocketAddress> prequalQueue,
+                                              Map<InetSocketAddress, Integer> probeReuseCount) {
         TResourceVector resourceCapacity = Resources.getSystemResourceVector(configuration);
         String schedulingStrategy = configuration.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         float cpuWeight = configuration.getFloat(DodoorConf.CPU_WEIGHT, 1);
@@ -54,6 +56,7 @@ public abstract class TaskPlacer {
             diskWeight = configuration.getFloat(DodoorConf.DISK_WEIGHT, 1);
         }
         float totalDurationWeight = configuration.getFloat(DodoorConf.TOTAL_PENDING_DURATION_WEIGHT, DodoorConf.DEFAULT_TOTAL_PENDING_DURATION_WEIGHT);
+        double rifQuantile = configuration.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
         return switch (schedulingStrategy) {
             case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
@@ -69,6 +72,8 @@ public abstract class TaskPlacer {
             case DodoorConf.ASYNC_LOAD_SCORE_SPARROW -> new AsyncSparrowTaskPlacer(beta, true, resourceCapacity,
                     schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket, neSocketToNmSocket,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
+            case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, true, resourceCapacity, rifQuantile,
+                    prequalQueue, probeReuseCount);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }
