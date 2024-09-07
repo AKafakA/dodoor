@@ -34,7 +34,7 @@ if generate_azure:
                                             time_shift=1.0,
                                             timeline_compress_ratio=1.0,
                                             max_cores=8, max_memory=62 * 1024, max_disk=-1)
-    azure_data_generator.write_data_target_output(data_1m, azure_output_path_1m)
+    # azure_data_generator.write_data_target_output(data_1m, azure_output_path_1m)
 
     print("Azure Data generation completed")
 

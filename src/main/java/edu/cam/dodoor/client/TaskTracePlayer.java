@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,7 +33,7 @@ public class TaskTracePlayer {
         private final long _durationInMs;
         private final long _startTime;
         private final DodoorClient _client;
-        private final long _globalStartTime;
+        final long _globalStartTime;
         private final boolean _addTimelineDelay;
 
         public TaskLaunchRunnable(String taskId, int cores, long memory,
@@ -108,6 +110,8 @@ public class TaskTracePlayer {
                 DodoorConf.DEFAULT_REPLAY_WITH_DISK);
         int numThreads = config.getInt(DodoorConf.NUM_THREAD_CONCURRENT_SUBMITTED_TASKS,
                 DodoorConf.DEFAULT_NUM_THREAD_CONCURRENT_SUBMITTED_TASKS);
+        PriorityQueue<TaskLaunchRunnable> taskQueue =
+                new PriorityQueue<>(numThreads, Comparator.comparingLong(a -> a._startTime));
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
         for (String line : allLines) {
             String[] parts = line.split(",");
@@ -117,8 +121,23 @@ public class TaskTracePlayer {
             long disks = replayWithDisk? Long.parseLong(parts[3]):0;
             long durationInMs = Long.parseLong(parts[4]);
             long startTime = Long.parseLong(parts[5]);
-            executor.submit(new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs,
-                    startTime, client, globalStartTime, addDelay));
+            if (startTime < 0) {
+                startTime = 0;
+            }
+            TaskLaunchRunnable task = new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs, startTime, client, globalStartTime, addDelay);
+            taskQueue.add(task);
+        }
+
+        while (!taskQueue.isEmpty()) {
+            TaskLaunchRunnable task = taskQueue.poll();
+            if (task._startTime > System.currentTimeMillis() - globalStartTime) {
+                try {
+                    Thread.sleep(task._startTime - (System.currentTimeMillis() - globalStartTime));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            executor.submit(task);
         }
     }
 }

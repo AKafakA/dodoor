@@ -45,8 +45,9 @@ public class DodoorConf {
     public final static String PREQUAL_PROBE_POOL_SIZE = "prequal.probe.pool.size";
     public final static int DEFAULT_PREQUAL_PROBE_POOL_SIZE = 16;
     public final static String PREQUAL_RIF_QUANTILE = "prequal.rif.quantile";
-    public final static double DEFAULT_PREQUAL_RIF_QUANTILE = 0.75;
+    public final static double DEFAULT_PREQUAL_RIF_QUANTILE = 0.84;
     public final static String PREQUAL_PROBE_REUSE_BUDGET = "prequal.probe.reuse.budget";
+    // calculated by  2 / ((1 - pool size / number of nodes) * probe ratio - 1)
     public final static int DEFAULT_PREQUAL_PROBE_REUSE_BUDGET = 2;
     public final static String PREQUAL_PROBE_REMOVE_INTERVAL_MS = "prequal.probe.remove.interval.ms";
     public final static long DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_MS = 1000;

@@ -12,19 +12,20 @@ class NodeMetrics:
     num_waiting_tasks_pattern = re.compile("type=COUNTER, name=node.metrics.tasks.waiting.count, count=\d+")
     num_finished_tasks_pattern = re.compile("type=COUNTER, name=node.metrics.tasks.finished.count, count=\d+")
     resource_usage_pattern = re.compile(
-        "Time\(in Seconds\) OSM: \d+ CPU usage: \d+.\d+(E-\d)? Memory usage: \d+.\d+(E-\d)? Disk usage: \d+.\d+(E-\d)?")
+        "Time\(in Seconds\) OSM: \d+ CPU usage: \d+.\d+(E-\d+)? Memory usage: \d+.\d+(E-\d+)? Disk usage: \d+.\d+(E-\d+)?")
     task_rate_pattern = re.compile("type=METER, name=node.metrics.tasks.rate, count=\d+, "
-                                   "m1_rate=\d+.\d+, m5_rate=\d+.\d+, m15_rate=\d+.\d+, mean_rate=\d+.\d+, "
+                                   "m1_rate=\d+.\d+(E-\d+)?, m5_rate=\d+.\d+(E-\d+)?, m15_rate=\d+.\d+(E-\d+)?, "
+                                   "mean_rate=\d+.\d+(E-\d+)?, "
                                    "rate_unit=events/second")
 
     task_waiting_duration_pattern = re.compile("type=HISTOGRAM, name=node.metrics.tasks.wait.time.histograms, "
-                                               "count=\d+, min=\d+, max=\d+, mean=\d+.\d+, "
-                                               "stddev=\d+.\d+, "
-                                               "p50=\d+.\d+, "
-                                               "p75=\d+.\d+, "
-                                               "p95=\d+.\d+, "
-                                               "p98=\d+.\d+, "
-                                               "p99=\d+.\d+, p999=\d+.\d+")
+                                               "count=\d+, min=\d+, max=\d+, mean=\d+.\d+(E-\d+)?, "
+                                               "stddev=\d+.\d+(E-?\d+)?, "
+                                               "p50=\d+.\d+(E-?\d+)?, "
+                                               "p75=\d+.\d+(E-?\d+)?, "
+                                               "p95=\d+.\d+(E-?\d+)?, "
+                                               "p98=\d+.\d+(E-?\d+)?, "
+                                               "p99=\d+.\d+(E-?\d+)?, p999=\d+.\d+(E-?\d+)?")
 
     def __init__(self, log_file, node_id):
         self.log_file = log_file

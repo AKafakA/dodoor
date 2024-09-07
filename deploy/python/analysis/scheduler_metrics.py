@@ -5,30 +5,31 @@ class SchedulerMetrics:
     message_counter_pattern = re.compile("type=COUNTER, name=scheduler.metrics.num.messages, count=\d+")
     e2e_latency_pattern = re.compile("type=HISTOGRAM, name=scheduler.metrics.tasks.e2e.scheduling.latency.histograms, count=\d+, min=\-?\d+, "
                                      "max=\d+, "
-                                     "mean=\d+.\d+, "
-                                     "stddev=\d+.\d+, "
-                                     "p50=\d+.\d+, "
-                                     "p75=\d+.\d+, "
-                                     "p95=\d+.\d+, "
-                                     "p98=\d+.\d+, "
-                                     "p99=\d+.\d+, "
-                                     "p999=\d+.\d+")
+                                     "mean=\d+.\d+(E-\d+)?, "
+                                     "stddev=\d+.\d+(E-\d+)?, "
+                                     "p50=\d+.\d+(E-\d+)?, "
+                                     "p75=\d+.\d+(E-\d+)?, "
+                                     "p95=\d+.\d+(E-\d+)?, "
+                                     "p98=\d+.\d+(E-\d+)?, "
+                                     "p99=\d+.\d+(E-\d+)?, "
+                                     "p999=\d+.\d+(E-\d+)?")
 
     task_rate_pattern = re.compile("type=METER, name=scheduler.metrics.tasks.rate, count=\d+, "
-                                   "m1_rate=\d+.\d+(E-\d)?, m5_rate=\d+.\d+, m15_rate=\d+.\d+, mean_rate=\d+.\d+, "
+                                   "m1_rate=\d+.\d+(E-\d+)?, m5_rate=\d+.\d+(E-\d+)?, "
+                                   "m15_rate=\d+.\d+(E-\d+)?, mean_rate=\d+.\d+(E-\d+)?, "
                                    "rate_unit=events/second")
 
     e2e_makespan_pattern = re.compile("type=HISTOGRAM, name=scheduler.metrics.tasks.e2e.makespan.latency.histograms, "
                                      "count=\d+, min=\d+, "
                                      "max=\d+, "
-                                     "mean=\d+.\d+, "
-                                     "stddev=\d+.\d+, "
-                                     "p50=\d+.\d+, "
-                                     "p75=\d+.\d+, "
-                                     "p95=\d+.\d+, "
-                                     "p98=\d+.\d+, "
-                                     "p99=\d+.\d+, "
-                                     "p999=\d+.\d+")
+                                     "mean=\d+.\d+(E-\d+)?, "
+                                     "stddev=\d+.\d+(E-\d+)?, "
+                                     "p50=\d+.\d+(E-\d+)?, "
+                                     "p75=\d+.\d+(E-\d+)?, "
+                                     "p95=\d+.\d+(E-\d+)?, "
+                                     "p98=\d+.\d+(E-\d+)?, "
+                                     "p99=\d+.\d+(E-\d+)?, "
+                                     "p999=\d+.\d+(E-\d+)?")
     finished_tasks_pattern = re.compile("type=COUNTER, name=scheduler.metrics.tasks.finished.count, count=\d+")
 
     def __init__(self, log_file):
@@ -103,3 +104,4 @@ class SchedulerMetrics:
 
     def get_submitted_tasks(self):
         return self.metrics["submitted_tasks"]
+

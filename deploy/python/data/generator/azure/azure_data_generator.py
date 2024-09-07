@@ -33,6 +33,8 @@ class AzureDataGenerator(DataGenerator, ABC):
             but if want to replay it within half day, then the time_compress_ratio should be 1 / (14 * 2)
             Similarly, time_shift is used to shift the time by the mod functions. -1 means no shifting
         """
+        cpu_cores_list = []
+        memory_list = []
         task_ids = {}
         data = []
         if time_range_in_days is None:
@@ -63,10 +65,16 @@ class AzureDataGenerator(DataGenerator, ABC):
                 memory = vm[TableKeys.RESOURCE_TYPE[1]] * self.max_memory
                 disk = vm[TableKeys.RESOURCE_TYPE[2]] * self.max_disk
                 if max_cores > 0:
+                    if cores * cores_scale > max_cores:
+                        continue
                     cores = math.ceil(min(cores * cores_scale, max_cores))
                 if max_memory > 0:
+                    if memory * memory_scale > max_memory:
+                        continue
                     memory = math.ceil(min(memory * memory_scale, max_memory))
                 if max_disk > 0:
+                    if disk * disk_scale > max_disk:
+                        continue
                     disk = math.ceil(min(disk * disk_scale, max_disk))
 
                 if cores <= 0 or memory <= 0 or disk <= 0:
@@ -80,9 +88,14 @@ class AzureDataGenerator(DataGenerator, ABC):
                     "duration": int(duration),
                     "startTime": int(start_time)
                 })
+                cpu_cores_list.append(int(cores))
+                memory_list.append(int(memory))
                 task_ids[task_id] = True
         data = sorted(data, key=lambda x: x["startTime"])[:num_records]
         if reassign_ids:
             for i in range(len(data)):
                 data[i]["taskId"] = i
+        print("Average cores: {}, Average memory: {}".format(sum(cpu_cores_list) / len(cpu_cores_list),
+                                                             sum(memory_list) / len(memory_list)))
+        print("Total tasks: {}".format(len(data)))
         return data
