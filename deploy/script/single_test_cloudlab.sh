@@ -2,6 +2,7 @@
 
 CORES=8
 MEMORY=61440
+#SCHEDULER_PORTS=20503,20504,20505,20506,20507,20508,20509,20511,20512,20513
 SCHEDULER_PORTS=20503,20504,20505,20506,20507
 SCHEDULER_NUM_TASKS_UPDATE=4
 
@@ -13,8 +14,6 @@ CPU_WEIGHT=$5
 NETWORK_INTERFACE="enp1s0"
 DATA_PATH=$6
 DURATION_WEIGHT=$7
-
-parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_nodes -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f dodoor"
 
