@@ -17,12 +17,15 @@ slot_size = sys.argv[3]
 beta = sys.argv[4]
 cpu_weight = sys.argv[5]
 duration_weight = sys.argv[6]
+num_scheduler = sys.argv[7]
 scheduler_names = [scheduler_name]
 caelum_test = False
 
 for scheduler in scheduler_names:
-    exp_name = "azure/{}_batch_{}_beta_{}_cpu_{}_slot_{}_duration_{}".format(scheduler, batch_size, beta,
-                                                                             cpu_weight, slot_size, duration_weight)
+    exp_name = "azure/{}_batch_{}_beta_{}_cpu_{}_slot_{}_duration_{}_scheduler_{}".format(scheduler, batch_size, beta,
+                                                                                          cpu_weight, slot_size,
+                                                                                          duration_weight,
+                                                                                          num_scheduler)
     node_host = []
     if caelum_test:
         node_host_file = "deploy/resources/host_addresses/caelum/caelum_host_ip"

@@ -27,15 +27,15 @@ def parse_args():
     parser.add_option("--node-monitor-ports", default="20501",
                       help="The port numbers of the node, passing multiple options separated by comma. Different ports "
                            "will point to a singleton node monitor instances")
-    parser.add_option("--scheduler-ports", default="20503",
+    parser.add_option("--node-enqueue-ports", default="20502",
+                      help="The port number of the internal service to enqueue and dequeue the tasks")
+    parser.add_option("--data-store-ports", default="20503",
+                      help="The port number of the data store, passing multiple options separated by comma, "
+                           "same as scheduler ports to create multiple data stores instances")
+    parser.add_option("--scheduler-ports", default="20504",
                       help="The port numbers of the scheduler, passing multiple options separated by comma. "
                            "Each port will be used by a individual scheduler. So, the number of ports should be equal "
                            "to the number of schedulers per host.")
-    parser.add_option("--data-store-ports", default="20510",
-                      help="The port number of the data store, passing multiple options separated by comma, "
-                           "same as scheduler ports to create multiple data stores instances")
-    parser.add_option("--node-enqueue-ports", default="20502",
-                      help="The port number of the internal service to enqueue and dequeue the tasks")
     parser.add_option("--scheduler-thrift-threads", default=8,
                       help="The number of threads running in scheduler service to listen to the thrift requests")
     parser.add_option("--node-monitor-thrift-threads", default=1,
