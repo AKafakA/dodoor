@@ -188,6 +188,8 @@ num_unfinished_tasks_fig.supxlabel('10 seconds')
 num_unfinished_tasks_ax1.set_ylabel("Diff from Random")
 num_unfinished_tasks_ax2.set_ylabel("Number of Unfinished Tasks")
 
+plot_with_legend = True
+
 for scheduler_type, nodes_metrics in schedulers_metrics.items():
     calibrated_e2e_latency_avg = [e2e_latency - schedulers_metrics['Random']["e2e_latency_avg"][i] for i, e2e_latency in
                                   enumerate(nodes_metrics["e2e_latency_avg"][:max_checkpoints])]
@@ -208,13 +210,13 @@ for scheduler_type, nodes_metrics in schedulers_metrics.items():
     num_unfinished_tasks_ax1.plot(calibrated_num_unfinished_tasks, label=scheduler_type)
     num_unfinished_tasks_ax2.plot(nodes_metrics["num_unfinished_tasks"][:max_checkpoints], label=scheduler_type)
 
-# scheduling_latency_fig.legend(*scheduling_latency_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
+if plot_with_legend:
+     scheduling_latency_fig.legend(*scheduling_latency_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
+     num_unfinished_tasks_fig.legend(*num_unfinished_tasks_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
 scheduling_latency_fig.savefig("{}/scheduling_latency_avg.png".format(target_dir))
-
 e2e_latency_fig.legend(*e2e_latency_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
 e2e_latency_fig.savefig("{}/e2e_latency_avg.png".format(target_dir))
 
-# num_unfinished_tasks_fig.legend(*num_unfinished_tasks_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
 num_unfinished_tasks_fig.savefig("{}/num_unfinished_tasks_avg.png".format(target_dir))
 
 
@@ -240,8 +242,10 @@ for scheduler_type, nodes_metrics in all_nodes_metrics.items():
     var_resource_ax1.plot(calibrated_var_resource_mean, label=scheduler_type)
     var_resource_ax2.plot(nodes_metrics["var_resource_mean"][:max_checkpoints], label=scheduler_type)
 
-# average_resource_fig.legend(*average_resource_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
+if plot_with_legend:
+    average_resource_fig.legend(*average_resource_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
+    var_resource_fig.legend(*var_resource_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
+
 average_resource_fig.savefig("{}/average_resource_mean.png".format(target_dir))
 
-# var_resource_fig.legend(*var_resource_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
 var_resource_fig.savefig("{}/var_resource_mean.png".format(target_dir))

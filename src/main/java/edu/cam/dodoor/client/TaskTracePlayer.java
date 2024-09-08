@@ -108,11 +108,7 @@ public class TaskTracePlayer {
 
         boolean replayWithDisk = config.getBoolean(DodoorConf.REPLAY_WITH_DISK,
                 DodoorConf.DEFAULT_REPLAY_WITH_DISK);
-        int numThreads = config.getInt(DodoorConf.NUM_THREAD_CONCURRENT_SUBMITTED_TASKS,
-                DodoorConf.DEFAULT_NUM_THREAD_CONCURRENT_SUBMITTED_TASKS);
-        PriorityQueue<TaskLaunchRunnable> taskQueue =
-                new PriorityQueue<>(numThreads, Comparator.comparingLong(a -> a._startTime));
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+
         for (String line : allLines) {
             String[] parts = line.split(",");
             String taskId = parts[0];
@@ -125,19 +121,8 @@ public class TaskTracePlayer {
                 startTime = 0;
             }
             TaskLaunchRunnable task = new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs, startTime, client, globalStartTime, addDelay);
-            taskQueue.add(task);
-        }
-
-        while (!taskQueue.isEmpty()) {
-            TaskLaunchRunnable task = taskQueue.poll();
-            if (task._startTime > System.currentTimeMillis() - globalStartTime) {
-                try {
-                    Thread.sleep(task._startTime - (System.currentTimeMillis() - globalStartTime));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            executor.submit(task);
+            Thread t = new Thread(task);
+            t.start();
         }
     }
 }
