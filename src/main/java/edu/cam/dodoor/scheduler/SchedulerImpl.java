@@ -142,6 +142,7 @@ public class SchedulerImpl implements Scheduler{
 
     @Override
     public void submitJob(TSchedulingRequest request) throws TException {
+        long start = System.currentTimeMillis();
         if (request.tasks.isEmpty()) {
             return;
         }
@@ -149,7 +150,8 @@ public class SchedulerImpl implements Scheduler{
         for (TTaskSpec task : request.tasks) {
             _taskReceivedTime.put(task.taskId, System.currentTimeMillis());
         }
-        Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = handleJobSubmission(request);
+        Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = handleJobSubmission(request,
+                start);
         _counter.getAndAdd(request.tasks.size());
         _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
         if (SchedulerUtils.isCachedEnabled(_schedulingStrategy)) {
@@ -257,7 +259,8 @@ public class SchedulerImpl implements Scheduler{
     }
 
     @Override
-    public Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> handleJobSubmission(TSchedulingRequest request) throws TException {
+    public Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> handleJobSubmission(TSchedulingRequest request,
+                                                                                            long startTime) throws TException {
         LOG.debug(Logging.functionCall(request));
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = Maps.newHashMap();
         long start = System.currentTimeMillis();
@@ -270,7 +273,7 @@ public class SchedulerImpl implements Scheduler{
                 NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(entry.getValue());
                 LOG.debug("Launching enqueueTask for request {} on node: {}", request.requestId, entry.getValue().getHostName());
                 client.enqueueTaskReservation(entry.getKey(), new EnqueueTaskReservationCallback(
-                        entry.getKey().taskId, entry.getValue(), client, _schedulerServiceMetrics));
+                        entry.getKey().taskId, entry.getValue(), client, _schedulerServiceMetrics, startTime));
                 if (!mapOfNodesToPlacedTasks.containsKey(entry.getValue())) {
                     mapOfNodesToPlacedTasks.put(entry.getValue(), new ArrayList<>());
                 }
@@ -376,10 +379,11 @@ public class SchedulerImpl implements Scheduler{
 
         public EnqueueTaskReservationCallback(String taskId, InetSocketAddress nodeEnqueueAddress,
                                               NodeEnqueueService.AsyncClient client,
-                                              SchedulerServiceMetrics schedulerServiceMetrics) {
+                                              SchedulerServiceMetrics schedulerServiceMetrics,
+                                              long startTimeMillis) {
             _taskId = taskId;
             _nodeEnqueueAddress = nodeEnqueueAddress;
-            _startTimeMillis = System.currentTimeMillis();
+            _startTimeMillis = startTimeMillis;
             _client = client;
             _schedulerServiceMetrics = schedulerServiceMetrics;
         }
@@ -391,6 +395,9 @@ public class SchedulerImpl implements Scheduler{
             }
             LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
                     new Object[]{_nodeEnqueueAddress.getHostName(), _taskId, System.currentTimeMillis() - _startTimeMillis});
+
+            long totalTime = System.currentTimeMillis() - _startTimeMillis;
+            _schedulerServiceMetrics.taskScheduled(totalTime);
             returnClient();
         }
 

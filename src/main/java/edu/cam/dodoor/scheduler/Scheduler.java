@@ -15,7 +15,8 @@ public interface Scheduler {
     void initialize(Configuration conf, THostPort schedulerAddress,
                     SchedulerServiceMetrics schedulerServiceMetrics) throws IOException;
     void submitJob(TSchedulingRequest request) throws TException;
-    Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> handleJobSubmission(TSchedulingRequest request) throws TException;
+    Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> handleJobSubmission(TSchedulingRequest request,
+                                                                                     long startTime) throws TException;
     void updateNodeState(Map<String, TNodeState> snapshot);
     void registerNode(String nodeAddress) throws TException;
     void registerDataStore(String dataStoreAddress) throws TException;

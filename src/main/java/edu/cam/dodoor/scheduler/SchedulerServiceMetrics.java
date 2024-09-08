@@ -51,10 +51,14 @@ public class SchedulerServiceMetrics {
         _totalMessages.inc();
     }
 
+    public void taskScheduled(long latency) {
+        _endToEndLatencyHistogram.update(latency);
+    }
+
+
     public void taskFinished(long makespan, long nodeWallTime, long taskDuration) {
         _numFinishedTasks.inc();
         _endToEndMakespanHistogram.update(makespan);
-        _endToEndLatencyHistogram.update(makespan - nodeWallTime);
         _endToEndExtraDurationHistogram.update(makespan - taskDuration);
     }
 
