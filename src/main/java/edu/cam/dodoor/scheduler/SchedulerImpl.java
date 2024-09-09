@@ -74,7 +74,7 @@ public class SchedulerImpl implements Scheduler{
         _taskReceivedTime = new HashMap<>();
         _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         double beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
-        _nodeEqueueSocketToNodeMonitorClients = Maps.newHashMap();
+        _nodeEqueueSocketToNodeMonitorClients = Collections.synchronizedMap(new HashMap<>());
         _dataStoreAddress = new ArrayList<>();
         _nodeAddressToNeSocket = Maps.newHashMap();
         _neSocketToNmSocket = Maps.newHashMap();

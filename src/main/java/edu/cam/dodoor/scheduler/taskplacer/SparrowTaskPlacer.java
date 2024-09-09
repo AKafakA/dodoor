@@ -49,11 +49,19 @@ public class SparrowTaskPlacer extends TaskPlacer{
             int firstIndex = ran.nextInt(loadMaps.size());
             if (flag < _beta) {
                 int secondIndex = ran.nextInt(loadMaps.size());
+                NodeMonitorService.Client nodeMonitorClient1 = _nodeMonitorClients.get(nodeAddresses.get(firstIndex));
+                NodeMonitorService.Client nodeMonitorClient2 = _nodeMonitorClients.get(nodeAddresses.get(secondIndex));
+                TNodeState nodeState1;
+                TNodeState nodeState2;
                 try {
-                    TNodeState nodeState1 = _nodeMonitorClients.get(nodeAddresses.get(firstIndex)).getNodeState();
-                    _schedulerMetrics.probeNode();
-                    TNodeState nodeState2 = _nodeMonitorClients.get(nodeAddresses.get(secondIndex)).getNodeState();
-                    _schedulerMetrics.probeNode();
+                    synchronized (nodeMonitorClient1) {
+                        synchronized (nodeMonitorClient2) {
+                            nodeState1 = nodeMonitorClient1.getNodeState();
+                            _schedulerMetrics.probeNode();
+                            nodeState2 = nodeMonitorClient2.getNodeState();
+                            _schedulerMetrics.probeNode();
+                        }
+                    }
                     if (_useLoadScores) {
                         Map.Entry<Double, Double> scores = LoadScore.getLoadScoresPairs(nodeState1, nodeState2, taskResources,
                                 _cpuWeight, _memWeight, _diskWeight, _totalDurationWeight, _resourceCapacity);
