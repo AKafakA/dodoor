@@ -100,7 +100,8 @@ def parse_args():
     parser.add_option("--prequal_probe_remove_interval_ms", default=1000,
                         help="The interval in milliseconds to remove the probe tasks from the system")
 
-
+    parser.add_option("--task_replay_time_scale", default=1.0,
+                      help="The time scale to replay the tasks in the trace, used to speed up the replay process for debugging scheduler performances")
     return parser.parse_args()
 
 
@@ -209,6 +210,7 @@ def main():
     file.write("prequal.rif.quantile = {} \n".format(options.prequal_rif_quantile))
     file.write("prequal.probe.reuse.budget = {} \n".format(options.prequal_probe_reuse_budget))
     file.write("prequal.probe.remove.interval.ms = {} \n".format(options.prequal_probe_remove_interval_ms))
+    file.write("task.replay.time.scale = {} \n".format(options.task_replay_time_scale))
 
     file.close()
 

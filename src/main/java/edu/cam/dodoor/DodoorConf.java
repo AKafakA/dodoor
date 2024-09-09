@@ -20,8 +20,9 @@ public class DodoorConf {
     // Values: "debug", "info", "warn", "error", "fatal"
     public final static String LOG_LEVEL = "log_level";
 
-    public final static String NUM_THREAD_CONCURRENT_SUBMITTED_TASKS = "trace.num.thread.concurrent.submitted.tasks";
-    public final static int DEFAULT_NUM_THREAD_CONCURRENT_SUBMITTED_TASKS = 1000;
+    public final static String TASK_REPLAY_TIME_SCALE = "task.replay.time.scale";
+    public final static double DEFAULT_TASK_REPLAY_TIME_SCALE = 1.0;
+
 
 
     /**
@@ -38,6 +39,9 @@ public class DodoorConf {
     public final static String ASYNC_SCHEDULER_PREFIX = "async";
     public final static String ASYNC_SPARROW_SCHEDULER = "asyncSparrow";
     public final static String ASYNC_LOAD_SCORE_SPARROW = "asyncLoadScoreSparrow";
+
+    // Used for debugging the schedulers without actually running at tasks
+    public final static String DUMMY_SCHEDULER = "dummyScheduler";
 
     public final static String PREQUAL = "prequal";
     public final static String PREQUAL_PROBE_RATIO = "prequal.probe.ratio";

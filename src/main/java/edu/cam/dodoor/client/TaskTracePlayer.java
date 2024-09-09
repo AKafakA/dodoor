@@ -109,6 +109,9 @@ public class TaskTracePlayer {
         boolean replayWithDisk = config.getBoolean(DodoorConf.REPLAY_WITH_DISK,
                 DodoorConf.DEFAULT_REPLAY_WITH_DISK);
 
+        double taskReplyRate = config.getDouble(DodoorConf.TASK_REPLAY_TIME_SCALE,
+                DodoorConf.DEFAULT_TASK_REPLAY_TIME_SCALE);
+
         for (String line : allLines) {
             String[] parts = line.split(",");
             String taskId = parts[0];
@@ -116,7 +119,7 @@ public class TaskTracePlayer {
             long memory = Long.parseLong(parts[2]);
             long disks = replayWithDisk? Long.parseLong(parts[3]):0;
             long durationInMs = Long.parseLong(parts[4]);
-            long startTime = Long.parseLong(parts[5]);
+            long startTime = (long) Math.ceil(Long.parseLong(parts[5]) / taskReplyRate);
             if (startTime < 0) {
                 startTime = 0;
             }

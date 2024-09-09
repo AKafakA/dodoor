@@ -74,6 +74,9 @@ public abstract class TaskPlacer {
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, true, resourceCapacity, rifQuantile,
                     prequalQueue, probeReuseCount);
+
+            case DodoorConf.DUMMY_SCHEDULER -> new DummyTaskPlacer(beta, true, resourceCapacity,
+                    cpuWeight, memWeight, diskWeight, totalDurationWeight);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }
