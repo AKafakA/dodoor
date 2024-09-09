@@ -475,13 +475,8 @@ public class SchedulerImpl implements Scheduler{
         @Override
         public void onComplete(TNodeState nodeState) {
             LOG.info("Node state received from {}", _nmAddress.getHostName());
-            synchronized (_prequalpool) {
-                synchronized (_probeReuseCount) {
-                    if (_probeReuseCount.containsKey(_neAddress)) {
-                        _probeReuseCount.put(_neAddress, 0);
-                    }
-                }
-            }
+            _probeReuseCount.put(_neAddress, 0);
+            _prequalpool.add(_neAddress);
             _loadMapEqueueSocketToNodeState.put(_neAddress, nodeState);
             returnClient();
         }
