@@ -44,22 +44,20 @@ public class PrequalTaskPlacer extends TaskPlacer{
     private InetSocketAddress selectLeastNodeFromPrequalPool(Map<InetSocketAddress, TNodeState> loadMaps,
                                                              int taskCountCutoff) {
         Map<InetSocketAddress, TNodeState> prequalLoadMaps = new HashMap<>();
-        synchronized (_prequalQueue) {
-            synchronized (_probeReuseCount) {
-                if (_prequalQueue.isEmpty() || _prequalQueue.size() <= 2) {
-                    LOG.debug("Prequal queue is empty or too small, selecting random node");
-                    Random random = new Random();
-                    return (InetSocketAddress) loadMaps.keySet().toArray()[random.nextInt(loadMaps.size())];
-                }
-                for (InetSocketAddress nodeAddress: _prequalQueue) {
-                    prequalLoadMaps.put(nodeAddress, loadMaps.get(nodeAddress));
-                    if (!_probeReuseCount.containsKey(nodeAddress)) {
-                        throw new RuntimeException("Node address not found in probe reuse count map");
-                    }
-                    _probeReuseCount.put(nodeAddress, _probeReuseCount.get(nodeAddress) + 1);
-                }
-            }
+
+        if (_prequalQueue.isEmpty() || _prequalQueue.size() <= 2) {
+            LOG.debug("Prequal queue is empty or too small, selecting random node");
+            Random random = new Random();
+            return (InetSocketAddress) loadMaps.keySet().toArray()[random.nextInt(loadMaps.size())];
         }
+        for (InetSocketAddress nodeAddress: _prequalQueue) {
+            prequalLoadMaps.put(nodeAddress, loadMaps.get(nodeAddress));
+            if (!_probeReuseCount.containsKey(nodeAddress)) {
+                throw new RuntimeException("Node address not found in probe reuse count map");
+            }
+            _probeReuseCount.put(nodeAddress, _probeReuseCount.get(nodeAddress) + 1);
+        }
+
         Optional<InetSocketAddress> selectedNodeOptional = prequalLoadMaps.entrySet().stream().filter(e -> e.getValue().numTasks < taskCountCutoff)
                 .sorted(Comparator.comparingLong(e -> e.getValue().totalDurations)).map(Map.Entry::getKey).findFirst();
         return selectedNodeOptional.orElseGet(() -> prequalLoadMaps.entrySet().stream().min(Comparator.comparingInt(e -> e.getValue().numTasks)).get().getKey());

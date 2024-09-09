@@ -139,6 +139,28 @@ public class SchedulerImpl implements Scheduler{
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
     }
 
+    @Override
+    public void updateNodeState(Map<String, TNodeState> snapshot) {
+        if (!SchedulerUtils.isCachedEnabled(_schedulingStrategy)) {
+            throw new RuntimeException("updateNodeState should not be called for non-cached scheduler");
+        }
+        _schedulerServiceMetrics.loadUpdated();
+        for (Map.Entry<String, TNodeState> entry : snapshot.entrySet()) {
+            Optional<InetSocketAddress> neAddressOptional = Serialization.strToSocket(entry.getKey());
+            if (neAddressOptional.isPresent()) {
+                InetSocketAddress nodeEnqueueSocket = neAddressOptional.get();
+                if (_loadMapEqueueSocketToNodeState.containsKey(nodeEnqueueSocket)) {
+                    LOG.debug("Updating load for node: {}", nodeEnqueueSocket.getHostName());
+                } else {
+                    LOG.error("Adding load for unregistered node: {}", nodeEnqueueSocket.getHostName());
+                }
+                _loadMapEqueueSocketToNodeState.put(nodeEnqueueSocket, entry.getValue());
+                LOG.debug("Current node {} load is {}", nodeEnqueueSocket.getHostName(), _loadMapEqueueSocketToNodeState.get(nodeEnqueueSocket));
+            } else {
+                LOG.error("Invalid address: {}", entry.getKey());
+            }
+        }
+    }
 
     @Override
     public void submitJob(TSchedulingRequest request) throws TException {
@@ -184,7 +206,7 @@ public class SchedulerImpl implements Scheduler{
         removeNodeFromPrequalPool();
     }
 
-    private synchronized void removeNodeFromPrequalPool() {
+    private void removeNodeFromPrequalPool() {
         // remove the probe which has been reused more than the budget
         for (Map.Entry<InetSocketAddress, Integer> entry : _probeReuseCount.entrySet()) {
             if (entry.getValue() > _probeReuseBudget) {
@@ -285,30 +307,6 @@ public class SchedulerImpl implements Scheduler{
         long end = System.currentTimeMillis();
         LOG.debug("All tasks enqueued for request {}; returning. Total time: {} milliseconds", request.requestId, end - start);
         return mapOfNodesToPlacedTasks;
-    }
-
-
-    @Override
-    public void updateNodeState(Map<String, TNodeState> snapshot) {
-        if (!SchedulerUtils.isCachedEnabled(_schedulingStrategy)) {
-            throw new RuntimeException("updateNodeState should not be called for non-cached scheduler");
-        }
-        _schedulerServiceMetrics.loadUpdated();
-        for (Map.Entry<String, TNodeState> entry : snapshot.entrySet()) {
-            Optional<InetSocketAddress> neAddressOptional = Serialization.strToSocket(entry.getKey());
-            if (neAddressOptional.isPresent()) {
-                InetSocketAddress nodeEnqueueSocket = neAddressOptional.get();
-                if (_loadMapEqueueSocketToNodeState.containsKey(nodeEnqueueSocket)) {
-                    LOG.debug("Updating load for node: {}", nodeEnqueueSocket.getHostName());
-                } else {
-                    LOG.error("Adding load for unregistered node: {}", nodeEnqueueSocket.getHostName());
-                }
-                _loadMapEqueueSocketToNodeState.put(nodeEnqueueSocket, entry.getValue());
-                LOG.debug("Current node {} load is {}", nodeEnqueueSocket.getHostName(), _loadMapEqueueSocketToNodeState.get(nodeEnqueueSocket));
-            } else {
-                LOG.error("Invalid address: {}", entry.getKey());
-            }
-        }
     }
 
     @Override
