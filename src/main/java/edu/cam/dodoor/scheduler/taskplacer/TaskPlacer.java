@@ -45,7 +45,6 @@ public abstract class TaskPlacer {
                                               ThriftClientPool<NodeMonitorService.AsyncClient> asyncNodeMonitorClientPool,
                                               Map<String, InetSocketAddress> nodeAddressToNeSocket,
                                               Map<InetSocketAddress, InetSocketAddress> neSocketToNmSocket,
-                                              Queue<InetSocketAddress> prequalQueue,
                                               Map<InetSocketAddress, Integer> probeReuseCount) {
         TResourceVector resourceCapacity = Resources.getSystemResourceVector(configuration);
         String schedulingStrategy = configuration.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
@@ -57,6 +56,7 @@ public abstract class TaskPlacer {
         }
         float totalDurationWeight = configuration.getFloat(DodoorConf.TOTAL_PENDING_DURATION_WEIGHT, DodoorConf.DEFAULT_TOTAL_PENDING_DURATION_WEIGHT);
         double rifQuantile = configuration.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
+        int probePoolSize = configuration.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
         return switch (schedulingStrategy) {
             case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
@@ -73,7 +73,7 @@ public abstract class TaskPlacer {
                     schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket, neSocketToNmSocket,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, true, resourceCapacity, rifQuantile,
-                    prequalQueue, probeReuseCount);
+                    probeReuseCount, probePoolSize);
 
             case DodoorConf.DUMMY_SCHEDULER -> new DummyTaskPlacer(beta, true, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
