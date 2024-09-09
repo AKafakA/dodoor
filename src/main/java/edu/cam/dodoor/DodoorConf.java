@@ -53,8 +53,8 @@ public class DodoorConf {
     public final static String PREQUAL_PROBE_REUSE_BUDGET = "prequal.probe.reuse.budget";
     // calculated by  2 / ((1 - pool size / number of nodes) * probe ratio - 1)
     public final static int DEFAULT_PREQUAL_PROBE_REUSE_BUDGET = 2;
-    public final static String PREQUAL_PROBE_REMOVE_INTERVAL_MS = "prequal.probe.remove.interval.ms";
-    public final static long DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_MS = 1000;
+    public final static String PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS = "prequal.probe.remove.interval.seconds";
+    public final static long DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS = 1;
 
     public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20504;

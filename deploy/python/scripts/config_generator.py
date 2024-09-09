@@ -87,7 +87,6 @@ def parse_args():
                       help="The weight of disk in the dodoor load score calculation.")
     parser.add_option("--duration_weight", default="0.95",
                       help="The weight of total pending task duration in the dodoor load score calculation.")
-
     # generate configuration for prequal
     parser.add_option("--prequal_probe_ratio", default=3,
                       help="The ratio of probe tasks to the total tasks in the system")
@@ -97,11 +96,11 @@ def parse_args():
                         help="The quantile of RIF to be used in the prequal scheduler")
     parser.add_option("--prequal_probe_reuse_budget", default=2,
                         help="The reuse budget of probe tasks to be scheduled")
-    parser.add_option("--prequal_probe_remove_interval_ms", default=1000,
+    parser.add_option("--prequal_probe_remove_interval_seconds", default=1,
                         help="The interval in milliseconds to remove the probe tasks from the system")
-
     parser.add_option("--task_replay_time_scale", default=1.0,
-                      help="The time scale to replay the tasks in the trace, used to speed up the replay process for debugging scheduler performances")
+                      help="The time scale to replay the tasks in the trace, used to speed up the replay process for "
+                           "debugging scheduler performances")
     return parser.parse_args()
 
 
@@ -209,7 +208,7 @@ def main():
     file.write("prequal.probe.pool.size = {} \n".format(options.prequal_probe_pool_size))
     file.write("prequal.rif.quantile = {} \n".format(options.prequal_rif_quantile))
     file.write("prequal.probe.reuse.budget = {} \n".format(options.prequal_probe_reuse_budget))
-    file.write("prequal.probe.remove.interval.ms = {} \n".format(options.prequal_probe_remove_interval_ms))
+    file.write("prequal.probe.remove.interval.seconds = {} \n".format(options.prequal_probe_remove_interval_seconds))
     file.write("task.replay.time.scale = {} \n".format(options.task_replay_time_scale))
 
     file.close()

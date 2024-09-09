@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SchedulerImpl implements Scheduler{
@@ -55,7 +56,6 @@ public class SchedulerImpl implements Scheduler{
     Map<InetSocketAddress, Integer> _probeReuseCount;
     private int _probeRateForPrequal;
     private double _rifQuantile;
-    private int _probeReuseBudget;
     private long _prequalProbeRemoveInterval;
     private int _probePoolSize;
 
@@ -112,10 +112,9 @@ public class SchedulerImpl implements Scheduler{
 
         if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
             _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATIO, DodoorConf.DEFAULT_PREQUAL_PROBE_RATIO);
-            _probeReuseBudget = config.getInt(DodoorConf.PREQUAL_PROBE_REUSE_BUDGET, DodoorConf.DEFAULT_PREQUAL_PROBE_REUSE_BUDGET);
             _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
-            _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_MS,
-                    DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_MS);
+            _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS,
+                    DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS);
             _probeReuseCount = Collections.synchronizedMap(new LinkedHashMap<>());
             _probePoolSize = config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
             Thread probePoolRemover = new Thread(new PrequalProbePoolRemover(_probeReuseCount, _probePoolSize,
@@ -500,7 +499,7 @@ public class SchedulerImpl implements Scheduler{
                 }
                 removeNodeFromPrequalPool();
                 try {
-                    Thread.sleep(_prequalProbeRemoveInterval);
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(_prequalProbeRemoveInterval));
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }

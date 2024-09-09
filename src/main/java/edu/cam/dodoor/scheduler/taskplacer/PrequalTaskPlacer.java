@@ -13,15 +13,18 @@ public class PrequalTaskPlacer extends TaskPlacer{
     private final double _rifQuantile;
     private final Map<InetSocketAddress, Integer> _probeReuseCount;
     private final int _probePoolSize;
+    private final int _probeReuseBudget;
 
     public PrequalTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
                              double rifQuantile,
                              Map<InetSocketAddress, Integer> probeReuseCount,
-                             int probePoolSize) {
+                             int probePoolSize,
+                             int probeReuseBudget) {
         super(beta, useLoadScores, resourceCapacity, 1, 1, 1, 1);
         _rifQuantile = rifQuantile;
         _probeReuseCount = probeReuseCount;
         _probePoolSize = probePoolSize;
+        _probeReuseBudget = probeReuseBudget;
     }
 
 
@@ -53,7 +56,7 @@ public class PrequalTaskPlacer extends TaskPlacer{
             if (i < _probePoolSize) {
                 prequalLoadMaps.put(probeAddresses.get(i), loadMaps.get(probeAddresses.get(i)));
                 _probeReuseCount.put(probeAddresses.get(i), _probeReuseCount.get(probeAddresses.get(i)) + 1);
-                if ( _probeReuseCount.get(probeAddresses.get(i)) > 2) {
+                if ( _probeReuseCount.get(probeAddresses.get(i)) > _probeReuseBudget) {
                     addressToRemove.add(probeAddresses.get(i));
                 }
             } else {
