@@ -17,8 +17,8 @@ target_dir = "deploy/resources/figure/{}".format(experiment_name)
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
-scheduler_name_map = {"sparrow": "PowerOfTwo", "random": "Random", "prequal": "Prequal",
-                      "cachedSparrow": "CachedPowerOfTwo",
+scheduler_name_map = {"powerOfTwo": "PowerOfTwo", "random": "Random", "prequal": "Prequal",
+                      "cachedPowerOfTwo": "CachedPowerOfTwo",
                       "dodoor": "Dodoor"}
 
 time_steps = 10
@@ -31,9 +31,9 @@ max_num_waiting_task_lists = {}
 average_num_waiting_task_lists = {}
 variance_waiting_task_lists = {}
 
-uncached_scheduler_type = ["sparrow", "random", "prequal", "cachedSparrow"]
+baseline_scheduler_type = ["powerOfTwo", "random", "prequal", "cachedPowerOfTwo"]
 # uncached_scheduler_type = []
-cached_scheduler_type = ["dodoor"]
+compared_scheduler_type = ["dodoor"]
 test_cpu_weight = [50.0, 10.0, 25.0]
 # test_duration_weight = [0.5, 0.25, 0.1]
 test_duration_weight = [0.5, 0.75, 0.25]
@@ -49,13 +49,11 @@ for scheduler_name in os.listdir(composited_node_host_dir):
 
     scheduler_type = scheduler_name.split("_")[0]
     cpu = scheduler_name.split("_")[6]
-    if not (scheduler_type in uncached_scheduler_type or (scheduler_type in cached_scheduler_type and
+    if not (scheduler_type in baseline_scheduler_type or (scheduler_type in compared_scheduler_type and
                                                           float(cpu) in test_cpu_weight)):
         continue
 
-    new_scheduler_name = "{}_{}".format(scheduler_type, cpu)
-
-    if scheduler_type == "dodoor":
+    if scheduler_type in compared_scheduler_type:
         duration_weight = scheduler_name.split("_")[-1]
         if float(duration_weight) not in test_duration_weight:
             continue
@@ -115,16 +113,9 @@ for scheduler_name in os.listdir(scheduler_host_dir):
             nodes_metrics = SchedulerMetrics(os.path.join(scheduler_host_dir, scheduler_name, scheduler_log_file))
             scheduler_type = scheduler_name.split("_")[0]
             cpu = scheduler_name.split("_")[6]
-            new_scheduler_name = "{}_{}".format(scheduler_type, cpu)
-            if not (scheduler_type in uncached_scheduler_type or (scheduler_type in cached_scheduler_type and
+            if not (scheduler_type in baseline_scheduler_type or (scheduler_type in compared_scheduler_type and
                                                                   float(cpu) in test_cpu_weight)):
                 continue
-            if scheduler_type == "dodoor":
-                duration_weight = scheduler_name.split("_")[-1]
-                print(duration_weight)
-                if float(duration_weight) not in test_duration_weight:
-                    continue
-                new_scheduler_name = "{}_{}_{}".format(new_scheduler_name, cpu, duration_weight)
 
             num_messages = nodes_metrics.get_num_messages()
             task_rate_m1 = nodes_metrics.get_task_rate_m1()
