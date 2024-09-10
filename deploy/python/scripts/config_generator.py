@@ -94,10 +94,12 @@ def parse_args():
                         help="The pool size of probe tasks to be scheduled")
     parser.add_option("--prequal_rif_quantile", default=0.84,
                         help="The quantile of RIF to be used in the prequal scheduler")
-    parser.add_option("--prequal_probe_reuse_budget", default=2,
-                        help="The reuse budget of probe tasks to be scheduled")
     parser.add_option("--prequal_probe_remove_interval_seconds", default=1,
                         help="The interval in milliseconds to remove the probe tasks from the system")
+    parser.add_option("--prequal_delta", default=1,
+                      help="The delta value used in the prequal scheduler for probe reuse budget")
+    parser.add_option("--prequal_probe_delete", default=1,
+                      help="The probe delete value used in the prequal scheduler for probe reuse budget")
     parser.add_option("--task_replay_time_scale", default=1.0,
                       help="The time scale to replay the tasks in the trace, used to speed up the replay process for "
                            "debugging scheduler performances")
@@ -207,8 +209,10 @@ def main():
     file.write("prequal.probe.ratio = {} \n".format(options.prequal_probe_ratio))
     file.write("prequal.probe.pool.size = {} \n".format(options.prequal_probe_pool_size))
     file.write("prequal.rif.quantile = {} \n".format(options.prequal_rif_quantile))
-    file.write("prequal.probe.reuse.budget = {} \n".format(options.prequal_probe_reuse_budget))
     file.write("prequal.probe.remove.interval.seconds = {} \n".format(options.prequal_probe_remove_interval_seconds))
+    file.write("prequal.delta = {} \n".format(options.prequal_delta))
+    file.write("prequal.probe.delete = {} \n".format(options.prequal_probe_delete))
+
     file.write("task.replay.time.scale = {} \n".format(options.task_replay_time_scale))
 
     file.close()

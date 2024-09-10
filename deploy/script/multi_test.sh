@@ -14,7 +14,7 @@ export PYTHONPATH=$PYTHONPATH:~/Code/scheduling/dodoor
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
 rm -rf deploy/resources/log/*
 
-for i in "sparrow" "prequal" "random" "dodoor" "cachedSparrow";
+for i in "powerOfTwo" "prequal" "random" "dodoor" "cachedPowerOfTwo";
   do
     echo "run the exp for $i"
     sh deploy/script/single_test_cloudlab.sh $i $BATCH_SIZE $SLOT_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $NUM_SCHEDULER

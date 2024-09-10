@@ -31,17 +31,10 @@ public class DodoorConf {
     public final static String SCHEDULER_TYPE = "scheduler.type";
     /** Current supported scheduling algorithm*/
     public final static String DODOOR_SCHEDULER = "dodoor";
-    public final static String SPARROW_SCHEDULER = "sparrow";
-    public final static String CACHED_SPARROW_SCHEDULER = "cachedSparrow";
+    public final static String POWER_OF_TWO_SCHEDULER = "powerOfTwo";
+    public final static String CACHED_POWER_OF_TWO_SCHEDULER = "cachedPowerOfTwo";
     public final static String RANDOM_SCHEDULER = "random";
-    public final static String LOAD_SCORE_SPARROW = "loadScoreSparrow";
-
-    public final static String ASYNC_SCHEDULER_PREFIX = "async";
-    public final static String ASYNC_SPARROW_SCHEDULER = "asyncSparrow";
-    public final static String ASYNC_LOAD_SCORE_SPARROW = "asyncLoadScoreSparrow";
-
-    // Used for debugging the schedulers without actually running at tasks
-    public final static String DUMMY_SCHEDULER = "dummyScheduler";
+    public final static String LOAD_SCORE_POWER_OF_TWO_SCHEDULER = "loadScorePowerOfTwo";
 
     public final static String PREQUAL = "prequal";
     public final static String PREQUAL_PROBE_RATIO = "prequal.probe.ratio";
@@ -49,10 +42,11 @@ public class DodoorConf {
     public final static String PREQUAL_PROBE_POOL_SIZE = "prequal.probe.pool.size";
     public final static int DEFAULT_PREQUAL_PROBE_POOL_SIZE = 16;
     public final static String PREQUAL_RIF_QUANTILE = "prequal.rif.quantile";
-    public final static double DEFAULT_PREQUAL_RIF_QUANTILE = 0.75;
-    public final static String PREQUAL_PROBE_REUSE_BUDGET = "prequal.probe.reuse.budget";
-    // calculated by  2 / ((1 - pool size / number of nodes) * probe ratio - 1)
-    public final static int DEFAULT_PREQUAL_PROBE_REUSE_BUDGET = 2;
+    public final static double DEFAULT_PREQUAL_RIF_QUANTILE = 0.84;
+    public final static String  PREQUAL_DELTA = "prequal.delta";
+    public final static int DEFAULT_PREQUAL_DELTA = 1;
+    public final static String PREQUAL_PROBE_DELETE = "prequal.probe.delete";
+    public final static int DEFAULT_PREQUAL_PROBE_DELETE = 1;
     public final static String PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS = "prequal.probe.remove.interval.seconds";
     public final static long DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS = 1;
 

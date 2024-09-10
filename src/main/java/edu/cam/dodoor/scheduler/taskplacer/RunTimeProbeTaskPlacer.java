@@ -7,12 +7,12 @@ import org.apache.thrift.TException;
 import java.net.InetSocketAddress;
 import java.util.*;
 
-public class SparrowTaskPlacer extends TaskPlacer{
+public class RunTimeProbeTaskPlacer extends TaskPlacer{
     Map<InetSocketAddress, NodeMonitorService.Client> _nodeMonitorClients;
     SchedulerServiceMetrics _schedulerMetrics;
     boolean _useLoadScores;
 
-    public SparrowTaskPlacer(double beta,
+    public RunTimeProbeTaskPlacer(double beta,
                              boolean useLoadScores,
                              TResourceVector resourceCapacity,
                              Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
@@ -23,7 +23,7 @@ public class SparrowTaskPlacer extends TaskPlacer{
         _useLoadScores = useLoadScores;
     }
 
-    public SparrowTaskPlacer(double beta,
+    public RunTimeProbeTaskPlacer(double beta,
                              boolean useLoadScores,
                              TResourceVector resourceCapacity,
                              Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,

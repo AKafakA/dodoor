@@ -55,8 +55,6 @@ public class SchedulerImpl implements Scheduler{
     private String _schedulingStrategy;
     Map<InetSocketAddress, Integer> _probeReuseCount;
     private int _probeRateForPrequal;
-    private double _rifQuantile;
-    private long _prequalProbeRemoveInterval;
     private int _probePoolSize;
 
 
@@ -112,8 +110,8 @@ public class SchedulerImpl implements Scheduler{
 
         if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
             _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATIO, DodoorConf.DEFAULT_PREQUAL_PROBE_RATIO);
-            _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
-            _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS,
+            double _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
+            long _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS,
                     DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS);
             _probeReuseCount = Collections.synchronizedMap(new LinkedHashMap<>());
             _probePoolSize = config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
@@ -190,9 +188,7 @@ public class SchedulerImpl implements Scheduler{
             InetSocketAddress nmSocket = _neSocketToNmSocket.get(neSocket);
             try {
                 NodeMonitorService.AsyncClient client = _nodeMonitorServiceAsyncClientPool.borrowClient(nmSocket);
-                client.getNodeState(new GetNodeStateWithUpdateCallBack(
-                        neSocket, nmSocket, client
-                ));
+                client.getNodeState(new GetNodeStateWithUpdateCallBack(neSocket, nmSocket, client, _probeReuseCount));
                 _schedulerServiceMetrics.probeNode();
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -418,10 +414,12 @@ public class SchedulerImpl implements Scheduler{
         private final NodeMonitorService.AsyncClient _client;
         private final InetSocketAddress _neAddress;
         private final InetSocketAddress _nmAddress;
+        private final Map<InetSocketAddress, Integer> _probeReuseCount;
 
         public GetNodeStateWithUpdateCallBack(InetSocketAddress neAddress,
                                               InetSocketAddress nmAddress,
-                                              NodeMonitorService.AsyncClient client) {
+                                              NodeMonitorService.AsyncClient client,
+                                              Map<InetSocketAddress, Integer> probeReuseCount) {
             if (client == null) {
                 throw new IllegalArgumentException("Client cannot be null");
             }
@@ -431,15 +429,14 @@ public class SchedulerImpl implements Scheduler{
             _client = client;
             _neAddress = neAddress;
             _nmAddress = nmAddress;
+            _probeReuseCount = probeReuseCount;
         }
 
         @Override
         public void onComplete(TNodeState nodeState) {
             LOG.info("Node state received from {}", _nmAddress.getHostName());
             _loadMapEqueueSocketToNodeState.put(_neAddress, nodeState);
-            if (_probeReuseCount.containsKey(_neAddress)) {
-                _probeReuseCount.remove(_neAddress);
-            }
+            _probeReuseCount.remove(_neAddress);
             _probeReuseCount.put(_neAddress, 0);
             if (_probeReuseCount.size() > _probePoolSize) {
                 synchronized (_probeReuseCount) {
@@ -473,7 +470,7 @@ public class SchedulerImpl implements Scheduler{
 
     private static class PrequalProbePoolRemover implements Runnable {
 
-        Map<InetSocketAddress, Integer> _probeReuseCount;
+        final Map<InetSocketAddress, Integer> _probeReuseCount;
         int _probePoolSize;
         long _prequalProbeRemoveInterval;
         Map<InetSocketAddress, TNodeState> _loadMapEqueueSocketToNodeState;

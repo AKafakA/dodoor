@@ -5,12 +5,12 @@ import edu.cam.dodoor.scheduler.SchedulerServiceMetrics;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.Resources;
+import edu.cam.dodoor.utils.SchedulerUtils;
 import edu.cam.dodoor.utils.ThriftClientPool;
 import org.apache.commons.configuration.Configuration;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Queue;
 
 public abstract class TaskPlacer {
     double _beta;
@@ -57,26 +57,23 @@ public abstract class TaskPlacer {
         float totalDurationWeight = configuration.getFloat(DodoorConf.TOTAL_PENDING_DURATION_WEIGHT, DodoorConf.DEFAULT_TOTAL_PENDING_DURATION_WEIGHT);
         double rifQuantile = configuration.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
         int probePoolSize = configuration.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
-        int probeReuseBudget = configuration.getInt(DodoorConf.PREQUAL_PROBE_REUSE_BUDGET, DodoorConf.DEFAULT_PREQUAL_PROBE_REUSE_BUDGET);
+        int delta = configuration.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
+        int probeDelete = configuration.getInt(DodoorConf.PREQUAL_PROBE_DELETE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE);
+        int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(
+                nodeMonitorClients.size(), probePoolSize, delta, probeDelete, delta);
         return switch (schedulingStrategy) {
             case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
-            case DodoorConf.SPARROW_SCHEDULER -> new SparrowTaskPlacer(beta, false, resourceCapacity,
+            case DodoorConf.POWER_OF_TWO_SCHEDULER -> new RunTimeProbeTaskPlacer(beta, false, resourceCapacity,
                     nodeMonitorClients, schedulerMetrics);
-            case DodoorConf.LOAD_SCORE_SPARROW -> new SparrowTaskPlacer(beta, true, resourceCapacity,
-                    nodeMonitorClients, schedulerMetrics, cpuWeight, memWeight, diskWeight, totalDurationWeight);
-            case DodoorConf.CACHED_SPARROW_SCHEDULER -> new CachedTaskPlacer(beta, false, resourceCapacity,
+            case DodoorConf.LOAD_SCORE_POWER_OF_TWO_SCHEDULER -> new RunTimeProbeTaskPlacer(beta, true,
+                    resourceCapacity, nodeMonitorClients, schedulerMetrics,
+                    cpuWeight, memWeight, diskWeight, totalDurationWeight);
+            case DodoorConf.CACHED_POWER_OF_TWO_SCHEDULER-> new CachedTaskPlacer(beta, false, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
-            case DodoorConf.ASYNC_SPARROW_SCHEDULER -> new AsyncSparrowTaskPlacer(beta, false, resourceCapacity,
-                     schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket, neSocketToNmSocket);
-            case DodoorConf.ASYNC_LOAD_SCORE_SPARROW -> new AsyncSparrowTaskPlacer(beta, true, resourceCapacity,
-                    schedulerMetrics, asyncNodeMonitorClientPool, nodeAddressToNeSocket, neSocketToNmSocket,
-                    cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, true, resourceCapacity, rifQuantile,
                     probeReuseCount, probePoolSize, probeReuseBudget);
-            case DodoorConf.DUMMY_SCHEDULER -> new DummyTaskPlacer(beta, true, resourceCapacity,
-                    cpuWeight, memWeight, diskWeight, totalDurationWeight);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }
