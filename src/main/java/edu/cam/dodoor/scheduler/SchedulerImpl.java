@@ -7,7 +7,6 @@ import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.scheduler.taskplacer.TaskPlacer;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
-import org.apache.commons.collections.keyvalue.AbstractMapEntry;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -160,21 +159,23 @@ public class SchedulerImpl implements Scheduler{
     @Override
     public void submitJob(TSchedulingRequest request) throws TException {
         long start = System.currentTimeMillis();
+        int numTasksBefore = _counter.get();
         if (request.tasks.isEmpty()) {
             return;
         }
-        int numTasksBefore = _counter.get();
+        _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
         for (TTaskSpec task : request.tasks) {
             _taskReceivedTime.put(task.taskId, System.currentTimeMillis());
         }
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = handleJobSubmission(request,
                 start);
         _counter.getAndAdd(request.tasks.size());
-        _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
         if (SchedulerUtils.isCachedEnabled(_schedulingStrategy)) {
             updateDataStoreLoad(numTasksBefore, request, mapOfNodesToPlacedTasks);
         } else if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
-            updatePrequalPool();
+            synchronized (_probeInfo) {
+                updatePrequalPool();
+            }
         }
     }
 
@@ -488,8 +489,10 @@ public class SchedulerImpl implements Scheduler{
         public void onComplete(TNodeState nodeState) {
             LOG.info("Node state received from {}", _nmAddress.getHostName());
             _loadMapEqueueSocketToNodeState.put(_neAddress, nodeState);
-            _probeInfo.remove(_neAddress);
-            _probeInfo.put(_neAddress, new AbstractMap.SimpleEntry<>(System.currentTimeMillis(), 0));
+            synchronized (_probeInfo) {
+                _probeInfo.remove(_neAddress);
+                _probeInfo.put(_neAddress, new AbstractMap.SimpleEntry<>(System.currentTimeMillis(), 0));
+            }
             returnClient();
         }
 

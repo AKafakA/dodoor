@@ -18,7 +18,7 @@ public class PrequalTaskPlacer extends TaskPlacer{
     private final int _delta;
     private final int _probeRate;
     private final int _probeDeleteRate;
-    private long _probeAgeBudget;
+    private final long _probeAgeBudget;
 
     public PrequalTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
                              double rifQuantile,
@@ -64,13 +64,16 @@ public class PrequalTaskPlacer extends TaskPlacer{
         Collections.reverse(probeAddresses);
         int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(loadMaps.size(), _probePoolSize, _probeRate,
                 _probeDeleteRate, _delta);
-        for (int i = 0; i < Math.min(probeAddresses.size(), _probePoolSize); i++) {
-            InetSocketAddress probeAddress = probeAddresses.get(i);
-            long probedTime = _probeInfo.get(probeAddress).getKey();
-            int probedUsedCount = _probeInfo.get(probeAddress).getValue();
-            if (probedUsedCount < probeReuseBudget && (System.currentTimeMillis() - probedTime) < _probeAgeBudget) {
-                prequalLoadMaps.put(probeAddresses.get(i), loadMaps.get(probeAddresses.get(i)));
-                _probeInfo.get(probeAddresses.get(i)).setValue(_probeInfo.get(probeAddresses.get(i)).getValue() + 1);
+
+        synchronized (_probeInfo) {
+            for (int i = 0; i < Math.min(probeAddresses.size(), _probePoolSize); i++) {
+                InetSocketAddress probeAddress = probeAddresses.get(i);
+                long probedTime = _probeInfo.get(probeAddress).getKey();
+                int probedUsedCount = _probeInfo.get(probeAddress).getValue();
+                if (probedUsedCount < probeReuseBudget && (System.currentTimeMillis() - probedTime) < _probeAgeBudget) {
+                    prequalLoadMaps.put(probeAddresses.get(i), loadMaps.get(probeAddresses.get(i)));
+                    _probeInfo.get(probeAddresses.get(i)).setValue(_probeInfo.get(probeAddresses.get(i)).getValue() + 1);
+                }
             }
         }
 
