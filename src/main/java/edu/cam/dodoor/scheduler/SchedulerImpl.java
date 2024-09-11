@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SchedulerImpl implements Scheduler{
@@ -53,12 +52,13 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, InetSocketAddress> _nodeAddressToNeSocket;
     private Map<InetSocketAddress, InetSocketAddress> _neSocketToNmSocket;
     private String _schedulingStrategy;
-    Map<InetSocketAddress, Integer> _probeReuseCount;
+    Map<InetSocketAddress, Map.Entry<Long, Integer>> _probeInfo;
     private int _probeRateForPrequal;
-    private int _probePoolSize;
-
-    private int _delta;
+    private double _rifQuantile;
     private int _probeDeleteRate;
+    private int _delta;
+    private int _probePoolSize;
+    private int _probeAgeBudget;
 
 
     @Override
@@ -112,17 +112,13 @@ public class SchedulerImpl implements Scheduler{
         }
 
         if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
-            _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATIO, DodoorConf.DEFAULT_PREQUAL_PROBE_RATIO);
-            double _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
-            long _prequalProbeRemoveInterval = config.getLong(DodoorConf.PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS,
-                    DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS);
-            _probeReuseCount = Collections.synchronizedMap(new LinkedHashMap<>());
-            _probePoolSize = config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
-            _delta = config.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
+            _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_RATE);
+            _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
+            _probeInfo = Collections.synchronizedMap(new LinkedHashMap<>());
             _probeDeleteRate = config.getInt(DodoorConf.PREQUAL_PROBE_DELETE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE);
-            Thread probePoolRemover = new Thread(new PrequalProbePoolRemover(_probeReuseCount, _probePoolSize,
-                    _prequalProbeRemoveInterval, _loadMapEqueueSocketToNodeState, _rifQuantile));
-            probePoolRemover.start();
+            _delta = config.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
+            _probePoolSize = config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
+            _probeAgeBudget = config.getInt(DodoorConf.PREQUAL_PROBE_AGE_BUDGET, DodoorConf.DEFAULT_PREQUAL_PROBE_AGE_BUDGET);
         }
 
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
@@ -132,7 +128,7 @@ public class SchedulerImpl implements Scheduler{
                 _nodeMonitorServiceAsyncClientPool,
                 _nodeAddressToNeSocket,
                 _neSocketToNmSocket,
-                _probeReuseCount);
+                _probeInfo);
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
     }
@@ -193,12 +189,62 @@ public class SchedulerImpl implements Scheduler{
             InetSocketAddress nmSocket = _neSocketToNmSocket.get(neSocket);
             try {
                 NodeMonitorService.AsyncClient client = _nodeMonitorServiceAsyncClientPool.borrowClient(nmSocket);
-                client.getNodeState(new GetNodeStateWithUpdateCallBack(neSocket, nmSocket, client, _probeReuseCount));
+                client.getNodeState(new GetNodeStateWithUpdateCallBack(neSocket, nmSocket, client, _probeInfo));
                 _schedulerServiceMetrics.probeNode();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
+        removeNodeFromPrequalPool();
+    }
+
+    private synchronized void removeNodeFromPrequalPool() {
+        Random ran = new Random();
+        int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(_loadMapEqueueSocketToNodeState.size(),
+                _probeInfo.size(), _probeRateForPrequal, _probeDeleteRate, _delta);
+        long currentTime = System.currentTimeMillis();
+        List<InetSocketAddress> reversedProbeAddresses = new ArrayList<>(_probeInfo.keySet());
+        Collections.reverse(reversedProbeAddresses);
+        for (int i = 0; i < reversedProbeAddresses.size(); i++) {
+            InetSocketAddress probeAddress = reversedProbeAddresses.get(i);
+            long probeTime = _probeInfo.get(probeAddress).getKey();
+            if (i >= _probePoolSize || _probeInfo.get(probeAddress).getValue() >= probeReuseBudget ||
+                    (currentTime - probeTime) >= _probeAgeBudget) {
+                _probeInfo.remove(probeAddress);
+                reversedProbeAddresses.remove(probeAddress);
+            }
+        }
+        for (int i = 0; i < _probeDeleteRate && !reversedProbeAddresses.isEmpty(); i++) {
+            InetSocketAddress probeAddressToRemove = reversedProbeAddresses.get(reversedProbeAddresses.size() - 1);
+            if (ran.nextBoolean()) {
+                int[] numPendingTasks = _loadMapEqueueSocketToNodeState.values().stream().mapToInt(e -> e.numTasks).toArray();
+                int cutoff = MetricsUtils.getQuantile(numPendingTasks, _rifQuantile);
+                probeAddressToRemove = selectWorstNodeFromPrequalPool(cutoff, reversedProbeAddresses);
+            }
+            _probeInfo.remove(probeAddressToRemove);
+            reversedProbeAddresses.remove(probeAddressToRemove);
+        }
+    }
+
+    private InetSocketAddress selectWorstNodeFromPrequalPool(int cutOff, List<InetSocketAddress> probeAddressesFILO) {
+        InetSocketAddress selectedHotNode = null;
+        InetSocketAddress selectedColdNode = probeAddressesFILO.get(probeAddressesFILO.size() - 1);
+        int maxLoad = 0;
+        long maxDuration = 0;
+        for (InetSocketAddress nodeEnqueueAddress : probeAddressesFILO) {
+            TNodeState nodeState = _loadMapEqueueSocketToNodeState.get(nodeEnqueueAddress);
+            if (nodeState.numTasks > cutOff && nodeState.numTasks >= maxLoad) {
+                selectedHotNode = nodeEnqueueAddress;
+                maxLoad = nodeState.numTasks;
+            } else {
+                if (nodeState.totalDurations >= maxDuration) {
+                    selectedColdNode = nodeEnqueueAddress;
+                    maxDuration = nodeState.totalDurations;
+                }
+
+            }
+        }
+        return selectedHotNode != null ? selectedHotNode : selectedColdNode;
     }
 
     private void updateDataStoreLoad(int numTasksBefore, TSchedulingRequest request,
@@ -419,12 +465,12 @@ public class SchedulerImpl implements Scheduler{
         private final NodeMonitorService.AsyncClient _client;
         private final InetSocketAddress _neAddress;
         private final InetSocketAddress _nmAddress;
-        private final Map<InetSocketAddress, Integer> _probeReuseCount;
+        private final Map<InetSocketAddress, Map.Entry<Long, Integer>> _probeInfo;
 
         public GetNodeStateWithUpdateCallBack(InetSocketAddress neAddress,
                                               InetSocketAddress nmAddress,
                                               NodeMonitorService.AsyncClient client,
-                                              Map<InetSocketAddress, Integer> probeReuseCount) {
+                                              Map<InetSocketAddress, Map.Entry<Long, Integer>> probeInfo) {
             if (client == null) {
                 throw new IllegalArgumentException("Client cannot be null");
             }
@@ -434,15 +480,15 @@ public class SchedulerImpl implements Scheduler{
             _client = client;
             _neAddress = neAddress;
             _nmAddress = nmAddress;
-            _probeReuseCount = probeReuseCount;
+            _probeInfo = probeInfo;
         }
 
         @Override
         public void onComplete(TNodeState nodeState) {
             LOG.info("Node state received from {}", _nmAddress.getHostName());
             _loadMapEqueueSocketToNodeState.put(_neAddress, nodeState);
-            _probeReuseCount.remove(_neAddress);
-            _probeReuseCount.put(_neAddress, 0);
+            _probeInfo.remove(_neAddress);
+            _probeInfo.put(_neAddress, Map.entry(System.currentTimeMillis(), 0));
             returnClient();
         }
 
@@ -461,74 +507,74 @@ public class SchedulerImpl implements Scheduler{
         }
     }
 
-    private class PrequalProbePoolRemover implements Runnable {
-
-        final Map<InetSocketAddress, Integer> _probeReuseCount;
-        int _probePoolSize;
-        long _prequalProbeRemoveInterval;
-        Map<InetSocketAddress, TNodeState> _loadMapEqueueSocketToNodeState;
-        double _rifQuantile;
-
-        public PrequalProbePoolRemover(Map<InetSocketAddress, Integer> probeReuseCount,
-                                       int probePoolSize,
-                                       long prequalProbeRemoveInterval,
-                                       Map<InetSocketAddress, TNodeState> loadMapEqueueSocketToNodeState,
-                                       double rifQuantile) {
-            _probeReuseCount = probeReuseCount;
-            _probePoolSize = probePoolSize;
-            _prequalProbeRemoveInterval = prequalProbeRemoveInterval;
-            _loadMapEqueueSocketToNodeState = loadMapEqueueSocketToNodeState;
-            _rifQuantile = rifQuantile;
-        }
-
-        @Override
-        public void run(){
-            do {
-                removeNodeFromPrequalPool();
-                try {
-                    Thread.sleep(TimeUnit.SECONDS.toMillis(_prequalProbeRemoveInterval));
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            } while (true);
-        }
-
-        private void removeNodeFromPrequalPool() {
-            int[] numPendingTasks = _loadMapEqueueSocketToNodeState.values().stream().mapToInt(e -> e.numTasks).toArray();
-            int cutoff = MetricsUtils.getQuantile(numPendingTasks, _rifQuantile);
-            // The reverse order of the probe addresses by insertion.
-            List<InetSocketAddress> reversedProbeAddresses = new ArrayList<>(_probeReuseCount.keySet());
-            Collections.reverse(reversedProbeAddresses);
-            Map<InetSocketAddress, TNodeState> prequalLoadMaps = new LinkedHashMap<>();
-            Set<InetSocketAddress> addressesToRemove = new HashSet<>();
-            int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(_loadMapEqueueSocketToNodeState.size(),
-                    _probePoolSize,
-                    _probeRateForPrequal, _probeDeleteRate, _delta);
-            LOG.debug("Clean the probe pool with budget: " + probeReuseBudget);
-            for (int i = 0; i < reversedProbeAddresses.size(); i++) {
-                InetSocketAddress address = reversedProbeAddresses.get(i);
-                if (i < _probePoolSize && _probeReuseCount.get(address) < probeReuseBudget) {
-                    prequalLoadMaps.put(reversedProbeAddresses.get(i),
-                            _loadMapEqueueSocketToNodeState.get(reversedProbeAddresses.get(i)));
-                } else {
-                    addressesToRemove.add(address);
-                }
-            }
-            // since the insertion order is reversed, the oldest node is the last one.
-            if (!prequalLoadMaps.isEmpty()) {
-                InetSocketAddress oldestAddress = prequalLoadMaps.keySet().stream().reduce((first, second) -> second).get();
-                addressesToRemove.add(oldestAddress);
-                if (addressesToRemove.size() < _probeReuseCount.size()) {
-                    java.util.Optional<Map.Entry<InetSocketAddress, TNodeState>> worstNode =  prequalLoadMaps.entrySet().stream()
-                            .filter(e -> e.getValue().numTasks >= cutoff)
-                            .max(Comparator.comparingLong(e -> e.getValue().totalDurations))
-                            .or(() -> prequalLoadMaps.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().numTasks)));
-                    addressesToRemove.add(worstNode.get().getKey());
-                }
-            }
-            for (InetSocketAddress addressToRemove: addressesToRemove) {
-                _probeReuseCount.remove(addressToRemove);
-            }
-        }
-    }
+//    private class PrequalProbePoolRemover implements Runnable {
+//
+//        final Map<InetSocketAddress, Integer> _probeReuseCount;
+//        int _probePoolSize;
+//        long _prequalProbeRemoveInterval;
+//        Map<InetSocketAddress, TNodeState> _loadMapEqueueSocketToNodeState;
+//        double _rifQuantile;
+//
+//        public PrequalProbePoolRemover(Map<InetSocketAddress, Integer> probeReuseCount,
+//                                       int probePoolSize,
+//                                       long prequalProbeRemoveInterval,
+//                                       Map<InetSocketAddress, TNodeState> loadMapEqueueSocketToNodeState,
+//                                       double rifQuantile) {
+//            _probeReuseCount = probeReuseCount;
+//            _probePoolSize = probePoolSize;
+//            _prequalProbeRemoveInterval = prequalProbeRemoveInterval;
+//            _loadMapEqueueSocketToNodeState = loadMapEqueueSocketToNodeState;
+//            _rifQuantile = rifQuantile;
+//        }
+//
+//        @Override
+//        public void run(){
+//            do {
+//                removeNodeFromPrequalPool();
+//                try {
+//                    Thread.sleep(TimeUnit.SECONDS.toMillis(_prequalProbeRemoveInterval));
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            } while (true);
+//        }
+//
+//        private void removeNodeFromPrequalPool() {
+//            int[] numPendingTasks = _loadMapEqueueSocketToNodeState.values().stream().mapToInt(e -> e.numTasks).toArray();
+//            int cutoff = MetricsUtils.getQuantile(numPendingTasks, _rifQuantile);
+//            // The reverse order of the probe addresses by insertion.
+//            List<InetSocketAddress> reversedProbeAddresses = new ArrayList<>(_probeReuseCount.keySet());
+//            Collections.reverse(reversedProbeAddresses);
+//            Map<InetSocketAddress, TNodeState> prequalLoadMaps = new LinkedHashMap<>();
+//            Set<InetSocketAddress> addressesToRemove = new HashSet<>();
+//            int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(_loadMapEqueueSocketToNodeState.size(),
+//                    _probePoolSize,
+//                    _probeRateForPrequal, _probeDeleteRate, _delta);
+//            LOG.debug("Clean the probe pool with budget: {}", probeReuseBudget);
+//            for (int i = 0; i < reversedProbeAddresses.size(); i++) {
+//                InetSocketAddress address = reversedProbeAddresses.get(i);
+//                if (i < _probePoolSize && _probeReuseCount.get(address) < probeReuseBudget) {
+//                    prequalLoadMaps.put(reversedProbeAddresses.get(i),
+//                            _loadMapEqueueSocketToNodeState.get(reversedProbeAddresses.get(i)));
+//                } else {
+//                    addressesToRemove.add(address);
+//                }
+//            }
+//            // since the insertion order is reversed, the oldest node is the last one.
+//            if (!prequalLoadMaps.isEmpty()) {
+//                InetSocketAddress oldestAddress = prequalLoadMaps.keySet().stream().reduce((first, second) -> second).get();
+//                addressesToRemove.add(oldestAddress);
+//                if (addressesToRemove.size() < _probeReuseCount.size()) {
+//                    java.util.Optional<Map.Entry<InetSocketAddress, TNodeState>> worstNode =  prequalLoadMaps.entrySet().stream()
+//                            .filter(e -> e.getValue().numTasks >= cutoff)
+//                            .max(Comparator.comparingLong(e -> e.getValue().totalDurations))
+//                            .or(() -> prequalLoadMaps.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().numTasks)));
+//                    addressesToRemove.add(worstNode.get().getKey());
+//                }
+//            }
+//            for (InetSocketAddress addressToRemove: addressesToRemove) {
+//                _probeReuseCount.remove(addressToRemove);
+//            }
+//        }
+//    }
 }

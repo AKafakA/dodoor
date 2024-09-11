@@ -88,8 +88,8 @@ def parse_args():
     parser.add_option("--duration_weight", default="0.95",
                       help="The weight of total pending task duration in the dodoor load score calculation.")
     # generate configuration for prequal
-    parser.add_option("--prequal_probe_ratio", default=3,
-                      help="The ratio of probe tasks to the total tasks in the system")
+    parser.add_option("--prequal_probe_rate", default=3,
+                      help="The rate of probe tasks to the total tasks in the system")
     parser.add_option("--prequal_probe_pool_size", default=16,
                         help="The pool size of probe tasks to be scheduled")
     parser.add_option("--prequal_rif_quantile", default=0.84,
@@ -206,7 +206,7 @@ def main():
     file.write("dodoor.total.pending.duration.weight = {} \n".format(options.duration_weight))
 
     # prequal options
-    file.write("prequal.probe.ratio = {} \n".format(options.prequal_probe_ratio))
+    file.write("prequal.probe.rate = {} \n".format(options.prequal_probe_rate))
     file.write("prequal.probe.pool.size = {} \n".format(options.prequal_probe_pool_size))
     file.write("prequal.rif.quantile = {} \n".format(options.prequal_rif_quantile))
     file.write("prequal.probe.remove.interval.seconds = {} \n".format(options.prequal_probe_remove_interval_seconds))

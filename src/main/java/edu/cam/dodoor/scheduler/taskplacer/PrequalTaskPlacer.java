@@ -1,7 +1,9 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
+import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.MetricsUtils;
+import edu.cam.dodoor.utils.SchedulerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,17 +13,29 @@ import java.util.*;
 public class PrequalTaskPlacer extends TaskPlacer{
     public static final Logger LOG = LoggerFactory.getLogger(PrequalTaskPlacer.class);
     private final double _rifQuantile;
-    private final Map<InetSocketAddress, Integer> _probeReuseCount;
+    private final Map<InetSocketAddress, Map.Entry<Long, Integer>> _probeInfo;
     private final int _probePoolSize;
+    private final int _delta;
+    private final int _probeRate;
+    private final int _probeDeleteRate;
+    private long _probeAgeBudget;
 
     public PrequalTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
                              double rifQuantile,
-                             Map<InetSocketAddress, Integer> probeReuseCount,
-                             int probePoolSize) {
+                             Map<InetSocketAddress, Map.Entry<Long, Integer>> probeInfo,
+                             int probePoolSize,
+                             int delta,
+                             int probeRate,
+                             int probeDeleteRate,
+                             long probeAgeBudget) {
         super(beta, useLoadScores, resourceCapacity, 1, 1, 1, 1);
         _rifQuantile = rifQuantile;
-        _probeReuseCount = probeReuseCount;
         _probePoolSize = probePoolSize;
+        _delta = delta;
+        _probeRate = probeRate;
+        _probeDeleteRate = probeDeleteRate;
+        _probeInfo = probeInfo;
+        _probeAgeBudget = probeAgeBudget;
     }
 
 
@@ -46,12 +60,17 @@ public class PrequalTaskPlacer extends TaskPlacer{
                                                              int taskCountCutoff) {
         Map<InetSocketAddress, TNodeState> prequalLoadMaps = new HashMap<>();
 
-        List<InetSocketAddress> probeAddresses = new ArrayList<>(_probeReuseCount.keySet());
+        List<InetSocketAddress> probeAddresses = new ArrayList<>(_probeInfo.keySet());
         Collections.reverse(probeAddresses);
-        for (int i = 0; i < probeAddresses.size(); i++) {
-            if (i < _probePoolSize) {
+        int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(loadMaps.size(), _probePoolSize, _probeRate,
+                _probeDeleteRate, _delta);
+        for (int i = 0; i < Math.min(probeAddresses.size(), _probePoolSize); i++) {
+            InetSocketAddress probeAddress = probeAddresses.get(i);
+            long probedTime = _probeInfo.get(probeAddress).getKey();
+            int probedUsedCount = _probeInfo.get(probeAddress).getValue();
+            if (probedUsedCount < probeReuseBudget && (System.currentTimeMillis() - probedTime) < _probeAgeBudget) {
                 prequalLoadMaps.put(probeAddresses.get(i), loadMaps.get(probeAddresses.get(i)));
-                _probeReuseCount.put(probeAddresses.get(i), _probeReuseCount.get(probeAddresses.get(i)) + 1);
+                _probeInfo.get(probeAddresses.get(i)).setValue(_probeInfo.get(probeAddresses.get(i)).getValue() + 1);
             }
         }
 
@@ -63,7 +82,6 @@ public class PrequalTaskPlacer extends TaskPlacer{
 
         Optional<InetSocketAddress> selectedNodeOptional = prequalLoadMaps.entrySet().stream().filter(e -> e.getValue().numTasks < taskCountCutoff)
                 .sorted(Comparator.comparingLong(e -> e.getValue().totalDurations)).map(Map.Entry::getKey).findFirst();
-        InetSocketAddress selectedAddress = selectedNodeOptional.orElseGet(() -> prequalLoadMaps.entrySet().stream().min(Comparator.comparingInt(e -> e.getValue().numTasks)).get().getKey());
-        return selectedAddress;
+        return selectedNodeOptional.orElseGet(() -> prequalLoadMaps.entrySet().stream().min(Comparator.comparingInt(e -> e.getValue().numTasks)).get().getKey());
     }
 }

@@ -37,8 +37,8 @@ public class DodoorConf {
     public final static String LOAD_SCORE_POWER_OF_TWO_SCHEDULER = "loadScorePowerOfTwo";
 
     public final static String PREQUAL = "prequal";
-    public final static String PREQUAL_PROBE_RATIO = "prequal.probe.ratio";
-    public final static int DEFAULT_PREQUAL_PROBE_RATIO = 3;
+    public final static String PREQUAL_PROBE_RATE = "prequal.probe.rate";
+    public final static int DEFAULT_PREQUAL_PROBE_RATE = 3;
     public final static String PREQUAL_PROBE_POOL_SIZE = "prequal.probe.pool.size";
     public final static int DEFAULT_PREQUAL_PROBE_POOL_SIZE = 16;
     public final static String PREQUAL_RIF_QUANTILE = "prequal.rif.quantile";
@@ -47,8 +47,8 @@ public class DodoorConf {
     public final static int DEFAULT_PREQUAL_DELTA = 1;
     public final static String PREQUAL_PROBE_DELETE = "prequal.probe.delete";
     public final static int DEFAULT_PREQUAL_PROBE_DELETE = 1;
-    public final static String PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS = "prequal.probe.remove.interval.seconds";
-    public final static long DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS = 1;
+    public final static String PREQUAL_PROBE_AGE_BUDGET = "prequal.probe.age.budget";
+    public final static int DEFAULT_PREQUAL_PROBE_AGE_BUDGET = 1000;
 
     public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20504;

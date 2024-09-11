@@ -45,7 +45,7 @@ public abstract class TaskPlacer {
                                               ThriftClientPool<NodeMonitorService.AsyncClient> asyncNodeMonitorClientPool,
                                               Map<String, InetSocketAddress> nodeAddressToNeSocket,
                                               Map<InetSocketAddress, InetSocketAddress> neSocketToNmSocket,
-                                              Map<InetSocketAddress, Integer> probeReuseCount) {
+                                              Map<InetSocketAddress, Map.Entry<Long, Integer>> probeInfo) {
         TResourceVector resourceCapacity = Resources.getSystemResourceVector(configuration);
         String schedulingStrategy = configuration.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         float cpuWeight = configuration.getFloat(DodoorConf.CPU_WEIGHT, 1);
@@ -57,6 +57,10 @@ public abstract class TaskPlacer {
         float totalDurationWeight = configuration.getFloat(DodoorConf.TOTAL_PENDING_DURATION_WEIGHT, DodoorConf.DEFAULT_TOTAL_PENDING_DURATION_WEIGHT);
         double rifQuantile = configuration.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
         int probePoolSize = configuration.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
+        int delta = configuration.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
+        int probeDelete = configuration.getInt(DodoorConf.PREQUAL_PROBE_DELETE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE);
+        int probeRate = configuration.getInt(DodoorConf.PREQUAL_PROBE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_RATE);
+        int probeAgeBudget = configuration.getInt(DodoorConf.PREQUAL_PROBE_AGE_BUDGET, DodoorConf.DEFAULT_PREQUAL_PROBE_AGE_BUDGET);
         return switch (schedulingStrategy) {
             case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
@@ -69,7 +73,7 @@ public abstract class TaskPlacer {
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
             case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, true, resourceCapacity, rifQuantile,
-                    probeReuseCount, probePoolSize);
+                    probeInfo, probePoolSize, delta, probeRate, probeDelete, probeAgeBudget);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }
