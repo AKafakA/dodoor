@@ -60,12 +60,12 @@ public class PrequalTaskPlacer extends TaskPlacer{
                                                              int taskCountCutoff) {
         Map<InetSocketAddress, TNodeState> prequalLoadMaps = new HashMap<>();
 
-        List<InetSocketAddress> probeAddresses = new ArrayList<>(_probeInfo.keySet());
-        Collections.reverse(probeAddresses);
-        int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(loadMaps.size(), _probePoolSize, _probeRate,
-                _probeDeleteRate, _delta);
-
         synchronized (_probeInfo) {
+            List<InetSocketAddress> probeAddresses = new ArrayList<>(_probeInfo.keySet());
+            Collections.reverse(probeAddresses);
+            int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(loadMaps.size(), _probePoolSize, _probeRate,
+                    _probeDeleteRate, _delta);
+
             for (int i = 0; i < Math.min(probeAddresses.size(), _probePoolSize); i++) {
                 InetSocketAddress probeAddress = probeAddresses.get(i);
                 long probedTime = _probeInfo.get(probeAddress).getKey();
