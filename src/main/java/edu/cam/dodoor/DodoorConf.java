@@ -45,10 +45,10 @@ public class DodoorConf {
     public final static double DEFAULT_PREQUAL_RIF_QUANTILE = 0.84;
     public final static String  PREQUAL_DELTA = "prequal.delta";
     public final static int DEFAULT_PREQUAL_DELTA = 1;
-    public final static String PREQUAL_PROBE_DELETE = "prequal.probe.delete";
-    public final static int DEFAULT_PREQUAL_PROBE_DELETE = 1;
-    public final static String PREQUAL_PROBE_AGE_BUDGET = "prequal.probe.age.budget";
-    public final static int DEFAULT_PREQUAL_PROBE_AGE_BUDGET = 1000;
+    public final static String PREQUAL_PROBE_DELETE_RATE = "prequal.probe.delete.rate";
+    public final static int DEFAULT_PREQUAL_PROBE_DELETE_RATE = 1;
+    public final static String PREQUAL_PROBE_AGE_BUDGET_MS = "prequal.probe.age.budget.ms";
+    public final static int DEFAULT_PREQUAL_PROBE_AGE_BUDGET_MS = 1000;
 
     public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20504;

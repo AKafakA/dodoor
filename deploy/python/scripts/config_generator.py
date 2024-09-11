@@ -94,12 +94,13 @@ def parse_args():
                         help="The pool size of probe tasks to be scheduled")
     parser.add_option("--prequal_rif_quantile", default=0.84,
                         help="The quantile of RIF to be used in the prequal scheduler")
-    parser.add_option("--prequal_probe_remove_interval_seconds", default=1,
-                        help="The interval in milliseconds to remove the probe tasks from the system")
+    parser.add_option("--prequal_probe_age_budget_ms", default=1000,
+                        help="The age budget of probed results in the prequal scheduler. The probed results older than "
+                             "this value will be removed from the probed results pool")
     parser.add_option("--prequal_delta", default=1,
                       help="The delta value used in the prequal scheduler for probe reuse budget")
-    parser.add_option("--prequal_probe_delete", default=1,
-                      help="The probe delete value used in the prequal scheduler for probe reuse budget")
+    parser.add_option("--prequal_probe_delete_rate", default=1,
+                      help="The probe delete rate used in the prequal scheduler for probe reuse budget")
     parser.add_option("--task_replay_time_scale", default=1.0,
                       help="The time scale to replay the tasks in the trace, used to speed up the replay process for "
                            "debugging scheduler performances")
@@ -209,9 +210,9 @@ def main():
     file.write("prequal.probe.rate = {} \n".format(options.prequal_probe_rate))
     file.write("prequal.probe.pool.size = {} \n".format(options.prequal_probe_pool_size))
     file.write("prequal.rif.quantile = {} \n".format(options.prequal_rif_quantile))
-    file.write("prequal.probe.remove.interval.seconds = {} \n".format(options.prequal_probe_remove_interval_seconds))
     file.write("prequal.delta = {} \n".format(options.prequal_delta))
-    file.write("prequal.probe.delete = {} \n".format(options.prequal_probe_delete))
+    file.write("prequal.probe.delete.rate = {} \n".format(options.prequal_probe_delete_rate))
+    file.write("prequal.probe.age.budget.ms = {} \n".format(options.prequal_probe_age_budget_ms))
 
     file.write("task.replay.time.scale = {} \n".format(options.task_replay_time_scale))
 

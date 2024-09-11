@@ -115,10 +115,10 @@ public class SchedulerImpl implements Scheduler{
             _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_RATE);
             _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
             _probeInfo = Collections.synchronizedMap(new LinkedHashMap<>());
-            _probeDeleteRate = config.getInt(DodoorConf.PREQUAL_PROBE_DELETE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE);
+            _probeDeleteRate = config.getInt(DodoorConf.PREQUAL_PROBE_DELETE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE_RATE);
             _delta = config.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
             _probePoolSize = config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
-            _probeAgeBudget = config.getInt(DodoorConf.PREQUAL_PROBE_AGE_BUDGET, DodoorConf.DEFAULT_PREQUAL_PROBE_AGE_BUDGET);
+            _probeAgeBudget = config.getInt(DodoorConf.PREQUAL_PROBE_AGE_BUDGET_MS, DodoorConf.DEFAULT_PREQUAL_PROBE_AGE_BUDGET_MS);
         }
 
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
