@@ -21,6 +21,7 @@ public class SchedulerUtils {
 
     public static int getProbeReuseBudget(int numNode, int probePoolSize, int probeRatio, int probeDelete,
                                           int delta) {
-        return (int) Math.ceil((1 + delta) / ((1 - (double) probePoolSize / numNode) * probeRatio - probeDelete)) + 1;
+        int result = (int) Math.ceil((1 + delta) / ((1 - (double) probePoolSize / numNode) * probeRatio - probeDelete));
+        return Math.max(result, 1);
     }
 }

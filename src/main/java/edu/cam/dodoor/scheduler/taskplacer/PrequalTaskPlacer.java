@@ -13,18 +13,15 @@ public class PrequalTaskPlacer extends TaskPlacer{
     private final double _rifQuantile;
     private final Map<InetSocketAddress, Integer> _probeReuseCount;
     private final int _probePoolSize;
-    private final int _probeReuseBudget;
 
     public PrequalTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
                              double rifQuantile,
                              Map<InetSocketAddress, Integer> probeReuseCount,
-                             int probePoolSize,
-                             int probeReuseBudget) {
+                             int probePoolSize) {
         super(beta, useLoadScores, resourceCapacity, 1, 1, 1, 1);
         _rifQuantile = rifQuantile;
         _probeReuseCount = probeReuseCount;
         _probePoolSize = probePoolSize;
-        _probeReuseBudget = probeReuseBudget;
     }
 
 
@@ -49,18 +46,12 @@ public class PrequalTaskPlacer extends TaskPlacer{
                                                              int taskCountCutoff) {
         Map<InetSocketAddress, TNodeState> prequalLoadMaps = new HashMap<>();
 
-        Set<InetSocketAddress> addressToRemove = new HashSet<>();
         List<InetSocketAddress> probeAddresses = new ArrayList<>(_probeReuseCount.keySet());
         Collections.reverse(probeAddresses);
         for (int i = 0; i < probeAddresses.size(); i++) {
             if (i < _probePoolSize) {
                 prequalLoadMaps.put(probeAddresses.get(i), loadMaps.get(probeAddresses.get(i)));
                 _probeReuseCount.put(probeAddresses.get(i), _probeReuseCount.get(probeAddresses.get(i)) + 1);
-                if ( _probeReuseCount.get(probeAddresses.get(i)) > _probeReuseBudget) {
-                    addressToRemove.add(probeAddresses.get(i));
-                }
-            } else {
-                addressToRemove.add(probeAddresses.get(i));
             }
         }
 
@@ -73,12 +64,6 @@ public class PrequalTaskPlacer extends TaskPlacer{
         Optional<InetSocketAddress> selectedNodeOptional = prequalLoadMaps.entrySet().stream().filter(e -> e.getValue().numTasks < taskCountCutoff)
                 .sorted(Comparator.comparingLong(e -> e.getValue().totalDurations)).map(Map.Entry::getKey).findFirst();
         InetSocketAddress selectedAddress = selectedNodeOptional.orElseGet(() -> prequalLoadMaps.entrySet().stream().min(Comparator.comparingInt(e -> e.getValue().numTasks)).get().getKey());
-
-        if (!addressToRemove.isEmpty()) {
-            for (InetSocketAddress address: addressToRemove) {
-                _probeReuseCount.remove(address);
-            }
-        }
         return selectedAddress;
     }
 }

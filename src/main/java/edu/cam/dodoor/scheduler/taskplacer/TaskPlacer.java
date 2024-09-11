@@ -57,10 +57,6 @@ public abstract class TaskPlacer {
         float totalDurationWeight = configuration.getFloat(DodoorConf.TOTAL_PENDING_DURATION_WEIGHT, DodoorConf.DEFAULT_TOTAL_PENDING_DURATION_WEIGHT);
         double rifQuantile = configuration.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
         int probePoolSize = configuration.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
-        int delta = configuration.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
-        int probeDelete = configuration.getInt(DodoorConf.PREQUAL_PROBE_DELETE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE);
-        int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(
-                nodeMonitorClients.size(), probePoolSize, delta, probeDelete, delta);
         return switch (schedulingStrategy) {
             case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
@@ -73,7 +69,7 @@ public abstract class TaskPlacer {
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
             case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, true, resourceCapacity, rifQuantile,
-                    probeReuseCount, probePoolSize, probeReuseBudget);
+                    probeReuseCount, probePoolSize);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }

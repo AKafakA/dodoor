@@ -57,6 +57,9 @@ public class SchedulerImpl implements Scheduler{
     private int _probeRateForPrequal;
     private int _probePoolSize;
 
+    private int _delta;
+    private int _probeDeleteRate;
+
 
     @Override
     public void initialize(Configuration config, THostPort localAddress,
@@ -115,6 +118,8 @@ public class SchedulerImpl implements Scheduler{
                     DodoorConf.DEFAULT_PREQUAL_PROBE_REMOVE_INTERVAL_SECONDS);
             _probeReuseCount = Collections.synchronizedMap(new LinkedHashMap<>());
             _probePoolSize = config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
+            _delta = config.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
+            _probeDeleteRate = config.getInt(DodoorConf.PREQUAL_PROBE_DELETE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE);
             Thread probePoolRemover = new Thread(new PrequalProbePoolRemover(_probeReuseCount, _probePoolSize,
                     _prequalProbeRemoveInterval, _loadMapEqueueSocketToNodeState, _rifQuantile));
             probePoolRemover.start();
@@ -438,18 +443,6 @@ public class SchedulerImpl implements Scheduler{
             _loadMapEqueueSocketToNodeState.put(_neAddress, nodeState);
             _probeReuseCount.remove(_neAddress);
             _probeReuseCount.put(_neAddress, 0);
-            if (_probeReuseCount.size() > _probePoolSize) {
-                synchronized (_probeReuseCount) {
-                    int count = _probeReuseCount.size() - _probePoolSize;
-                    for (InetSocketAddress key : _probeReuseCount.keySet()) {
-                        if (count == 0) {
-                            break;
-                        }
-                        _probeReuseCount.remove(key);
-                        count--;
-                    }
-                }
-            }
             returnClient();
         }
 
@@ -468,7 +461,7 @@ public class SchedulerImpl implements Scheduler{
         }
     }
 
-    private static class PrequalProbePoolRemover implements Runnable {
+    private class PrequalProbePoolRemover implements Runnable {
 
         final Map<InetSocketAddress, Integer> _probeReuseCount;
         int _probePoolSize;
@@ -491,9 +484,7 @@ public class SchedulerImpl implements Scheduler{
         @Override
         public void run(){
             do {
-                synchronized (_probeReuseCount) {
-                    removeNodeFromPrequalPool();
-                }
+                removeNodeFromPrequalPool();
                 try {
                     Thread.sleep(TimeUnit.SECONDS.toMillis(_prequalProbeRemoveInterval));
                 } catch (InterruptedException e) {
@@ -509,32 +500,34 @@ public class SchedulerImpl implements Scheduler{
             List<InetSocketAddress> reversedProbeAddresses = new ArrayList<>(_probeReuseCount.keySet());
             Collections.reverse(reversedProbeAddresses);
             Map<InetSocketAddress, TNodeState> prequalLoadMaps = new LinkedHashMap<>();
-            Set<InetSocketAddress> addressToRemove = new HashSet<>();
+            Set<InetSocketAddress> addressesToRemove = new HashSet<>();
+            int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(_loadMapEqueueSocketToNodeState.size(),
+                    _probePoolSize,
+                    _probeRateForPrequal, _probeDeleteRate, _delta);
+            LOG.debug("Clean the probe pool with budget: " + probeReuseBudget);
             for (int i = 0; i < reversedProbeAddresses.size(); i++) {
-                if (i < _probePoolSize) {
-                    prequalLoadMaps.put(reversedProbeAddresses.get(i), _loadMapEqueueSocketToNodeState.get(reversedProbeAddresses.get(i)));
+                InetSocketAddress address = reversedProbeAddresses.get(i);
+                if (i < _probePoolSize && _probeReuseCount.get(address) < probeReuseBudget) {
+                    prequalLoadMaps.put(reversedProbeAddresses.get(i),
+                            _loadMapEqueueSocketToNodeState.get(reversedProbeAddresses.get(i)));
                 } else {
-                    addressToRemove.add(reversedProbeAddresses.get(i));
+                    addressesToRemove.add(address);
                 }
             }
             // since the insertion order is reversed, the oldest node is the last one.
             if (!prequalLoadMaps.isEmpty()) {
                 InetSocketAddress oldestAddress = prequalLoadMaps.keySet().stream().reduce((first, second) -> second).get();
-                addressToRemove.add(oldestAddress);
-                prequalLoadMaps.remove(oldestAddress);
+                addressesToRemove.add(oldestAddress);
+                if (addressesToRemove.size() < _probeReuseCount.size()) {
+                    java.util.Optional<Map.Entry<InetSocketAddress, TNodeState>> worstNode =  prequalLoadMaps.entrySet().stream()
+                            .filter(e -> e.getValue().numTasks >= cutoff)
+                            .max(Comparator.comparingLong(e -> e.getValue().totalDurations))
+                            .or(() -> prequalLoadMaps.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().numTasks)));
+                    addressesToRemove.add(worstNode.get().getKey());
+                }
             }
-            java.util.Optional<Map.Entry<InetSocketAddress, TNodeState>> worstNode =  prequalLoadMaps.entrySet().stream()
-                    .filter(e -> e.getValue().numTasks >= cutoff)
-                    .max(Comparator.comparingLong(e -> e.getValue().totalDurations))
-                    .or(() -> prequalLoadMaps.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().numTasks)));
-
-            if (worstNode.isPresent()) {
-                addressToRemove.add(worstNode.get().getKey());
-            } else {
-                LOG.error("No worst node found in prequal pool.");
-            }
-            for (InetSocketAddress address: addressToRemove) {
-                _probeReuseCount.remove(address);
+            for (InetSocketAddress addressToRemove: addressesToRemove) {
+                _probeReuseCount.remove(addressToRemove);
             }
         }
     }
