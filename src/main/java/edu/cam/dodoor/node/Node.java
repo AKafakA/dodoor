@@ -17,7 +17,7 @@ public interface Node {
 
     boolean cancelTaskReservation(TFullTaskId taskId) throws TException;
 
-    boolean executeTask(TFullTaskId taskId) throws TException;
+    long executeTask(TFullTaskId taskId) throws TException;
 
     TResourceVector getRequestedResourceVector();
 

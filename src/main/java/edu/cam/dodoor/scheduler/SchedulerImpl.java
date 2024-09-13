@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SchedulerImpl implements Scheduler{
@@ -63,6 +64,7 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, Set<InetSocketAddress>> _nodePreservedForTask;
 
     private int _roundOfReservations;
+    private Map<String, Long> _taskScheduledTotalLatency;
 
 
     @Override
@@ -139,6 +141,7 @@ public class SchedulerImpl implements Scheduler{
         if (SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
             _nodePreservedForTask = Maps.newConcurrentMap();
             _roundOfReservations = config.getInt(DodoorConf.LATE_BINDING_PROBE_COUNT, DodoorConf.DEFAULT_LATE_BINDING_PROBE_COUNT);
+            _taskScheduledTotalLatency = new ConcurrentHashMap<>();
         } else {
             _nodePreservedForTask = null;
             _roundOfReservations = 1;
@@ -429,7 +432,8 @@ public class SchedulerImpl implements Scheduler{
                     NodeEnqueueService.AsyncClient client =
                             _nodeEnqueueServiceAsyncClientPool.borrowClient(nodeEnqueueAddress);
                     _schedulerServiceMetrics.infoNodeToExecute();
-                    client.executeTask(taskId, new ExecuteTaskCallBack(nodeEnqueueAddress, client));
+                    long taskReceivedTime = _taskReceivedTime.get(taskId.taskId);
+                    client.executeTask(taskId, new ExecuteTaskCallBack(nodeEnqueueAddress, client, taskReceivedTime));
 
                     for (InetSocketAddress address : preservedNodes) {
                         if (!address.equals(nodeEnqueueAddress)) {
@@ -477,8 +481,11 @@ public class SchedulerImpl implements Scheduler{
             LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
                     new Object[]{_nodeEnqueueAddress.getHostName(), _taskId, System.currentTimeMillis() - _startTimeMillis});
 
-            long totalTime = System.currentTimeMillis() - _startTimeMillis;
-            _schedulerServiceMetrics.taskScheduled(totalTime);
+            if (!aBoolean) {
+                _schedulerServiceMetrics.failedToScheduling();
+            } else if (!SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
+                _schedulerServiceMetrics.taskScheduled(System.currentTimeMillis() - _startTimeMillis);
+            }
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
 
@@ -566,21 +573,26 @@ public class SchedulerImpl implements Scheduler{
         }
     }
 
-    private class ExecuteTaskCallBack implements AsyncMethodCallback<Boolean> {
+    private class ExecuteTaskCallBack implements AsyncMethodCallback<Long> {
 
         private final Logger LOG = LoggerFactory.getLogger(ExecuteTaskCallBack.class);
         private final InetSocketAddress _nodeEnqueueAddress;
         private final NodeEnqueueService.AsyncClient _client;
+        private final long _taskReceivedTime;
 
 
-        public ExecuteTaskCallBack(InetSocketAddress nodeEnqueueAddress, NodeEnqueueService.AsyncClient client) {
+        public ExecuteTaskCallBack(InetSocketAddress nodeEnqueueAddress, NodeEnqueueService.AsyncClient client,
+                                   long taskReceivedTime) {
             _nodeEnqueueAddress = nodeEnqueueAddress;
             _client = client;
+            _taskReceivedTime = taskReceivedTime;
         }
 
         @Override
-        public void onComplete(Boolean aBoolean) {
+        public void onComplete(Long waitingTime) {
             LOG.debug("Task executed on node {}", _nodeEnqueueAddress.getHostName());
+            long accumulatedLatency = System.currentTimeMillis() - _taskReceivedTime - waitingTime;
+            _schedulerServiceMetrics.taskScheduled(accumulatedLatency);
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
 

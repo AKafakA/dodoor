@@ -122,9 +122,9 @@ public class NodeImpl implements Node {
     }
 
     @Override
-    public boolean executeTask(TFullTaskId taskId) throws TException {
-        if (_isLateBindingEnabled) {
-            return _taskScheduler.executeTask(taskId);
+    public long executeTask(TFullTaskId taskId) throws TException {
+        if (_isLateBindingEnabled && _taskScheduler.executeTask(taskId)) {
+            return System.currentTimeMillis() - _taskReceivedTime.get(taskId.taskId);
         } else {
             throw new TException("Task execution confirmation no necessary for no late binding scheduler");
         }

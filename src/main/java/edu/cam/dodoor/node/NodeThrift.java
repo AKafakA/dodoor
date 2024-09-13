@@ -103,7 +103,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     }
 
     @Override
-    public boolean executeTask(TFullTaskId taskId) throws TException {
+    public long executeTask(TFullTaskId taskId) throws TException {
         if (_schedulerType.equals(DodoorConf.SPARROW_SCHEDULER)) {
             return _node.executeTask(taskId);
         } else {
