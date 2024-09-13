@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SchedulerImpl implements Scheduler{
@@ -64,7 +63,6 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, Set<InetSocketAddress>> _nodePreservedForTask;
 
     private int _roundOfReservations;
-    private Map<String, Long> _taskScheduledTotalLatency;
 
 
     @Override
@@ -141,7 +139,6 @@ public class SchedulerImpl implements Scheduler{
         if (SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
             _nodePreservedForTask = Maps.newConcurrentMap();
             _roundOfReservations = config.getInt(DodoorConf.LATE_BINDING_PROBE_COUNT, DodoorConf.DEFAULT_LATE_BINDING_PROBE_COUNT);
-            _taskScheduledTotalLatency = new ConcurrentHashMap<>();
         } else {
             _nodePreservedForTask = null;
             _roundOfReservations = 1;

@@ -9,12 +9,12 @@ DURATION_WEIGHT=0.5
 NUM_SCHEDULER=5
 DATA_PATH="deploy/resources/data/azure_data_cloudlab_10m"
 
-parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout exp && git pull && sh rebuild.sh"
+parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add . && git stash && git checkout sparrow_impl && git pull && sh rebuild.sh"
 export PYTHONPATH=$PYTHONPATH:~/Code/scheduling/dodoor
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
 rm -rf deploy/resources/log/*
 
-for i in "powerOfTwo" "prequal" "random" "dodoor" "cachedPowerOfTwo";
+for i in "powerOfTwo" "prequal" "random" "dodoor" "cachedPowerOfTwo" "sparrow";
   do
     echo "run the exp for $i"
     sh deploy/script/single_test_cloudlab.sh $i $BATCH_SIZE $SLOT_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $NUM_SCHEDULER
