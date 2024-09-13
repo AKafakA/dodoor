@@ -62,6 +62,8 @@ public class SchedulerImpl implements Scheduler{
 
     private Map<String, Set<InetSocketAddress>> _nodePreservedForTask;
 
+    private int _roundOfReservations;
+
 
     @Override
     public void initialize(Configuration config, THostPort localAddress,
@@ -134,8 +136,12 @@ public class SchedulerImpl implements Scheduler{
         _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
 
-        if (_schedulingStrategy.equals(DodoorConf.SPARROW_SCHEDULER)) {
+        if (SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
             _nodePreservedForTask = Maps.newConcurrentMap();
+            _roundOfReservations = config.getInt(DodoorConf.LATE_BINDING_PROBE_COUNT, DodoorConf.DEFAULT_LATE_BINDING_PROBE_COUNT);
+        } else {
+            _nodePreservedForTask = null;
+            _roundOfReservations = 1;
         }
     }
 
@@ -174,8 +180,22 @@ public class SchedulerImpl implements Scheduler{
         for (TTaskSpec task : request.tasks) {
             _taskReceivedTime.put(task.taskId, System.currentTimeMillis());
         }
-        Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = handleJobSubmission(request,
-                start);
+        Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = new HashMap<>();
+        for (int i = 0; i < _roundOfReservations; i++) {
+            Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> placedTasks = handleJobSubmission(request, start);
+            for (InetSocketAddress nodeEnqueueAddress : placedTasks.keySet()) {
+                if (!mapOfNodesToPlacedTasks.containsKey(nodeEnqueueAddress)) {
+                    mapOfNodesToPlacedTasks.put(nodeEnqueueAddress, new ArrayList<>());
+                }
+                mapOfNodesToPlacedTasks.get(nodeEnqueueAddress).addAll(placedTasks.get(nodeEnqueueAddress));
+                for (TEnqueueTaskReservationRequest task : placedTasks.get(nodeEnqueueAddress)) {
+                    if (_nodePreservedForTask != null) {
+                        _nodePreservedForTask.putIfAbsent(task.taskId,new HashSet<>());
+                        _nodePreservedForTask.get(task.taskId).add(nodeEnqueueAddress);
+                    }
+                }
+            }
+        }
         _counter.getAndAdd(request.tasks.size());
         if (SchedulerUtils.isCachedEnabled(_schedulingStrategy)) {
             updateDataStoreLoad(numTasksBefore, request, mapOfNodesToPlacedTasks);

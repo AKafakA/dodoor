@@ -11,6 +11,7 @@ import org.apache.commons.configuration.Configuration;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class TaskPlacer {
     double _beta;
@@ -64,14 +65,15 @@ public abstract class TaskPlacer {
         return switch (schedulingStrategy) {
             case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
-            case DodoorConf.POWER_OF_TWO_SCHEDULER, DodoorConf.SPARROW_SCHEDULER
+            case DodoorConf.POWER_OF_TWO_SCHEDULER
                         -> new RunTimeProbeTaskPlacer(beta, false, resourceCapacity, nodeMonitorClients, schedulerMetrics);
             case DodoorConf.LOAD_SCORE_POWER_OF_TWO_SCHEDULER -> new RunTimeProbeTaskPlacer(beta, true,
                     resourceCapacity, nodeMonitorClients, schedulerMetrics,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.CACHED_POWER_OF_TWO_SCHEDULER-> new CachedTaskPlacer(beta, false, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
-            case DodoorConf.RANDOM_SCHEDULER -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
+            case DodoorConf.RANDOM_SCHEDULER, DodoorConf.SPARROW_SCHEDULER
+                    -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
             case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, true, resourceCapacity, rifQuantile,
                     probeInfo, probePoolSize, delta, probeRate, probeDelete, probeAgeBudget);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
