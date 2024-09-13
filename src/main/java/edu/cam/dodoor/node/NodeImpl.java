@@ -46,11 +46,8 @@ public class NodeImpl implements Node {
         String schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _isLateBindingEnabled = SchedulerUtils.isLateBindingScheduler(schedulerType);
         String nodeAddressStr = nodeThrift._neAddressStr;
-        _taskScheduler = TaskScheduler.getTaskScheduler(numSlots, _nodeResources, schedulerType, _schedulerClientPool,
-                nodeAddressStr);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
         taskLauncherService.initialize(config, numSlots, nodeThrift);
-        _taskScheduler.initialize(config, taskLauncherService);
 
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,
@@ -69,6 +66,9 @@ public class NodeImpl implements Node {
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
         _taskSourceSchedulerAddress = Maps.newConcurrentMap();
         _nodeThrift = nodeThrift;
+        _taskScheduler = TaskScheduler.getTaskScheduler(numSlots, _nodeResources, schedulerType, _schedulerClientPool,
+                nodeAddressStr);
+        _taskScheduler.initialize(config, taskLauncherService);
     }
 
     @Override
