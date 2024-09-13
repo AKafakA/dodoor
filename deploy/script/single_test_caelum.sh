@@ -5,7 +5,7 @@ MEMORY=61440
 SCHEDULER_PORTS=20503,20504
 SCHEDULER_NUM_TASKS_UPDATE=1
 
-SCHEDULER_TYPE=$1
+SCHEDULER_TYPE="sparrow"
 BATCH_SIZE=1
 SLOT_SIZE=2
 BETA=1.0
@@ -16,7 +16,7 @@ DURATION_WEIGHT=0.5
 
 parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum  -i "rm ~/*.log && rm ~/*.out"
 
-parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum -i "cd dodoor && git add . && git stash && git checkout exp && git reset --hard HEAD~1 && git pull && sh rebuild.sh"
+parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum -i "cd dodoor && git fetch --all && git add . && git stash && git checkout sparrow_impl && git reset --hard HEAD~1 && git pull && sh rebuild.sh"
 
 parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum -i "pkill -f dodoor"
 

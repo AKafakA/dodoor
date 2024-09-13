@@ -64,8 +64,8 @@ public abstract class TaskPlacer {
         return switch (schedulingStrategy) {
             case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
-            case DodoorConf.POWER_OF_TWO_SCHEDULER -> new RunTimeProbeTaskPlacer(beta, false, resourceCapacity,
-                    nodeMonitorClients, schedulerMetrics);
+            case DodoorConf.POWER_OF_TWO_SCHEDULER, DodoorConf.SPARROW_SCHEDULER
+                        -> new RunTimeProbeTaskPlacer(beta, false, resourceCapacity, nodeMonitorClients, schedulerMetrics);
             case DodoorConf.LOAD_SCORE_POWER_OF_TWO_SCHEDULER -> new RunTimeProbeTaskPlacer(beta, true,
                     resourceCapacity, nodeMonitorClients, schedulerMetrics,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
