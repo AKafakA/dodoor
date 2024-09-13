@@ -435,7 +435,7 @@ public class SchedulerImpl implements Scheduler{
                         if (!address.equals(nodeEnqueueAddress)) {
                             _schedulerServiceMetrics.infoNodeToCancel();
                             NodeEnqueueService.AsyncClient clientToCancel = _nodeEnqueueServiceAsyncClientPool.borrowClient(address);
-                            client.cancelTaskReservation(taskId, new CancelTaskReservationCallBack(address, clientToCancel));
+                            clientToCancel.cancelTaskReservation(taskId, new CancelTaskReservationCallBack(address, clientToCancel));
                         }
                     }
                     _nodePreservedForTask.remove(taskId.taskId);
