@@ -30,6 +30,8 @@ service SchedulerService {
   void registerDataStore(1: string dataStoreAddress);
   # used to caculate the end 2 end latency
   void taskFinished(1: types.TFullTaskId task, 2: i64 nodeWallTime);
+
+  bool confirmTaskReadyToExecute(1: types.TFullTaskId taskId, 2:string nodeEnqueueAddress);
 }
 
 # DataStoreService for storing the state of the nodes
@@ -60,5 +62,7 @@ service NodeMonitorService {
 # Service of the node exposed to the scheduler to enqueue tasks
 service NodeEnqueueService {
   bool enqueueTaskReservation(1: types.TEnqueueTaskReservationRequest request);
+  bool cancelTaskReservation(1: types.TFullTaskId taskId);
+  bool executeTask(1: types.TFullTaskId taskId);
   void taskFinished(1: types.TFullTaskId task);
 }

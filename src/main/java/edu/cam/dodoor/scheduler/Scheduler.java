@@ -21,4 +21,5 @@ public interface Scheduler {
     void registerNode(String nodeAddress) throws TException;
     void registerDataStore(String dataStoreAddress) throws TException;
     void taskFinished(TFullTaskId taskId, long nodeWallTime) throws TException;
+    boolean confirmTaskReadyToExecute(TFullTaskId taskId, String nodeAddressStr) throws TException;
 }

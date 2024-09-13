@@ -24,10 +24,11 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     // Defaults if not specified by configuration
     protected Node _node;
     private List<InetSocketAddress> _dataStoreAddress;
-    private String _neAddressStr;
     private NodeServiceMetrics _nodeServiceMetrics;
     private Counter _numMessages;
     private String _nodeIp;
+    private String _schedulerType;
+    protected String _neAddressStr;
 
 
     /**
@@ -78,6 +79,8 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
                 DodoorConf.DEFAULT_NM_THRIFT_THREADS);
 
         TServers.launchThreadedThriftServer(nmPort, threads, processor);
+
+        _schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
     }
 
     @Override
@@ -88,6 +91,24 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         }
         _nodeServiceMetrics.taskEnqueued();
         return _node.enqueueTaskReservation(request);
+    }
+
+    @Override
+    public boolean cancelTaskReservation(TFullTaskId taskId) throws TException {
+        if (_schedulerType.equals(DodoorConf.SPARROW_SCHEDULER)) {
+            return _node.cancelTaskReservation(taskId);
+        } else {
+            throw new TException("Task reservation cancellation not supported for scheduler type " + _schedulerType);
+        }
+    }
+
+    @Override
+    public boolean executeTask(TFullTaskId taskId) throws TException {
+        if (_schedulerType.equals(DodoorConf.SPARROW_SCHEDULER)) {
+            return _node.executeTask(taskId);
+        } else {
+            throw new TException("Task execution confirmation no necessary and not supported for scheduler type " + _schedulerType);
+        }
     }
 
     @Override

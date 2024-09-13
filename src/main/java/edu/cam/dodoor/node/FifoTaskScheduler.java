@@ -1,6 +1,8 @@
 package edu.cam.dodoor.node;
 
+import edu.cam.dodoor.thrift.TEnqueueTaskReservationRequest;
 import edu.cam.dodoor.thrift.TFullTaskId;
+import edu.cam.dodoor.thrift.TSchedulingRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,29 +12,31 @@ import java.util.List;
 
 public class FifoTaskScheduler extends TaskScheduler {
     private final static Logger LOG = LoggerFactory.getLogger(FifoTaskScheduler.class);
-    private final List<TaskSpec> _taskReservations =
-            Collections.synchronizedList(new ArrayList<>());
+    private final List<TaskSpec> _taskReservations;
 
     public FifoTaskScheduler(int numSlots, NodeResources nodeResources) {
         super(numSlots, nodeResources);
+        _taskReservations = Collections.synchronizedList(new ArrayList<>());
     }
 
     @Override
-    synchronized int handleSubmitTaskReservation(TaskSpec taskReservation) {
+    synchronized int handleSubmitTaskReservation(TEnqueueTaskReservationRequest request) {
         // This method, cancelTaskReservations(), and handleTaskCompleted() are synchronized to avoid
         // race conditions between updating activeTasks and taskReservations.
         int currentActiveTasks = _taskLauncherService.getActiveTasks();
+        TaskSpec taskReservation = new TaskSpec(request);
         boolean noEnoughResources = false;
         if (currentActiveTasks < _numSlots) {
             if (_nodeResources.runTaskIfPossible(taskReservation._resourceVector.cores,
                     taskReservation._resourceVector.memory, taskReservation._resourceVector.disks)) {
                 makeTaskRunnable(taskReservation);
-                LOG.debug("Making task for task {} runnable ({} of {} task slots currently filled)", new Object[]{taskReservation._taskId,
-                        currentActiveTasks, _numSlots});
+                LOG.debug("Making task for task {} runnable ({} of {} task slots currently filled)",
+                        new Object[]{taskReservation._taskId, currentActiveTasks, _numSlots});
                 return 0;
             } else {
                 noEnoughResources = true;
-                LOG.warn("Failed to run task for task {} because resources are not available, will put into reservation", taskReservation._taskId);
+                LOG.warn("Failed to run task for task {} because resources are not available, will put into reservation",
+                        taskReservation._taskId);
             }
         }
         int queuedReservations = _taskReservations.size();
@@ -82,7 +86,12 @@ public class FifoTaskScheduler extends TaskScheduler {
     }
 
     @Override
-    int getNumSlots() {
-        return _numSlots;
+    protected boolean cancelTaskReservation(TFullTaskId taskId) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    protected boolean executeTask(TFullTaskId taskId) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

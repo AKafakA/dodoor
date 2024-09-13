@@ -33,6 +33,8 @@ public class NodeImpl implements Node {
     private NodeThrift _nodeThrift;
     private Map<String, Long> _taskReceivedTime;
 
+    private boolean _isLateBindingEnabled;
+
 
     @Override
     public void initialize(Configuration config, NodeThrift nodeThrift) {
@@ -41,7 +43,11 @@ public class NodeImpl implements Node {
         // TODO(wda): add more task scheduler
         _nodeResources = new NodeResources(Resources.getSystemCoresCapacity(config),
                 Resources.getMemoryMbCapacity(config), Resources.getSystemDiskGbCapacity(config));
-        _taskScheduler = new FifoTaskScheduler(numSlots, _nodeResources);
+        String schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
+        _isLateBindingEnabled = SchedulerUtils.isLateBindingScheduler(schedulerType);
+        String nodeAddressStr = nodeThrift._neAddressStr;
+        _taskScheduler = TaskScheduler.getTaskScheduler(numSlots, _nodeResources, schedulerType, _schedulerClientPool,
+                nodeAddressStr);
         TaskLauncherService taskLauncherService = new TaskLauncherService();
         taskLauncherService.initialize(config, numSlots, nodeThrift);
         _taskScheduler.initialize(config, taskLauncherService);
@@ -63,7 +69,6 @@ public class NodeImpl implements Node {
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
         _taskSourceSchedulerAddress = Maps.newConcurrentMap();
         _nodeThrift = nodeThrift;
-
     }
 
     @Override
@@ -105,6 +110,24 @@ public class NodeImpl implements Node {
         _waitingOrRunningTasksCounter.getAndAdd(1);
         _totalDurations.getAndAdd(request.durationInMs);
         return true;
+    }
+
+    @Override
+    public boolean cancelTaskReservation(TFullTaskId taskId) throws TException {
+        if (_isLateBindingEnabled) {
+           return _taskScheduler.cancelTaskReservation(taskId);
+        } else {
+            throw new TException("Task reservation cancellation not supported for no late binding scheduler");
+        }
+    }
+
+    @Override
+    public boolean executeTask(TFullTaskId taskId) throws TException {
+        if (_isLateBindingEnabled) {
+            return _taskScheduler.executeTask(taskId);
+        } else {
+            throw new TException("Task execution confirmation no necessary for no late binding scheduler");
+        }
     }
 
     private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {

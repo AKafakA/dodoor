@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class SchedulerThrift implements SchedulerService.Iface{
     private Scheduler _scheduler;
     private Counter _numMessages;
+    private String _schedulerType;
 
 
     @Override
@@ -57,6 +58,16 @@ public class SchedulerThrift implements SchedulerService.Iface{
         _scheduler.taskFinished(task, nodeWallTime);
     }
 
+    @Override
+    public boolean confirmTaskReadyToExecute(TFullTaskId taskId, String nodeAddressStr) throws TException {
+        if (_schedulerType.equals(DodoorConf.SPARROW_SCHEDULER)) {
+            return _scheduler.confirmTaskReadyToExecute(taskId, nodeAddressStr);
+        } else {
+            throw new TException("confirmTaskReadyToExecute is not supported by " + _schedulerType);
+        }
+
+    }
+
     public void initialize(Configuration config, int port, boolean logKicked) throws TException, IOException {
         _scheduler = new SchedulerImpl();
         SchedulerService.Processor<SchedulerService.Iface> processor =
@@ -68,6 +79,7 @@ public class SchedulerThrift implements SchedulerService.Iface{
         _numMessages = schedulerMetrics.getTotalMessages();
         _scheduler.initialize(config, Network.getInternalHostPort(port, config), schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
+        _schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
 
         // Avoid one log kicked duplicated from different scheduler instances
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && !logKicked) {

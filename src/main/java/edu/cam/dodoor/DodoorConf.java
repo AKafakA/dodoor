@@ -35,6 +35,7 @@ public class DodoorConf {
     public final static String CACHED_POWER_OF_TWO_SCHEDULER = "cachedPowerOfTwo";
     public final static String RANDOM_SCHEDULER = "random";
     public final static String LOAD_SCORE_POWER_OF_TWO_SCHEDULER = "loadScorePowerOfTwo";
+    public final static String SPARROW_SCHEDULER = "sparrow";
 
     public final static String PREQUAL = "prequal";
     public final static String PREQUAL_PROBE_RATE = "prequal.probe.rate";

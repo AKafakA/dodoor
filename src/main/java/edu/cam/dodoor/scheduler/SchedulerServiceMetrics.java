@@ -65,4 +65,16 @@ public class SchedulerServiceMetrics {
     public void failedToScheduling() {
         _numFailedToSchedule.inc();
     }
+
+    public void taskReadyToExecute() {
+        _totalMessages.inc();
+    }
+
+    public void infoNodeToExecute() {
+        _totalMessages.inc();
+    }
+
+    public void infoNodeToCancel() {
+        _totalMessages.inc();
+    }
 }

@@ -1,6 +1,7 @@
 package edu.cam.dodoor.node;
 
 
+import edu.cam.dodoor.scheduler.Scheduler;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
@@ -22,6 +23,17 @@ public abstract class TaskScheduler {
     protected Configuration _conf;
 
     protected TaskLauncherService _taskLauncherService;
+
+
+    public static TaskScheduler getTaskScheduler(int numSlots, NodeResources nodeResources, String schedulerType,
+                                                 ThriftClientPool<SchedulerService.AsyncClient> schedulerClientPool,
+                                                 String nodeAddressStr) {
+        if (SchedulerUtils.isLateBindingScheduler(schedulerType)) {
+            return new LateBindTaskScheduler(numSlots, nodeResources,  schedulerClientPool, nodeAddressStr);
+        } else {
+            return new FifoTaskScheduler(numSlots, nodeResources);
+        }
+    }
 
     public TaskScheduler(int numSlots, NodeResources nodeResources) {
         _numSlots = numSlots;
@@ -47,8 +59,7 @@ public abstract class TaskScheduler {
     }
 
     public synchronized void submitTaskReservation(TEnqueueTaskReservationRequest request) {
-        TaskSpec reservation = new TaskSpec(request);
-        int queuedReservations = handleSubmitTaskReservation(reservation);
+        int queuedReservations = handleSubmitTaskReservation(request);
         LOG.info(Logging.auditEventString("reservation_enqueued", request.taskId,
                 queuedReservations));
     }
@@ -58,7 +69,7 @@ public abstract class TaskScheduler {
     /**
      * Handles a task reservation. Returns the number of queued reservations.
      */
-    abstract int handleSubmitTaskReservation(TaskSpec taskReservation);
+    abstract int handleSubmitTaskReservation(TEnqueueTaskReservationRequest taskReservation);
 
 
     /**
@@ -66,10 +77,8 @@ public abstract class TaskScheduler {
      */
     protected abstract void handleTaskFinished(TFullTaskId finishedTask);
 
-    /**
-     * Returns the maximum number of active tasks allowed (the number of slots).
-     *
-     * -1 signals that the scheduler does not enforce a maximum number of active tasks.
-     */
-    abstract int getNumSlots();
+
+    protected abstract boolean cancelTaskReservation(TFullTaskId taskId);
+
+    protected abstract boolean executeTask(TFullTaskId taskId);
 }

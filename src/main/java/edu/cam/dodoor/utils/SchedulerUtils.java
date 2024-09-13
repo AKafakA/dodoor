@@ -25,4 +25,8 @@ public class SchedulerUtils {
         int result = (int) Math.ceil((1 + delta) / ((1 - (double) probePoolSize / numNode) * probeRate - probeDeleteRate));
         return Math.max(result, 1);
     }
+
+    public static boolean isLateBindingScheduler(String schedulerType) {
+        return schedulerType.equals(DodoorConf.SPARROW_SCHEDULER);
+    }
 }

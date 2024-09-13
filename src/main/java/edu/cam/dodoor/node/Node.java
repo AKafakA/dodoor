@@ -15,6 +15,10 @@ public interface Node {
 
     boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException;
 
+    boolean cancelTaskReservation(TFullTaskId taskId) throws TException;
+
+    boolean executeTask(TFullTaskId taskId) throws TException;
+
     TResourceVector getRequestedResourceVector();
 
     TNodeState getNodeState();

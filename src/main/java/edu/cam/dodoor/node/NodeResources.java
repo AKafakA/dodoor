@@ -31,6 +31,10 @@ public class NodeResources {
         return false;
     }
 
+    public synchronized boolean enoughToRun(int cores, long memory, long disk) {
+        return _cores.get() >= cores && _memory.get() >= memory && _disk.get() >= disk;
+    }
+
     public synchronized void freeTask(int cores, long memory, long disk) {
         _cores.addAndGet(cores);
         _memory.addAndGet(memory);

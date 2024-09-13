@@ -1,6 +1,5 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
-import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.MetricsUtils;
 import edu.cam.dodoor.utils.SchedulerUtils;
@@ -65,7 +64,6 @@ public class PrequalTaskPlacer extends TaskPlacer{
             Collections.reverse(probeAddresses);
             int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(loadMaps.size(), _probePoolSize, _probeRate,
                     _probeDeleteRate, _delta);
-
             for (int i = 0; i < Math.min(probeAddresses.size(), _probePoolSize); i++) {
                 InetSocketAddress probeAddress = probeAddresses.get(i);
                 long probedTime = _probeInfo.get(probeAddress).getKey();
