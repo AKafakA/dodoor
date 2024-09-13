@@ -101,8 +101,8 @@ public class ThriftClientPool<T extends TAsyncClient> {
 
     @Override
     public void destroyObject(InetSocketAddress socket, T client) throws Exception {
-      transports.get(client).close();
-      transports.remove(client);
+//      transports.get(client).close();
+//      transports.remove(client);
     }
 
     @Override
