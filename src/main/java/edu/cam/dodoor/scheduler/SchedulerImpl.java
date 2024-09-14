@@ -63,6 +63,8 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, Set<InetSocketAddress>> _nodePreservedForTask;
 
     private int _roundOfReservations;
+    private Map<String, Set<InetSocketAddress>> _nodeAskToExecute;
+    private Map<String, TSchedulingRequest> _taskToRequest;
 
 
     @Override
@@ -137,8 +139,10 @@ public class SchedulerImpl implements Scheduler{
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
 
         if (SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
-            _nodePreservedForTask = Maps.newConcurrentMap();
+            _nodePreservedForTask = Collections.synchronizedMap(new HashMap<>());
             _roundOfReservations = config.getInt(DodoorConf.LATE_BINDING_PROBE_COUNT, DodoorConf.DEFAULT_LATE_BINDING_PROBE_COUNT);
+            _nodeAskToExecute = Collections.synchronizedMap(new HashMap<>());
+            _taskToRequest = Collections.synchronizedMap(new HashMap<>());
         } else {
             _nodePreservedForTask = null;
             _roundOfReservations = 1;
@@ -179,6 +183,7 @@ public class SchedulerImpl implements Scheduler{
         _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
         for (TTaskSpec task : request.tasks) {
             _taskReceivedTime.put(task.taskId, System.currentTimeMillis());
+            _taskToRequest.put(task.taskId, request);
         }
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = new HashMap<>();
         for (int i = 0; i < _roundOfReservations; i++) {
@@ -413,15 +418,17 @@ public class SchedulerImpl implements Scheduler{
     public synchronized boolean confirmTaskReadyToExecute(TFullTaskId taskId, String nodeAddressStr) throws TException {
         _schedulerServiceMetrics.taskReadyToExecute();
         if (_schedulingStrategy.equals(DodoorConf.SPARROW_SCHEDULER)) {
-            LOG.debug("Task {} ready to execute", taskId.taskId);
-            if (!_nodePreservedForTask.containsKey(taskId.taskId)) {
-                LOG.debug("Task {} not preserved for any node and may has been executed.", taskId.taskId);
-                return false;
-            }
             Optional<InetSocketAddress> nodeAddress = Serialization.strToSocket(nodeAddressStr);
             Set<InetSocketAddress> preservedNodes = _nodePreservedForTask.get(taskId.taskId);
             if (nodeAddress.isPresent()) {
                 InetSocketAddress nodeEnqueueAddress = nodeAddress.get();
+                _nodeAskToExecute.putIfAbsent(taskId.taskId, new HashSet<>());
+                _nodeAskToExecute.get(taskId.taskId).add(nodeEnqueueAddress);
+                LOG.debug("Task {} ready to execute", taskId.taskId);
+                if (!_nodePreservedForTask.containsKey(taskId.taskId)) {
+                    LOG.debug("Task {} not preserved for any node and may has been executed.", taskId.taskId);
+                    return false;
+                }
                 if (!preservedNodes.contains(nodeEnqueueAddress)) {
                     LOG.debug("Task {} not preserved for node {}", taskId.taskId, nodeEnqueueAddress.getHostName());
                 }
@@ -430,16 +437,11 @@ public class SchedulerImpl implements Scheduler{
                             _nodeEnqueueServiceAsyncClientPool.borrowClient(nodeEnqueueAddress);
                     _schedulerServiceMetrics.infoNodeToExecute();
                     long taskReceivedTime = _taskReceivedTime.get(taskId.taskId);
-                    client.executeTask(taskId, new ExecuteTaskCallBack(nodeEnqueueAddress, client, taskReceivedTime));
-
-                    for (InetSocketAddress address : preservedNodes) {
-                        if (!address.equals(nodeEnqueueAddress)) {
-                            _schedulerServiceMetrics.infoNodeToCancel();
-                            NodeEnqueueService.AsyncClient clientToCancel = _nodeEnqueueServiceAsyncClientPool.borrowClient(address);
-                            clientToCancel.cancelTaskReservation(taskId, new CancelTaskReservationCallBack(address, clientToCancel));
-                        }
-                    }
+                    Set<InetSocketAddress> nodesToCancel = _nodePreservedForTask.get(taskId.taskId);
+                    nodesToCancel.remove(nodeEnqueueAddress);
                     _nodePreservedForTask.remove(taskId.taskId);
+                    client.executeTask(taskId, new ExecuteTaskCallBack(nodeEnqueueAddress, client, taskReceivedTime,
+                            taskId, nodesToCancel));
                     return true;
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -576,18 +578,32 @@ public class SchedulerImpl implements Scheduler{
         private final InetSocketAddress _nodeEnqueueAddress;
         private final NodeEnqueueService.AsyncClient _client;
         private final long _taskReceivedTime;
+        private final TFullTaskId _taskId;
+        private final Set<InetSocketAddress> _otherNodesToCancel;
 
 
         public ExecuteTaskCallBack(InetSocketAddress nodeEnqueueAddress, NodeEnqueueService.AsyncClient client,
-                                   long taskReceivedTime) {
+                                   long taskReceivedTime, TFullTaskId taskId,
+                                   Set<InetSocketAddress> otherNodesToCancel) {
             _nodeEnqueueAddress = nodeEnqueueAddress;
             _client = client;
             _taskReceivedTime = taskReceivedTime;
+            _taskId = taskId;
+            _otherNodesToCancel = otherNodesToCancel;
         }
 
         @Override
         public void onComplete(Long waitingTime) {
             LOG.debug("Task executed on node {}", _nodeEnqueueAddress.getHostName());
+            for (InetSocketAddress address : _otherNodesToCancel) {
+                _schedulerServiceMetrics.infoNodeToCancel();
+                try {
+                    NodeEnqueueService.AsyncClient clientToCancel = _nodeEnqueueServiceAsyncClientPool.borrowClient(address);
+                    clientToCancel.cancelTaskReservation(_taskId, new CancelTaskReservationCallBack(address, clientToCancel));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
             long accumulatedLatency = System.currentTimeMillis() - _taskReceivedTime - waitingTime;
             _schedulerServiceMetrics.taskScheduled(accumulatedLatency);
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
@@ -595,7 +611,25 @@ public class SchedulerImpl implements Scheduler{
 
         @Override
         public void onError(Exception e) {
+            // If error occurs, we will try to enqueue the task to another node
+            // first for any node which attempted to confirm between the scheduler attempted to confirm current node, it will reenqueue
+            // or if the node is the last node to confirm, it will be reenqueued
+            // second put the node to waiting list to be confirmed again
             LOG.error("Error executing task on node {}", _nodeEnqueueAddress.getHostName(), e);
+            Set<InetSocketAddress> leftProbedNodes = _nodeAskToExecute.get(_taskId.taskId);
+            leftProbedNodes.remove(_nodeEnqueueAddress);
+            for (InetSocketAddress address : leftProbedNodes) {
+                _schedulerServiceMetrics.probeNode();
+                try {
+                    NodeEnqueueService.AsyncClient client = _nodeEnqueueServiceAsyncClientPool.borrowClient(address);
+                    client.enqueueTaskReservation(generateEnqueueTaskReservationRequest(_taskToRequest.get(_taskId.taskId), _taskId.taskId),
+                            new EnqueueTaskReservationCallback(_taskId.taskId, address, client, _schedulerServiceMetrics,
+                                    _taskReceivedTime));
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            _nodePreservedForTask.put(_taskId.taskId, _otherNodesToCancel);
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
     }
@@ -641,6 +675,19 @@ public class SchedulerImpl implements Scheduler{
         } catch (Exception e) {
             LOG.error("Error returning client to node monitor client pool: {}", e.getMessage());
         }
+    }
+
+    private TEnqueueTaskReservationRequest generateEnqueueTaskReservationRequest(TSchedulingRequest request, String taskId) {
+        TEnqueueTaskReservationRequest taskReservationRequest = new TEnqueueTaskReservationRequest();
+        for (TTaskSpec task : request.tasks) {
+            if (task.taskId.equals(taskId)) {
+                taskReservationRequest.taskId = task.taskId;
+                taskReservationRequest.resourceRequested = task.resourceRequest;
+                taskReservationRequest.durationInMs = task.durationInMs;
+                return taskReservationRequest;
+            }
+        }
+        return null;
     }
 
 }

@@ -36,6 +36,7 @@ public class DodoorConf {
     public final static String RANDOM_SCHEDULER = "random";
     public final static String LOAD_SCORE_POWER_OF_TWO_SCHEDULER = "loadScorePowerOfTwo";
     public final static String SPARROW_SCHEDULER = "sparrow";
+    public final static String POWER_OF_TWO_DURATION_SCHEDULER = "powerOfTwoDuration";
 
     public final static String LATE_BINDING_PROBE_COUNT = "late.binding.probe.count";
     public final static int DEFAULT_LATE_BINDING_PROBE_COUNT = 2;

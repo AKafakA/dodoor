@@ -11,26 +11,25 @@ import org.apache.commons.configuration.Configuration;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Set;
 
 public abstract class TaskPlacer {
     double _beta;
-    final boolean _useLoadScores;
+    final PackingStrategy _packingStrategy;
     final TResourceVector _resourceCapacity;
     final float _cpuWeight;
     final float _memWeight;
     final float _diskWeight;
     final float _totalDurationWeight;
 
-    public TaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
+    public TaskPlacer(double beta, PackingStrategy packingStrategy, TResourceVector resourceCapacity,
                       float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
         _beta = beta;
-        _useLoadScores = useLoadScores;
         _resourceCapacity = resourceCapacity;
         _cpuWeight = cpuWeight;
         _memWeight = memWeight;
         _diskWeight = diskWeight;
         _totalDurationWeight = totalDurationWeight;
+        _packingStrategy = packingStrategy;
     }
 
     public Map<TEnqueueTaskReservationRequest, InetSocketAddress> getEnqueueTaskReservationRequests(
@@ -63,19 +62,23 @@ public abstract class TaskPlacer {
         int probeRate = configuration.getInt(DodoorConf.PREQUAL_PROBE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_RATE);
         int probeAgeBudget = configuration.getInt(DodoorConf.PREQUAL_PROBE_AGE_BUDGET_MS, DodoorConf.DEFAULT_PREQUAL_PROBE_AGE_BUDGET_MS);
         return switch (schedulingStrategy) {
-            case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, true, resourceCapacity,
+            case DodoorConf.DODOOR_SCHEDULER -> new CachedTaskPlacer(beta, PackingStrategy.SCORE, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.POWER_OF_TWO_SCHEDULER
-                        -> new RunTimeProbeTaskPlacer(beta, false, resourceCapacity, nodeMonitorClients, schedulerMetrics);
-            case DodoorConf.LOAD_SCORE_POWER_OF_TWO_SCHEDULER -> new RunTimeProbeTaskPlacer(beta, true,
+                        -> new RunTimeProbeTaskPlacer(beta, PackingStrategy.RIF, resourceCapacity,
+                    nodeMonitorClients, schedulerMetrics);
+            case DodoorConf.LOAD_SCORE_POWER_OF_TWO_SCHEDULER -> new RunTimeProbeTaskPlacer(beta,
                     resourceCapacity, nodeMonitorClients, schedulerMetrics,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
-            case DodoorConf.CACHED_POWER_OF_TWO_SCHEDULER-> new CachedTaskPlacer(beta, false, resourceCapacity,
+            case DodoorConf.CACHED_POWER_OF_TWO_SCHEDULER-> new CachedTaskPlacer(beta,
+                    PackingStrategy.RIF, resourceCapacity,
                     cpuWeight, memWeight, diskWeight, totalDurationWeight);
             case DodoorConf.RANDOM_SCHEDULER, DodoorConf.SPARROW_SCHEDULER
-                    -> new CachedTaskPlacer(-1.0, false, resourceCapacity);
-            case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, true, resourceCapacity, rifQuantile,
+                    -> new CachedTaskPlacer(-1.0, PackingStrategy.NONE, resourceCapacity);
+            case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta,  resourceCapacity, rifQuantile,
                     probeInfo, probePoolSize, delta, probeRate, probeDelete, probeAgeBudget);
+            case DodoorConf.POWER_OF_TWO_DURATION_SCHEDULER -> new RunTimeProbeTaskPlacer(beta,
+                    PackingStrategy.DURATION, resourceCapacity, nodeMonitorClients, schedulerMetrics);
             default -> throw new IllegalArgumentException("Unknown scheduling strategy: " + schedulingStrategy);
         };
     }

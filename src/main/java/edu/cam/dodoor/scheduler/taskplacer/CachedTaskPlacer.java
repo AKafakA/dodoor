@@ -10,14 +10,19 @@ import java.util.*;
 public class CachedTaskPlacer extends TaskPlacer{
     public static final Logger LOG = LoggerFactory.getLogger(CachedTaskPlacer.class);
 
-    public CachedTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity) {
-        super(beta, useLoadScores, resourceCapacity, 1, 1, 1, 1);
+    public CachedTaskPlacer(double beta, PackingStrategy packingStrategy,
+                            TResourceVector resourceCapacity) {
+        this(beta, packingStrategy, resourceCapacity, 1, 1, 1, 1);
+        if (packingStrategy == PackingStrategy.SCORE) {
+            throw new IllegalArgumentException("Packing strategy should not be SCORE without resource weights");
+        }
     }
 
     
-    public CachedTaskPlacer(double beta, boolean useLoadScores, TResourceVector resourceCapacity,
+    public CachedTaskPlacer(double beta, PackingStrategy packingStrategy,
+                            TResourceVector resourceCapacity,
                             float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
-        super(beta, useLoadScores, resourceCapacity, cpuWeight, memWeight, diskWeight, totalDurationWeight);
+        super(beta, packingStrategy, resourceCapacity, cpuWeight, memWeight, diskWeight, totalDurationWeight);
     }
 
     @Override
@@ -31,18 +36,23 @@ public class CachedTaskPlacer extends TaskPlacer{
             Random ran = new Random();
             double flag = ran.nextFloat();
             int firstIndex = ran.nextInt(loadMaps.size());
-            if (flag < _beta) {
+            if (_beta > 0 && flag < _beta) {
                 int secondIndex = ran.nextInt(loadMaps.size());
                 double score1, score2;
-                if (_useLoadScores) {
+                if (_packingStrategy == PackingStrategy.SCORE) {
                     Map.Entry<Double, Double> scores = LoadScore.getLoadScoresPairs(loadMaps.get(nodeAddresses.get(firstIndex)),
                             loadMaps.get(nodeAddresses.get(secondIndex)), taskResources, _cpuWeight, _memWeight, _diskWeight,
                             _totalDurationWeight, _resourceCapacity);
                     score1 = scores.getKey();
                     score2 = scores.getValue();
-                } else {
+                } else if (_packingStrategy == PackingStrategy.RIF) {
                     score1 = loadMaps.get(nodeAddresses.get(firstIndex)).numTasks;
                     score2 = loadMaps.get(nodeAddresses.get(secondIndex)).numTasks;
+                } else if (_packingStrategy == PackingStrategy.DURATION) {
+                    score1 = loadMaps.get(nodeAddresses.get(firstIndex)).totalDurations;
+                    score2 = loadMaps.get(nodeAddresses.get(secondIndex)).totalDurations;
+                } else {
+                    throw new IllegalArgumentException("Unknown packing strategy");
                 }
                 LOG.debug("node {} with score {}, node {} with score {} ",
                         new Object[]{nodeAddresses.get(firstIndex).getHostName(), score1,
