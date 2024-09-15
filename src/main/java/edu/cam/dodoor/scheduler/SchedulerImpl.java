@@ -428,7 +428,7 @@ public class SchedulerImpl implements Scheduler{
     }
 
     @Override
-    public synchronized boolean confirmTaskReadyToExecute(TFullTaskId taskId, String nodeAddressStr) throws TException {
+    public boolean confirmTaskReadyToExecute(TFullTaskId taskId, String nodeAddressStr) throws TException {
         _schedulerServiceMetrics.taskReadyToExecute();
         long triggerTime = System.currentTimeMillis();
         if (_schedulingStrategy.equals(DodoorConf.SPARROW_SCHEDULER)) {
@@ -450,7 +450,6 @@ public class SchedulerImpl implements Scheduler{
                     NodeEnqueueService.AsyncClient client =
                             _nodeEnqueueServiceAsyncClientPool.borrowClient(nodeEnqueueAddress);
                     _schedulerServiceMetrics.infoNodeToExecute();
-                    long taskReceivedTime = _taskReceivedTime.get(taskId.taskId);
                     Set<InetSocketAddress> nodesToCancel = _nodePreservedForTask.get(taskId.taskId);
                     nodesToCancel.remove(nodeEnqueueAddress);
                     _nodePreservedForTask.remove(taskId.taskId);
@@ -619,6 +618,9 @@ public class SchedulerImpl implements Scheduler{
         @Override
         public void onComplete(Long waitingTime) {
             LOG.debug("Task executed on node {}", _nodeEnqueueAddress.getHostName());
+            long totalSchedulingTime = _taskEnqueueTime.getOrDefault(_taskId.taskId, 0L)
+                    + System.currentTimeMillis() - _triggerTime;
+            _schedulerServiceMetrics.taskScheduled(totalSchedulingTime);
             for (InetSocketAddress address : _otherNodesToCancel) {
                 _schedulerServiceMetrics.infoNodeToCancel();
                 try {
@@ -628,9 +630,6 @@ public class SchedulerImpl implements Scheduler{
                     throw new RuntimeException(e);
                 }
             }
-            long totalSchedulingTime = _taskEnqueueTime.getOrDefault(_taskId.taskId, 0L)
-                    + System.currentTimeMillis() - _triggerTime;
-            _schedulerServiceMetrics.taskScheduled(totalSchedulingTime);
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
 
