@@ -59,7 +59,7 @@ public class SchedulerServiceMetrics {
     public void taskFinished(long makespan, long nodeWallTime, long taskDuration) {
         _numFinishedTasks.inc();
         _endToEndMakespanHistogram.update(makespan);
-        _endToEndExtraDurationHistogram.update(makespan - taskDuration);
+        _endToEndExtraDurationHistogram.update(makespan - taskDuration - nodeWallTime);
     }
 
     public void failedToScheduling() {
