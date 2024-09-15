@@ -24,6 +24,7 @@ public class TaskSpec {
     public TResourceVector _resourceVector;
     public long _duration;
     public long _enqueuedTime;
+    private final TEnqueueTaskReservationRequest _request;
 
 
     public TaskSpec(TEnqueueTaskReservationRequest request) {
@@ -34,10 +35,27 @@ public class TaskSpec {
         _resourceVector = request.resourceRequested;
         _duration = request.durationInMs;
 
-        _enqueuedTime = System.currentTimeMillis();
+        _enqueuedTime = request.enqueueTime;
+        _request = request;
+    }
+
+    public TaskSpec(TEnqueueTaskReservationRequest request, long enqueuedTime) {
+        _user = request.getUser();
+        _taskId = request.taskId;
+        _previousTaskId = "";
+
+        _resourceVector = request.resourceRequested;
+        _duration = request.durationInMs;
+
+        _enqueuedTime = enqueuedTime;
+        _request = request;
     }
 
     public TFullTaskId getFullTaskId() {
         return new TFullTaskId(_taskId, _resourceVector, _duration);
+    }
+
+    public TEnqueueTaskReservationRequest getRequest() {
+        return _request;
     }
 }

@@ -122,10 +122,10 @@ public class NodeImpl implements Node {
     }
 
     @Override
-    public long executeTask(TFullTaskId taskId) throws TException {
+    public long executeTask(TEnqueueTaskReservationRequest task) throws TException {
         if (_isLateBindingEnabled) {
-            if (_taskScheduler.executeTask(taskId)) {
-                return System.currentTimeMillis() - _taskReceivedTime.get(taskId.taskId);
+            if (_taskScheduler.executeTask(task)) {
+                return System.currentTimeMillis() - _taskReceivedTime.get(task.taskId);
             } else {
                 throw new TException("Not found the task in the task reservation list");
             }

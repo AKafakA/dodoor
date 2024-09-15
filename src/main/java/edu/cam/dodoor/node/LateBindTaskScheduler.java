@@ -45,7 +45,7 @@ public class LateBindTaskScheduler extends TaskScheduler{
     int handleSubmitTaskReservation(TEnqueueTaskReservationRequest request) {
         int currentActiveTasks = _taskLauncherService.getActiveTasks();
         boolean noEnoughResources = false;
-        TaskSpec taskReservation = new TaskSpec(request);
+        TaskSpec taskReservation = new TaskSpec(request, System.currentTimeMillis());
         InetSocketAddress schedulerAddress = Network.thriftToSocket(request.getSchedulerAddress());
         _taskToSchedulerMap.put(taskReservation._taskId, schedulerAddress);
         _taskReservations.add(taskReservation);
@@ -84,6 +84,7 @@ public class LateBindTaskScheduler extends TaskScheduler{
             if (taskSpec._taskId.equals(taskId.taskId)) {
                 _taskReservations.remove(taskSpec);
                 _taskReservationPinedOut.remove(taskId.taskId);
+                LOG.debug("Task reservation for task {} has been cancelled", taskId.taskId);
                 return true;
             }
         }
@@ -92,17 +93,23 @@ public class LateBindTaskScheduler extends TaskScheduler{
     }
 
     @Override
-    protected boolean executeTask(TFullTaskId taskId) {
-        for (TaskSpec taskSpec : _taskReservations) {
-            if (taskSpec._taskId.equals(taskId.taskId)) {
-                _taskReservationPinedOut.remove(taskId.taskId);
-                _taskReservations.remove(taskSpec);
-                makeTaskRunnable(taskSpec);
-                return true;
+    protected boolean executeTask(TEnqueueTaskReservationRequest task) {
+        try {
+            TaskSpec taskSpec = new TaskSpec(task);
+            for (TaskSpec taskSpecReserved : _taskReservations) {
+                if (taskSpecReserved._taskId.equals(task.taskId)) {
+                    _taskReservations.remove(taskSpecReserved);
+                    _taskReservationPinedOut.remove(taskSpecReserved._taskId);
+                    taskSpec = taskSpecReserved;
+                    break;
+                }
             }
+            makeTaskRunnable(taskSpec);
+            return true;
+        } catch (Exception e) {
+            LOG.error("Failed to execute task {}", task.taskId, e);
+            return false;
         }
-        LOG.error("Failed to find task reservation for task {} to execute", taskId.taskId);
-        return false;
     }
 
     /**
@@ -164,10 +171,9 @@ public class LateBindTaskScheduler extends TaskScheduler{
         @Override
         public void onComplete(Boolean response) {
             if (response) {
-                TFullTaskId taskId = _taskReservation.getFullTaskId();
                 _taskReservation._previousTaskId = _lastExecutedTaskId;
-                _lateBindTaskScheduler.executeTask(taskId);
-                LOG.debug("Task {} confirmed ready to run from scheduler and has been executed.", taskId.taskId);
+                _lateBindTaskScheduler.executeTask(_taskReservation.getRequest());
+                LOG.debug("Task {} confirmed ready to run from scheduler and has been executed.", _taskReservation._taskId);
             } else {
                 LOG.debug("Task {} has been placed already", _taskReservation._taskId);
             }

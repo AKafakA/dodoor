@@ -24,7 +24,7 @@ public class FifoTaskScheduler extends TaskScheduler {
         // This method, cancelTaskReservations(), and handleTaskCompleted() are synchronized to avoid
         // race conditions between updating activeTasks and taskReservations.
         int currentActiveTasks = _taskLauncherService.getActiveTasks();
-        TaskSpec taskReservation = new TaskSpec(request);
+        TaskSpec taskReservation = new TaskSpec(request, System.currentTimeMillis());
         boolean noEnoughResources = false;
         if (currentActiveTasks < _numSlots) {
             if (_nodeResources.runTaskIfPossible(taskReservation._resourceVector.cores,
@@ -91,7 +91,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     }
 
     @Override
-    protected boolean executeTask(TFullTaskId taskId) {
+    protected boolean executeTask(TEnqueueTaskReservationRequest task) {
         throw new UnsupportedOperationException("Not implemented");
     }
 }

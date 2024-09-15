@@ -95,7 +95,8 @@ public abstract class TaskPlacer {
                 schedulerAddress,
                 taskResources,
                 taskSpec.durationInMs,
-                Network.socketAddressToThrift(nodeAddress)
+                Network.socketAddressToThrift(nodeAddress),
+                System.currentTimeMillis()
         ), nodeAddress);
     }
 }
