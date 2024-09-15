@@ -66,6 +66,8 @@ public class SchedulerImpl implements Scheduler{
     private Set<String> _tasks;
     private Map<String, Set<InetSocketAddress>> _nodeAskToExecute;
     private Map<String, TEnqueueTaskReservationRequest> _taskToRequest;
+    // Used to track the latency of the task be enqueued
+    private Map<String, Long> _taskEnqueueTime;
 
 
     @Override
@@ -76,6 +78,7 @@ public class SchedulerImpl implements Scheduler{
         _address = localAddress;
         _loadMapEqueueSocketToNodeState = Maps.newConcurrentMap();
         _taskReceivedTime = new HashMap<>();
+        _taskEnqueueTime = Maps.newConcurrentMap();
         _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         double beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _nodeEqueueSocketToNodeMonitorClients = Collections.synchronizedMap(new HashMap<>());
@@ -427,6 +430,7 @@ public class SchedulerImpl implements Scheduler{
     @Override
     public synchronized boolean confirmTaskReadyToExecute(TFullTaskId taskId, String nodeAddressStr) throws TException {
         _schedulerServiceMetrics.taskReadyToExecute();
+        long triggerTime = System.currentTimeMillis();
         if (_schedulingStrategy.equals(DodoorConf.SPARROW_SCHEDULER)) {
             Optional<InetSocketAddress> nodeAddress = Serialization.strToSocket(nodeAddressStr);
             Set<InetSocketAddress> preservedNodes = _nodePreservedForTask.get(taskId.taskId);
@@ -451,8 +455,8 @@ public class SchedulerImpl implements Scheduler{
                     nodesToCancel.remove(nodeEnqueueAddress);
                     _nodePreservedForTask.remove(taskId.taskId);
                     TEnqueueTaskReservationRequest task = _taskToRequest.get(taskId.taskId);
-                    client.executeTask(task, new ExecuteTaskCallBack(nodeEnqueueAddress, client, taskReceivedTime,
-                            taskId, nodesToCancel));
+                    client.executeTask(task, new ExecuteTaskCallBack(nodeEnqueueAddress, client,
+                            taskId, nodesToCancel, triggerTime));
                     return true;
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -493,8 +497,16 @@ public class SchedulerImpl implements Scheduler{
 
             if (!aBoolean) {
                 _schedulerServiceMetrics.failedToScheduling();
-            } else if (!SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
-                _schedulerServiceMetrics.taskScheduled(System.currentTimeMillis() - _startTimeMillis);
+            }
+            long taskEnqueueTime = System.currentTimeMillis() - _taskReceivedTime.get(_taskId);
+            if (!SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
+                _schedulerServiceMetrics.taskScheduled(taskEnqueueTime);
+            } else {
+                if (_taskEnqueueTime.containsKey(_taskId)) {
+                    _taskEnqueueTime.put(_taskId, Math.max(taskEnqueueTime, _taskEnqueueTime.get(_taskId)));
+                } else {
+                    _taskEnqueueTime.put(_taskId, taskEnqueueTime);
+                }
             }
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
@@ -588,19 +600,20 @@ public class SchedulerImpl implements Scheduler{
         private final Logger LOG = LoggerFactory.getLogger(ExecuteTaskCallBack.class);
         private final InetSocketAddress _nodeEnqueueAddress;
         private final NodeEnqueueService.AsyncClient _client;
-        private final long _taskReceivedTime;
         private final TFullTaskId _taskId;
         private final Set<InetSocketAddress> _otherNodesToCancel;
+        private final long _triggerTime;
 
 
         public ExecuteTaskCallBack(InetSocketAddress nodeEnqueueAddress, NodeEnqueueService.AsyncClient client,
-                                   long taskReceivedTime, TFullTaskId taskId,
-                                   Set<InetSocketAddress> otherNodesToCancel) {
+                                   TFullTaskId taskId,
+                                   Set<InetSocketAddress> otherNodesToCancel,
+                                   long triggerTime) {
             _nodeEnqueueAddress = nodeEnqueueAddress;
             _client = client;
-            _taskReceivedTime = taskReceivedTime;
             _taskId = taskId;
             _otherNodesToCancel = otherNodesToCancel;
+            _triggerTime = triggerTime;
         }
 
         @Override
@@ -615,8 +628,9 @@ public class SchedulerImpl implements Scheduler{
                     throw new RuntimeException(e);
                 }
             }
-            long accumulatedLatency = System.currentTimeMillis() - _taskReceivedTime - waitingTime;
-            _schedulerServiceMetrics.taskScheduled(accumulatedLatency);
+            long totalSchedulingTime = _taskEnqueueTime.getOrDefault(_taskId.taskId, 0L)
+                    + System.currentTimeMillis() - _triggerTime;
+            _schedulerServiceMetrics.taskScheduled(totalSchedulingTime);
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
 
