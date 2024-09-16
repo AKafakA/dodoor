@@ -90,8 +90,4 @@ public class FifoTaskScheduler extends TaskScheduler {
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    @Override
-    protected boolean executeTask(TEnqueueTaskReservationRequest task) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
 }

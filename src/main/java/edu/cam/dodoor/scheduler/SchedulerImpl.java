@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SchedulerImpl implements Scheduler{
@@ -428,34 +429,39 @@ public class SchedulerImpl implements Scheduler{
     }
 
     @Override
-    public boolean confirmTaskReadyToExecute(TFullTaskId taskId, String nodeAddressStr) throws TException {
+    public synchronized boolean confirmTaskReadyToExecute(TFullTaskId taskId, String nodeAddressStr) throws TException {
         _schedulerServiceMetrics.taskReadyToExecute();
         long triggerTime = System.currentTimeMillis();
         if (_schedulingStrategy.equals(DodoorConf.SPARROW_SCHEDULER)) {
-            Optional<InetSocketAddress> nodeAddress = Serialization.strToSocket(nodeAddressStr);
+            if (!_nodePreservedForTask.containsKey(taskId.taskId)) {
+                LOG.debug("Task {} not preserved for any node and may has been executed.", taskId.taskId);
+                return false;
+            }
             Set<InetSocketAddress> preservedNodes = _nodePreservedForTask.get(taskId.taskId);
+            Optional<InetSocketAddress> nodeAddress = Serialization.strToSocket(nodeAddressStr);
             if (nodeAddress.isPresent()) {
                 InetSocketAddress nodeEnqueueAddress = nodeAddress.get();
                 _nodeAskToExecute.putIfAbsent(taskId.taskId, new HashSet<>());
                 _nodeAskToExecute.get(taskId.taskId).add(nodeEnqueueAddress);
                 LOG.debug("Task {} ready to execute", taskId.taskId);
-                if (!_nodePreservedForTask.containsKey(taskId.taskId)) {
-                    LOG.debug("Task {} not preserved for any node and may has been executed.", taskId.taskId);
-                    return false;
-                }
                 if (!preservedNodes.contains(nodeEnqueueAddress)) {
                     LOG.debug("Task {} not preserved for node {}", taskId.taskId, nodeEnqueueAddress.getHostName());
+                    return false;
                 }
                 try {
-                    NodeEnqueueService.AsyncClient client =
-                            _nodeEnqueueServiceAsyncClientPool.borrowClient(nodeEnqueueAddress);
-                    _schedulerServiceMetrics.infoNodeToExecute();
-                    Set<InetSocketAddress> nodesToCancel = _nodePreservedForTask.get(taskId.taskId);
-                    nodesToCancel.remove(nodeEnqueueAddress);
+                    preservedNodes.remove(nodeEnqueueAddress);
                     _nodePreservedForTask.remove(taskId.taskId);
-                    TEnqueueTaskReservationRequest task = _taskToRequest.get(taskId.taskId);
-                    client.executeTask(task, new ExecuteTaskCallBack(nodeEnqueueAddress, client,
-                            taskId, nodesToCancel, triggerTime));
+                    for (InetSocketAddress address : preservedNodes) {
+                        _schedulerServiceMetrics.infoNodeToCancel();
+                        try {
+                            NodeEnqueueService.AsyncClient clientToCancel = _nodeEnqueueServiceAsyncClientPool.borrowClient(address);
+                            clientToCancel.cancelTaskReservation(taskId, new CancelTaskReservationCallBack(address, clientToCancel));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    _schedulerServiceMetrics.taskScheduled(System.currentTimeMillis() - triggerTime +
+                            _taskEnqueueTime.get(taskId.taskId));
                     return true;
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -594,53 +600,6 @@ public class SchedulerImpl implements Scheduler{
         }
     }
 
-    private class ExecuteTaskCallBack implements AsyncMethodCallback<Long> {
-
-        private final Logger LOG = LoggerFactory.getLogger(ExecuteTaskCallBack.class);
-        private final InetSocketAddress _nodeEnqueueAddress;
-        private final NodeEnqueueService.AsyncClient _client;
-        private final TFullTaskId _taskId;
-        private final Set<InetSocketAddress> _otherNodesToCancel;
-        private final long _triggerTime;
-
-
-        public ExecuteTaskCallBack(InetSocketAddress nodeEnqueueAddress, NodeEnqueueService.AsyncClient client,
-                                   TFullTaskId taskId,
-                                   Set<InetSocketAddress> otherNodesToCancel,
-                                   long triggerTime) {
-            _nodeEnqueueAddress = nodeEnqueueAddress;
-            _client = client;
-            _taskId = taskId;
-            _otherNodesToCancel = otherNodesToCancel;
-            _triggerTime = triggerTime;
-        }
-
-        @Override
-        public void onComplete(Long waitingTime) {
-            LOG.debug("Task executed on node {}", _nodeEnqueueAddress.getHostName());
-            long totalSchedulingTime = _taskEnqueueTime.getOrDefault(_taskId.taskId, 0L)
-                    + System.currentTimeMillis() - _triggerTime;
-            _schedulerServiceMetrics.taskScheduled(totalSchedulingTime);
-            for (InetSocketAddress address : _otherNodesToCancel) {
-                _schedulerServiceMetrics.infoNodeToCancel();
-                try {
-                    NodeEnqueueService.AsyncClient clientToCancel = _nodeEnqueueServiceAsyncClientPool.borrowClient(address);
-                    clientToCancel.cancelTaskReservation(_taskId, new CancelTaskReservationCallBack(address, clientToCancel));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
-        }
-
-        @Override
-        public void onError(Exception e) {
-            LOG.error("Error executing task on node {}", _nodeEnqueueAddress.getHostName(), e);
-            _nodePreservedForTask.put(_taskId.taskId, _otherNodesToCancel);
-            returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
-        }
-    }
-
     private class CancelTaskReservationCallBack implements AsyncMethodCallback<Boolean> {
 
         private final Logger LOG = LoggerFactory.getLogger(CancelTaskReservationCallBack.class);
@@ -657,6 +616,9 @@ public class SchedulerImpl implements Scheduler{
 
         @Override
         public void onComplete(Boolean aBoolean) {
+            if (!aBoolean) {
+                LOG.error("Error cancelling task reservation on node {}", _nodeEnqueueAddress.getHostName());
+            }
             LOG.debug("Task reservation cancelled on node {}", _nodeEnqueueAddress.getHostName());
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }

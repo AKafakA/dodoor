@@ -121,19 +121,6 @@ public class NodeImpl implements Node {
         }
     }
 
-    @Override
-    public long executeTask(TEnqueueTaskReservationRequest task) throws TException {
-        if (_isLateBindingEnabled) {
-            if (_taskScheduler.executeTask(task)) {
-                return System.currentTimeMillis() - _taskReceivedTime.get(task.taskId);
-            } else {
-                throw new TException("Not found the task in the task reservation list");
-            }
-        } else {
-            throw new TException("Task execution confirmation no necessary for no late binding scheduler");
-        }
-    }
-
     private void sendRequestsPostTaskFinished(TFullTaskId task) throws TException {
         LOG.debug(Logging.functionCall(task));
         for (InetSocketAddress dataStoreSocket : _nodeThrift.getDataStoreAddress()) {

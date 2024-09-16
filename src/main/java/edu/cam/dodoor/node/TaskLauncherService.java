@@ -16,7 +16,7 @@ public class TaskLauncherService {
     private final static Logger LOG = LoggerFactory.getLogger(TaskLauncherService.class);
     private Node _node;
     private NodeServiceMetrics _nodeServiceMetrics;
-    ThreadPoolExecutor _executor;
+    private ThreadPoolExecutor _executor;
 
     /** A runnable that spins in a loop asking for tasks to launch and launching them. */
     private class TaskLaunchRunnable implements Runnable {

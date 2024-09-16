@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -25,7 +24,6 @@ public class LateBindTaskScheduler extends TaskScheduler{
 
     private final static Logger LOG = LoggerFactory.getLogger(LateBindTaskScheduler.class);
     private final List<TaskSpec> _taskReservations;
-    private final Map<String, AtomicBoolean> _taskReservationPinedOut;
     private final Map<String, InetSocketAddress> _taskToSchedulerMap;
     private final ThriftClientPool<SchedulerService.AsyncClient> _schedulerClientPool;
     private final String _nodeAddressStr;
@@ -37,7 +35,6 @@ public class LateBindTaskScheduler extends TaskScheduler{
         _taskToSchedulerMap = new ConcurrentHashMap<>();
         _schedulerClientPool = schedulerClientPool;
         _nodeAddressStr = nodeAddressStr;
-        _taskReservationPinedOut = new ConcurrentHashMap<>();
         _taskReservations = Collections.synchronizedList(new ArrayList<>());
     }
 
@@ -49,7 +46,6 @@ public class LateBindTaskScheduler extends TaskScheduler{
         InetSocketAddress schedulerAddress = Network.thriftToSocket(request.getSchedulerAddress());
         _taskToSchedulerMap.put(taskReservation._taskId, schedulerAddress);
         _taskReservations.add(taskReservation);
-        _taskReservationPinedOut.put(taskReservation._taskId, new AtomicBoolean(false));
         if (currentActiveTasks < _numSlots) {
             if (confirmTaskReadyToRun(taskReservation, taskReservation._previousTaskId)) {
                 LOG.debug("Task {} is ready to run with {} active tasks and {} slots available. " +
@@ -83,33 +79,12 @@ public class LateBindTaskScheduler extends TaskScheduler{
        for (TaskSpec taskSpec : _taskReservations) {
             if (taskSpec._taskId.equals(taskId.taskId)) {
                 _taskReservations.remove(taskSpec);
-                _taskReservationPinedOut.remove(taskId.taskId);
                 LOG.debug("Task reservation for task {} has been cancelled", taskId.taskId);
                 return true;
             }
         }
         LOG.error("Failed to find task reservation for task {} to cancel", taskId.taskId);
         return false;
-    }
-
-    @Override
-    protected boolean executeTask(TEnqueueTaskReservationRequest task) {
-        try {
-            TaskSpec taskSpec = new TaskSpec(task);
-            for (TaskSpec taskSpecReserved : _taskReservations) {
-                if (taskSpecReserved._taskId.equals(task.taskId)) {
-                    _taskReservations.remove(taskSpecReserved);
-                    _taskReservationPinedOut.remove(taskSpecReserved._taskId);
-                    taskSpec = taskSpecReserved;
-                    break;
-                }
-            }
-            makeTaskRunnable(taskSpec);
-            return true;
-        } catch (Exception e) {
-            LOG.error("Failed to execute task {}", task.taskId, e);
-            return false;
-        }
     }
 
     /**
@@ -119,12 +94,12 @@ public class LateBindTaskScheduler extends TaskScheduler{
         int currentActiveTasks = _taskLauncherService.getActiveTasks();
 
         for (TaskSpec taskSpec : _taskReservations) {
-            if (!_taskReservationPinedOut.get(taskSpec._taskId).get()
-                    && confirmTaskReadyToRun(taskSpec, finishedTask.taskId)) {
+            if (confirmTaskReadyToRun(taskSpec, finishedTask.taskId)) {
                 return;
             }
         }
-        LOG.debug("No tasks to run, {} of {} task slots currently filled", currentActiveTasks, _numSlots);
+        LOG.debug("No tasks which current resource enough to run, " +
+                "{} of {} task slots currently filled", currentActiveTasks, _numSlots);
     }
 
     private boolean confirmTaskReadyToRun(TaskSpec taskSpec,
@@ -136,12 +111,16 @@ public class LateBindTaskScheduler extends TaskScheduler{
         if (canRun) {
             try {
                 SchedulerService.AsyncClient schedulerClient = _schedulerClientPool.borrowClient(schedulerAddress);
-                _taskReservationPinedOut.get(taskId.taskId).set(true);
                 schedulerClient.confirmTaskReadyToExecute(taskId, _nodeAddressStr,
-                        new ConfirmTaskReadyToRunCallback(schedulerClient, schedulerAddress, this,
+                        new ConfirmTaskReadyToRunCallback(schedulerClient, schedulerAddress,
                                 taskSpec,
                                 lastExecutedTaskId));
+                // either task is confirmed to run or not, both remove from reservation
+                _taskReservations.remove(taskSpec);
             } catch (Exception e) {
+                _nodeResources.freeTask(taskSpec._resourceVector.cores,
+                        taskSpec._resourceVector.memory,
+                        taskSpec._resourceVector.disks);
                 throw new RuntimeException(e);
             }
         }
@@ -152,29 +131,32 @@ public class LateBindTaskScheduler extends TaskScheduler{
 
         private final SchedulerService.AsyncClient _schedulerClient;
         private final InetSocketAddress _schedulerAddress;
-        private final LateBindTaskScheduler _lateBindTaskScheduler;
         private final TaskSpec _taskReservation;
         private final String _lastExecutedTaskId;
 
         ConfirmTaskReadyToRunCallback(SchedulerService.AsyncClient schedulerClient,
                                       InetSocketAddress schedulerAddress,
-                                      LateBindTaskScheduler lateBindTaskScheduler,
                                       TaskSpec taskReservation,
                                       String lastExecutedTaskId) {
             _schedulerClient = schedulerClient;
             _schedulerAddress = schedulerAddress;
-            _lateBindTaskScheduler = lateBindTaskScheduler;
             _taskReservation = taskReservation;
             _lastExecutedTaskId = lastExecutedTaskId;
         }
 
         @Override
         public void onComplete(Boolean response) {
+            // received response from scheduler
+            // if yes, make task runnable
+            // if no, free resources
             if (response) {
                 _taskReservation._previousTaskId = _lastExecutedTaskId;
-                _lateBindTaskScheduler.executeTask(_taskReservation.getRequest());
+                makeTaskRunnable(_taskReservation);
                 LOG.debug("Task {} confirmed ready to run from scheduler and has been executed.", _taskReservation._taskId);
             } else {
+                _nodeResources.freeTask(_taskReservation._resourceVector.cores,
+                        _taskReservation._resourceVector.memory,
+                        _taskReservation._resourceVector.disks);
                 LOG.debug("Task {} has been placed already", _taskReservation._taskId);
             }
             try {
@@ -188,7 +170,8 @@ public class LateBindTaskScheduler extends TaskScheduler{
         public void onError(Exception exception) {
             LOG.error("Error confirming task ready to run from scheduler {} and add this back to reservation",
                     _schedulerAddress, exception);
-            _taskReservationPinedOut.get(_taskReservation._taskId).set(false);
+            // reenqueue task reservation
+            _taskReservations.add(_taskReservation);
             _nodeResources.freeTask(_taskReservation._resourceVector.cores,
                     _taskReservation._resourceVector.memory,
                     _taskReservation._resourceVector.disks);

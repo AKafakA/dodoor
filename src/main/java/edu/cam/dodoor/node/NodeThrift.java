@@ -103,15 +103,6 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     }
 
     @Override
-    public long executeTask(TEnqueueTaskReservationRequest task) throws TException {
-        if (_schedulerType.equals(DodoorConf.SPARROW_SCHEDULER)) {
-            return _node.executeTask(task);
-        } else {
-            throw new TException("Task execution confirmation no necessary and not supported for scheduler type " + _schedulerType);
-        }
-    }
-
-    @Override
     public void registerDataStore(String dataStoreAddress) throws TException {
         _numMessages.inc();
         handleRegisterDataStore(dataStoreAddress);

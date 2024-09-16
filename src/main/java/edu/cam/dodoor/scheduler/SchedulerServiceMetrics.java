@@ -74,10 +74,6 @@ public class SchedulerServiceMetrics {
         _totalMessages.inc();
     }
 
-    public void infoNodeToExecute() {
-        _totalMessages.inc();
-    }
-
     public void infoNodeToCancel() {
         _totalMessages.inc();
     }

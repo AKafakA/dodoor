@@ -63,6 +63,5 @@ service NodeMonitorService {
 service NodeEnqueueService {
   bool enqueueTaskReservation(1: types.TEnqueueTaskReservationRequest request);
   bool cancelTaskReservation(1: types.TFullTaskId taskId);
-  i64 executeTask(1: types.TEnqueueTaskReservationRequest task);
   void taskFinished(1: types.TFullTaskId task);
 }

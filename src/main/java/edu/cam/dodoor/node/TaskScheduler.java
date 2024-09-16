@@ -80,5 +80,4 @@ public abstract class TaskScheduler {
 
     protected abstract boolean cancelTaskReservation(TFullTaskId taskId);
 
-    protected abstract boolean executeTask(TEnqueueTaskReservationRequest task);
 }
