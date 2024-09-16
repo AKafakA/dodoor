@@ -243,7 +243,9 @@ public class SchedulerImpl implements Scheduler{
                 throw new RuntimeException(e);
             }
         }
-        removeNodeFromPrequalPool();
+        synchronized (_probeInfo) {
+            removeNodeFromPrequalPool();
+        }
     }
 
     private void removeNodeFromPrequalPool() {
@@ -251,29 +253,27 @@ public class SchedulerImpl implements Scheduler{
         int probeReuseBudget = SchedulerUtils.getProbeReuseBudget(_loadMapEqueueSocketToNodeState.size(),
                 _probeInfo.size(), _probeRateForPrequal, _probeDeleteRate, _delta);
         long currentTime = System.currentTimeMillis();
-        synchronized (_probeInfo) {
-            List<InetSocketAddress> reversedProbeAddresses = new ArrayList<>(_probeInfo.keySet());
-            Collections.reverse(reversedProbeAddresses);
-            for (int i = 0; i < reversedProbeAddresses.size(); i++) {
-                InetSocketAddress probeAddress = reversedProbeAddresses.get(i);
-                long probeTime = _probeInfo.get(probeAddress).getKey();
-                if (i >= _probePoolSize || _probeInfo.get(probeAddress).getValue() >= probeReuseBudget ||
-                        (currentTime - probeTime) >= _probeAgeBudget) {
-                    _probeInfo.remove(probeAddress);
-                    reversedProbeAddresses.remove(probeAddress);
-                }
+        List<InetSocketAddress> reversedProbeAddresses = new ArrayList<>(_probeInfo.keySet());
+        Collections.reverse(reversedProbeAddresses);
+        for (int i = 0; i < reversedProbeAddresses.size(); i++) {
+            InetSocketAddress probeAddress = reversedProbeAddresses.get(i);
+            long probeTime = _probeInfo.get(probeAddress).getKey();
+            if (i >= _probePoolSize || _probeInfo.get(probeAddress).getValue() >= probeReuseBudget ||
+                    (currentTime - probeTime) >= _probeAgeBudget) {
+                _probeInfo.remove(probeAddress);
+                reversedProbeAddresses.remove(probeAddress);
             }
+        }
 
-            for (int i = 0; i < _probeDeleteRate && !reversedProbeAddresses.isEmpty(); i++) {
-                InetSocketAddress probeAddressToRemove = reversedProbeAddresses.get(reversedProbeAddresses.size() - 1);
-                if (ran.nextBoolean()) {
-                    int[] numPendingTasks = _loadMapEqueueSocketToNodeState.values().stream().mapToInt(e -> e.numTasks).toArray();
-                    int cutoff = MetricsUtils.getQuantile(numPendingTasks, _rifQuantile);
-                    probeAddressToRemove = selectWorstNodeFromPrequalPool(cutoff, reversedProbeAddresses);
-                }
-                _probeInfo.remove(probeAddressToRemove);
-                reversedProbeAddresses.remove(probeAddressToRemove);
+        for (int i = 0; i < _probeDeleteRate && !reversedProbeAddresses.isEmpty(); i++) {
+            InetSocketAddress probeAddressToRemove = reversedProbeAddresses.get(reversedProbeAddresses.size() - 1);
+            if (ran.nextBoolean()) {
+                int[] numPendingTasks = _loadMapEqueueSocketToNodeState.values().stream().mapToInt(e -> e.numTasks).toArray();
+                int cutoff = MetricsUtils.getQuantile(numPendingTasks, _rifQuantile);
+                probeAddressToRemove = selectWorstNodeFromPrequalPool(cutoff, reversedProbeAddresses);
             }
+            _probeInfo.remove(probeAddressToRemove);
+            reversedProbeAddresses.remove(probeAddressToRemove);
         }
     }
 
@@ -590,10 +590,8 @@ public class SchedulerImpl implements Scheduler{
             LOG.info("Node state received from {}", _nmAddress.getHostName());
             _loadMapEqueueSocketToNodeState.put(_neAddress, nodeState);
             // make sure reinsertation order is correct
-            synchronized (_probeInfo) {
-                _probeInfo.remove(_neAddress);
-                _probeInfo.put(_neAddress, new AbstractMap.SimpleEntry<>(System.currentTimeMillis(), 0));
-            }
+            _probeInfo.remove(_neAddress);
+            _probeInfo.put(_neAddress, new AbstractMap.SimpleEntry<>(System.currentTimeMillis(), 0));
             returnNodeMonitorClient(_nmAddress, _client);
         }
 
