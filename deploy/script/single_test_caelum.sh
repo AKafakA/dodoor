@@ -19,7 +19,7 @@ SLOT_SIZE=2
 BETA=1.0
 CPU_WEIGHT=1.0
 NETWORK_INTERFACE="eno1"
-DATA_PATH="deploy/resources/data/azure_data_small"
+DATA_PATH="deploy/resources/data/azure_data_cloudlab_10m"
 DURATION_WEIGHT=0.5
 
 parallel-ssh -h deploy/resources/host_addresses/caelum/small_caelum  -i "rm ~/*.log && rm ~/*.out"

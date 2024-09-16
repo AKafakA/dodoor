@@ -64,7 +64,6 @@ public class SchedulerImpl implements Scheduler{
     private Map<String, Set<InetSocketAddress>> _nodePreservedForTask;
 
     private int _roundOfReservations;
-    private Set<String> _tasks;
     private Map<String, Set<InetSocketAddress>> _nodeAskToExecute;
     private Map<String, TEnqueueTaskReservationRequest> _taskToRequest;
     // Used to track the latency of the task be enqueued
@@ -88,8 +87,6 @@ public class SchedulerImpl implements Scheduler{
         _neSocketToNmSocket = Maps.newHashMap();
         List<String> nmPorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)));
         List<String> nePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)));
-
-        _tasks = Collections.synchronizedSet(new HashSet<>());
 
         if (nmPorts.size() != nePorts.size()) {
             throw new IllegalArgumentException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
@@ -191,12 +188,7 @@ public class SchedulerImpl implements Scheduler{
         }
         _schedulerServiceMetrics.taskSubmitted(request.tasks.size());
         for (TTaskSpec task : request.tasks) {
-            if (_tasks.contains(task.taskId)) {
-                String newTaskId = task.taskId + "-" + System.currentTimeMillis();
-                LOG.error("Task {} already submitted, renamed to {}", task.taskId, newTaskId);
-                task.taskId = newTaskId;
-            }
-            _taskReceivedTime.put(task.taskId, System.currentTimeMillis());
+            _taskReceivedTime.put(task.taskId, start);
         }
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = new HashMap<>();
         for (int i = 0; i < _roundOfReservations; i++) {
@@ -506,7 +498,10 @@ public class SchedulerImpl implements Scheduler{
             if (!aBoolean) {
                 _schedulerServiceMetrics.failedToScheduling();
             }
-            long taskEnqueueTime = System.currentTimeMillis() - _taskReceivedTime.get(_taskId);
+            long taskEnqueueTime = 0L;
+            if (_taskReceivedTime.containsKey(_taskId)) {
+                taskEnqueueTime = System.currentTimeMillis() - _taskReceivedTime.get(_taskId);
+            }
             if (!SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
                 _schedulerServiceMetrics.taskScheduled(taskEnqueueTime);
             } else {
