@@ -461,7 +461,7 @@ public class SchedulerImpl implements Scheduler{
                         }
                     }
                     _schedulerServiceMetrics.taskScheduled(System.currentTimeMillis() - triggerTime +
-                            _taskEnqueueTime.get(taskId.taskId));
+                            _taskEnqueueTime.getOrDefault(taskId.taskId, 0L));
                     return true;
                 } catch (Exception e) {
                     throw new RuntimeException(e);
