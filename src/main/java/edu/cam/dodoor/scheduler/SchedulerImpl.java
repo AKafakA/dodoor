@@ -423,6 +423,7 @@ public class SchedulerImpl implements Scheduler{
         _schedulerServiceMetrics.taskFinished(taskDuration, nodeWallTime, taskId.durationInMs);
         if (SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
             _schedulerServiceMetrics.taskScheduled(_taskEnqueueTime.get(taskId.taskId));
+            LOG.debug("Task {} finished and scheduled in {}", taskId.taskId, _taskEnqueueTime.get(taskId.taskId));
         }
     }
 
@@ -494,25 +495,15 @@ public class SchedulerImpl implements Scheduler{
         public void onComplete(Boolean aBoolean) {
             if (!aBoolean) {
                 LOG.error("Error enqueuing task on node {}", _nodeEnqueueAddress.getHostName());
-            }
-            LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
-                    new Object[]{_nodeEnqueueAddress.getHostName(), _taskId, System.currentTimeMillis() - _startTimeMillis});
-
-            if (!aBoolean) {
                 _schedulerServiceMetrics.failedToScheduling();
             }
-            long taskEnqueueTime = 0L;
-            if (_taskReceivedTime.containsKey(_taskId)) {
-                taskEnqueueTime = System.currentTimeMillis() - _taskReceivedTime.get(_taskId);
-            }
+            long taskEnqueueTime = System.currentTimeMillis() - _startTimeMillis;
+            LOG.debug("Enqueue Task RPC to {} for request {} completed in {} ms",
+                    new Object[]{_nodeEnqueueAddress.getHostName(), _taskId, taskEnqueueTime});
             if (!SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
                 _schedulerServiceMetrics.taskScheduled(taskEnqueueTime);
             } else {
-                if (_taskEnqueueTime.containsKey(_taskId)) {
-                    _taskEnqueueTime.put(_taskId, Math.max(taskEnqueueTime, _taskEnqueueTime.get(_taskId)));
-                } else {
-                    _taskEnqueueTime.put(_taskId, taskEnqueueTime);
-                }
+                _taskEnqueueTime.put(_taskId, Math.max(taskEnqueueTime, _taskEnqueueTime.getOrDefault(_taskId, -1L)));
             }
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
@@ -630,11 +621,7 @@ public class SchedulerImpl implements Scheduler{
             }
             LOG.debug("Task reservation cancelled on node {}", _nodeEnqueueAddress.getHostName());
             long totalEnqueueTime = System.currentTimeMillis() - _triggerTime + _currentTaskEnqueueTime;
-            if (_taskEnqueueTime.containsKey(_taskId)) {
-                _taskEnqueueTime.put(_taskId, Math.max(totalEnqueueTime, _taskEnqueueTime.get(_taskId)));
-            } else {
-                _taskEnqueueTime.put(_taskId, totalEnqueueTime);
-            }
+            _taskEnqueueTime.put(_taskId, Math.max(totalEnqueueTime, _taskEnqueueTime.getOrDefault(_taskId, -1L)));
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
 

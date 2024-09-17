@@ -8,8 +8,6 @@ public class SchedulerServiceMetrics {
 
     private final Histogram _endToEndLatencyHistogram;
     private final Histogram _endToEndMakespanHistogram;
-    private final Histogram _endToEndExtraDurationHistogram;
-    private final Histogram _endToEndMakespandSubHistogram;
     private final Meter _tasksRate;
     private final Meter _loadUpdateRate;
     private final Counter _totalMessages;
@@ -22,10 +20,6 @@ public class SchedulerServiceMetrics {
                 () -> new Histogram(new UniformReservoir()));
         _endToEndMakespanHistogram = metrics.histogram(
                 DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_MAKESPAN_LATENCY_HISTOGRAMS,
-                () -> new Histogram(new UniformReservoir()));
-        _endToEndExtraDurationHistogram = metrics.histogram(DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_TOTAL_EXTRA_HISTOGRAMS,
-                () -> new Histogram(new UniformReservoir()));
-        _endToEndMakespandSubHistogram = metrics.histogram(DodoorConf.SCHEDULER_METRICS_TASKS_E2E_MAKESPAN_SUB_HISTOGRAMS,
                 () -> new Histogram(new UniformReservoir()));
         _tasksRate = metrics.meter(DodoorConf.SCHEDULER_METRICS_TASK_RATE);
         _loadUpdateRate = metrics.meter(DodoorConf.SCHEDULER_METRICS_LOAD_UPDATE_RATE);
@@ -62,8 +56,6 @@ public class SchedulerServiceMetrics {
     public void taskFinished(long makespan, long nodeWallTime, long taskDuration) {
         _numFinishedTasks.inc();
         _endToEndMakespanHistogram.update(makespan);
-        _endToEndMakespandSubHistogram.update(makespan - taskDuration);
-        _endToEndExtraDurationHistogram.update(makespan - nodeWallTime);
     }
 
     public void failedToScheduling() {
