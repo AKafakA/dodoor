@@ -508,6 +508,7 @@ public class SchedulerImpl implements Scheduler{
             if (!SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
                 _schedulerServiceMetrics.taskScheduled(taskEnqueueTime);
             } else {
+                _schedulerServiceMetrics.lateBindingEnqueue(taskEnqueueTime);
                 _taskEnqueueTime.put(_taskId, Math.max(taskEnqueueTime, _taskEnqueueTime.getOrDefault(_taskId, -1L)));
             }
             returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
@@ -625,6 +626,8 @@ public class SchedulerImpl implements Scheduler{
             long confirmationTime = System.currentTimeMillis() - _triggerTime;
             _taskConfirmedTime.put(_taskId, Math.max(confirmationTime,
                     _taskConfirmedTime.getOrDefault(_taskId, -1L)));
+            _schedulerServiceMetrics.lateBindingConfirm(confirmationTime);
+            returnNodeEnqueueClient(_nodeEnqueueAddress, _client);
         }
 
         @Override

@@ -14,13 +14,29 @@ public class SchedulerServiceMetrics {
     private final Counter _numFinishedTasks;
     private final Counter _numFailedToSchedule;
 
-    public SchedulerServiceMetrics(MetricRegistry metrics) {
+    private final Histogram _endToLateBindingEnqueueLatencyHistogram;
+    private final Histogram _endToLateBindingConfirmLatencyHistogram;
+
+    public SchedulerServiceMetrics(MetricRegistry metrics, boolean isLateBinding) {
         _endToEndLatencyHistogram = metrics.histogram(
                 DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_SCHEDULING_LATENCY_HISTOGRAMS,
                 () -> new Histogram(new UniformReservoir()));
         _endToEndMakespanHistogram = metrics.histogram(
                 DodoorConf.SCHEDULER_METRICS_END_TO_END_TASK_MAKESPAN_LATENCY_HISTOGRAMS,
                 () -> new Histogram(new UniformReservoir()));
+
+        if (isLateBinding) {
+            _endToLateBindingEnqueueLatencyHistogram = metrics.histogram(
+                    DodoorConf.SCHEDULER_METRICS_END_TO_END_LATE_BINDING_ENQUEUE_LATENCY_HISTOGRAMS,
+                    () -> new Histogram(new UniformReservoir()));
+            _endToLateBindingConfirmLatencyHistogram = metrics.histogram(
+                    DodoorConf.SCHEDULER_METRICS_END_TO_END_LATE_BINDING_CONFIRM_LATENCY_HISTOGRAMS,
+                    () -> new Histogram(new UniformReservoir())
+            );
+        } else {
+            _endToLateBindingEnqueueLatencyHistogram = null;
+            _endToLateBindingConfirmLatencyHistogram = null;
+        }
         _tasksRate = metrics.meter(DodoorConf.SCHEDULER_METRICS_TASK_RATE);
         _loadUpdateRate = metrics.meter(DodoorConf.SCHEDULER_METRICS_LOAD_UPDATE_RATE);
         _totalMessages = metrics.counter(DodoorConf.SCHEDULER_METRICS_NUM_MESSAGES);
@@ -50,6 +66,14 @@ public class SchedulerServiceMetrics {
 
     public void taskScheduled(long latency) {
         _endToEndLatencyHistogram.update(latency);
+    }
+
+    public void lateBindingEnqueue(long latency) {
+        _endToLateBindingEnqueueLatencyHistogram.update(latency);
+    }
+
+    public void lateBindingConfirm(long latency) {
+        _endToLateBindingConfirmLatencyHistogram.update(latency);
     }
 
 

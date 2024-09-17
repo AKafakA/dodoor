@@ -166,6 +166,12 @@ public class DodoorConf {
             "scheduler.metrics.tasks.finished.count";
     public final static String SCHEDULER_METRICS_FAILURE_COUNT = "scheduler.metrics.tasks.failed.count";
 
+    public final static String SCHEDULER_METRICS_END_TO_END_LATE_BINDING_ENQUEUE_LATENCY_HISTOGRAMS =
+            "scheduler.metrics.tasks.e2e.late.binding.enqueue.latency.histograms";
+
+    public final static String SCHEDULER_METRICS_END_TO_END_LATE_BINDING_CONFIRM_LATENCY_HISTOGRAMS =
+            "scheduler.metrics.tasks.e2e.late.binding.confirm.latency.histograms";
+
     /**
      * Node Monitor Config
      */

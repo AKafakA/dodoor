@@ -7,6 +7,7 @@ import com.codahale.metrics.Slf4jReporter;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
+import edu.cam.dodoor.utils.SchedulerUtils;
 import edu.cam.dodoor.utils.TServers;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.logging.Log;
@@ -74,12 +75,13 @@ public class SchedulerThrift implements SchedulerService.Iface{
                 new SchedulerService.Processor<>(this);
         int threads = config.getInt(DodoorConf.SCHEDULER_THRIFT_THREADS,
                 DodoorConf.DEFAULT_SCHEDULER_THRIFT_THREADS);
+        _schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
-        SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics);
+        boolean lateBindingEnabled = SchedulerUtils.isLateBindingScheduler(_schedulerType);
+        SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics, lateBindingEnabled);
         _numMessages = schedulerMetrics.getTotalMessages();
         _scheduler.initialize(config, Network.getInternalHostPort(port, config), schedulerMetrics);
         TServers.launchThreadedThriftServer(port, threads, processor);
-        _schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
 
         // Avoid one log kicked duplicated from different scheduler instances
         if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && !logKicked) {
