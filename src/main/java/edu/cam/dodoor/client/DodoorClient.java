@@ -17,7 +17,7 @@
 package edu.cam.dodoor.client;
 
 import edu.cam.dodoor.DodoorConf;
-import edu.cam.dodoor.utils.TClients;
+import edu.cam.dodoor.utils.ThriftClientPool;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
@@ -26,9 +26,11 @@ import edu.cam.dodoor.thrift.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.commons.pool.impl.GenericKeyedObjectPool.Config;
+import org.apache.thrift.async.AsyncMethodCallback;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -39,14 +41,15 @@ public class DodoorClient {
     private final static Logger LOG = Logger.getLogger(DodoorClient.class);
     private int _numClients;
 
-    BlockingQueue<SchedulerService.Client> _clients =
-            new LinkedBlockingQueue<>();
+    private ThriftClientPool<SchedulerService.AsyncClient> _clientPool;
 
     private AtomicInteger _nextRequestId = new AtomicInteger(0);
 
     private static TUserGroupInfo DEFAULT_USER = new TUserGroupInfo("default", "normal", 1);
 
     private static TPlacementPreference NO_PREFERENCE = new TPlacementPreference(new ArrayList<>());
+
+    private List<InetSocketAddress> _schedulerAddresses;
 
     public void initialize(InetSocketAddress[] schedulerAddresses, Configuration config)
             throws TException, IOException {
@@ -55,13 +58,10 @@ public class DodoorClient {
         _numClients = config.getInt(DodoorConf.DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT,
                 DodoorConf.DEFAULT_DODOOR_NUM_SCHEDULER_CLIENTS_PER_PORT);
 
-        for (int i = 0; i < _numClients; i++) {
-            InetSocketAddress schedulerAddr = schedulerAddresses[i % numSchedulers];
-            SchedulerService.Client client = TClients.createBlockingSchedulerClient(
-                    schedulerAddr.getAddress().getHostAddress(), schedulerAddr.getPort(),
-                    60000);
-            _clients.add(client);
-        }
+        Config poolConfig = ThriftClientPool.getPoolConfig();
+        poolConfig.maxTotal = _numClients;
+        _clientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory(), poolConfig);
+        _schedulerAddresses = Arrays.asList(schedulerAddresses);
     }
 
     public void submitTask(String taskId, int cores, long memory, long disks, long durationInMs)
@@ -104,17 +104,55 @@ public class DodoorClient {
         return submitRequest(request);
     }
 
-    public boolean submitRequest(TSchedulingRequest request) throws TException {
+    public synchronized boolean submitRequest(TSchedulingRequest request) {
         try {
-            SchedulerService.Client client = _clients.take();
-            client.submitJob(request);
-            _clients.put(client);
+            InetSocketAddress schedulerAddr = _schedulerAddresses.get(_nextRequestId.getAndIncrement() % _schedulerAddresses.size());
+            SchedulerService.AsyncClient client = _clientPool.borrowClient(schedulerAddr);
+            client.submitJob(request, new JobSubmissionCallback(schedulerAddr, request, client));
         } catch (InterruptedException e) {
             LOG.fatal(e);
         } catch (TException e) {
             LOG.error("Thrift exception when submitting job: " + e.getMessage());
             return false;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return true;
+    }
+
+    private class JobSubmissionCallback implements AsyncMethodCallback<Void> {
+        private final InetSocketAddress _schedulerAddr;
+        private final SchedulerService.AsyncClient _client;
+        private final TSchedulingRequest _request;
+
+
+        public JobSubmissionCallback(InetSocketAddress schedulerAddr, TSchedulingRequest request,
+                                     SchedulerService.AsyncClient client) {
+            _schedulerAddr = schedulerAddr;
+            _client = client;
+            _request = request;
+        }
+
+
+        @Override
+        public void onComplete(Void unused) {
+            LOG.info("Job submitted: " + _request.requestId);
+            try {
+                _clientPool.returnClient(_schedulerAddr, _client);
+            } catch (Exception e) {
+                LOG.error("Error returning client to pool", e);
+            }
+
+        }
+
+        @Override
+        public void onError(Exception error) {
+            LOG.error("Error submitting job", error);
+            try {
+                _clientPool.returnClient(_schedulerAddr, _client);
+            } catch (Exception e) {
+                LOG.error("Error returning client to pool", e);
+            }
+        }
     }
 }

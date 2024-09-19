@@ -4,13 +4,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.commons.configuration.Configuration;
 
 import edu.cam.dodoor.DodoorConf;
 
 /** Utilities for interrogating system resources. */
 public class Resources {
-  public static int getSystemMemoryMb(Configuration conf) {
+  public static int getMemoryMbCapacity(Configuration conf) {
     int systemMemory = -1;
     try {
       Process p = Runtime.getRuntime().exec("cat /proc/meminfo");  
@@ -38,12 +39,20 @@ public class Resources {
     }
   }
   
-  public static double getSystemCPUCount(Configuration conf) {
+  public static int getSystemCoresCapacity(Configuration conf) {
     // No system interrogation yet
-    return conf.getInt(DodoorConf.SYSTEM_CPUS, DodoorConf.DEFAULT_SYSTEM_CPUS);
+    return conf.getInt(DodoorConf.SYSTEM_CORES, DodoorConf.DEFAULT_SYSTEM_CORES);
   }
 
-  public static int getSystemDiskGb(Configuration conf) {
+  public static int getSystemDiskGbCapacity(Configuration conf) {
     return conf.getInt(DodoorConf.SYSTEM_DISK, DodoorConf.DEFAULT_SYSTEM_DISK);
+  }
+
+  public static TResourceVector getSystemResourceVector(Configuration conf) {
+    if (conf.getBoolean(DodoorConf.REPLAY_WITH_DISK, DodoorConf.DEFAULT_REPLAY_WITH_DISK)) {
+      return new TResourceVector(getSystemCoresCapacity(conf), getMemoryMbCapacity(conf), getSystemDiskGbCapacity(conf));
+    } else {
+        return new TResourceVector(getSystemCoresCapacity(conf), getMemoryMbCapacity(conf), 0);
+    }
   }
 }

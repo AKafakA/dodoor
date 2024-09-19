@@ -6,6 +6,7 @@ import joptsimple.OptionSet;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
@@ -13,12 +14,17 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class TaskTracePlayer {
-    private final Logger LOG = Logger.getLogger(TaskTracePlayer.class);
+    private static final Logger LOG = Logger.getLogger(TaskTracePlayer.class);
 
-    private class TaskLaunchRunnable implements Runnable {
+    private static class TaskLaunchRunnable implements Runnable {
         //        private int requestId;
         private final String _taskId;
         private final int _cores;
@@ -27,11 +33,12 @@ public class TaskTracePlayer {
         private final long _durationInMs;
         private final long _startTime;
         private final DodoorClient _client;
-        private final long _globalStartTime;
+        final long _globalStartTime;
+        private final boolean _addTimelineDelay;
 
         public TaskLaunchRunnable(String taskId, int cores, long memory,
                                   long disks, long durationInMs, long startTime,
-                                  DodoorClient client, long globalStartTime) {
+                                  DodoorClient client, long globalStartTime, boolean addTimelineDelay) {
             _taskId = taskId;
             _cores = cores;
             _memory = memory;
@@ -40,13 +47,14 @@ public class TaskTracePlayer {
             _startTime = startTime;
             _client = client;
             _globalStartTime = globalStartTime;
+            _addTimelineDelay = addTimelineDelay;
         }
 
         @Override
         public void run(){
             // Generate tasks in the format expected by Sparrow. First, pack task parameters.
             long start = System.currentTimeMillis() - _globalStartTime;
-            if (start < _startTime) {
+            if (start < _startTime && _addTimelineDelay) {
                 try {
                     Thread.sleep(_startTime - start);
                 } catch (InterruptedException e) {
@@ -58,12 +66,11 @@ public class TaskTracePlayer {
             } catch (TException e) {
                 LOG.error("Scheduling request failed!", e);
             }
-            long end = System.currentTimeMillis();
-            LOG.debug("Scheduling request duration " + (end - start));
         }
     }
 
     public static void main(String[] args) throws ConfigurationException, TException, IOException {
+        BasicConfigurator.configure();
         OptionParser parser = new OptionParser();
         parser.accepts("f", "trace files").
                 withRequiredArg().ofType(String.class);
@@ -95,18 +102,30 @@ public class TaskTracePlayer {
 
         String traceFile = (String) options.valueOf("f");
         List<String> allLines = Files.readAllLines(Paths.get(traceFile));
+
+        boolean addDelay = config.getBoolean(DodoorConf.REPLAY_WITH_TIMELINE_DELAY,
+                DodoorConf.DEFAULT_REPLAY_WITH_TIMELINE_DELAY);
+
+        boolean replayWithDisk = config.getBoolean(DodoorConf.REPLAY_WITH_DISK,
+                DodoorConf.DEFAULT_REPLAY_WITH_DISK);
+
+        double taskReplyRate = config.getDouble(DodoorConf.TASK_REPLAY_TIME_SCALE,
+                DodoorConf.DEFAULT_TASK_REPLAY_TIME_SCALE);
+
         for (String line : allLines) {
             String[] parts = line.split(",");
             String taskId = parts[0];
             int cores = Integer.parseInt(parts[1]);
             long memory = Long.parseLong(parts[2]);
-            long disks = Long.parseLong(parts[3]);
+            long disks = replayWithDisk? Long.parseLong(parts[3]):0;
             long durationInMs = Long.parseLong(parts[4]);
-            long startTime = Long.parseLong(parts[5]);
-            (new TaskTracePlayer()).new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs,
-                    startTime, client, globalStartTime).run();
+            long startTime = (long) Math.ceil(Long.parseLong(parts[5]) / taskReplyRate);
+            if (startTime < 0) {
+                startTime = 0;
+            }
+            TaskLaunchRunnable task = new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs, startTime, client, globalStartTime, addDelay);
+            Thread t = new Thread(task);
+            t.start();
         }
-
     }
-
 }

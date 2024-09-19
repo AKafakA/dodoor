@@ -4,7 +4,6 @@ import com.codahale.metrics.Slf4jReporter;
 import edu.cam.dodoor.DodoorConf;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.*;
-import org.slf4j.Logger;
 
 import java.io.File;
 import com.sun.management.OperatingSystemMXBean;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.TimeUnit;
+
 
 public class MetricsTrackerService {
 
@@ -25,14 +25,21 @@ public class MetricsTrackerService {
     private final long _systemMemory;
     private long _timelineInSeconds;
     private final Slf4jReporter _slf4jReporter;
+    private final TaskLauncherService _taskLauncherService;
 
-    public MetricsTrackerService(int trackingInterval, Configuration config, NodeServiceMetrics nodeServiceMetrics) {
+
+    public MetricsTrackerService(int trackingInterval, Configuration config, NodeServiceMetrics nodeServiceMetrics,
+                                 TaskLauncherService taskLauncherService) {
         _operatingSystemMXBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         _trackingInterval = trackingInterval;
+        _taskLauncherService = taskLauncherService;
         _root = new File("/");
         _totalSpace = _root.getTotalSpace();
         _systemMemory = _operatingSystemMXBean.getTotalMemorySize();
-        String tracingFile = config.getString(DodoorConf.NODE_METRICS_LOG_FILE, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE);
+        // track how much memory is occupied before the task is launched so that we can calculate the memory usage by the tasks only later
+        // The configured memory allowed to be scheduled for tasks should be lower than the actual system memory to avoid OOM
+        String tracingFileSuffix = config.getString(DodoorConf.NODE_METRICS_LOG_FILE_SUFFIX, DodoorConf.DEFAULT_NODE_METRICS_LOG_FILE_SUFFIX);
+        String tracingFile = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER) + "_" + tracingFileSuffix;
         org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(MetricsTrackerService.class);
         logger.setAdditivity(false);
         try {
@@ -41,6 +48,7 @@ public class MetricsTrackerService {
             throw new RuntimeException(e);
         }
         _timelineInSeconds = 0;
+
         LOG = LoggerFactory.getLogger(MetricsTrackerService.class);
 
         _slf4jReporter = Slf4jReporter.forRegistry(nodeServiceMetrics._metrics)
@@ -58,6 +66,7 @@ public class MetricsTrackerService {
                     Thread.sleep(TimeUnit.SECONDS.toMillis(_trackingInterval));
                     _timelineInSeconds += _trackingInterval;
                     logUsage();
+                    logLaunchService();
                 } catch (InterruptedException e) {
                     LOG.error("Metrics tracker thread interrupted", e);
                 }
@@ -65,12 +74,22 @@ public class MetricsTrackerService {
         }
     }
 
-    private void logUsage() {
+    private void logUsage() throws InterruptedException {
         double cpuUsage = _operatingSystemMXBean.getCpuLoad();
-        double memoryUsage =
-                (double) (_systemMemory - _operatingSystemMXBean.getFreeMemorySize()) / _systemMemory;
-        double freeSpace =  (double) _root.getFreeSpace() / _totalSpace;
-        LOG.info("Time(in Seconds): {} CPU usage: {} Memory usage: {} Disk usage: {}", new Object[]{_timelineInSeconds, cpuUsage, memoryUsage, freeSpace});
+        double usedMemory = _systemMemory - _operatingSystemMXBean.getFreeMemorySize();
+        double memoryUsage = usedMemory / _systemMemory;
+        double diskUsage =  (double) _root.getFreeSpace() / _totalSpace;
+        LOG.info("Time(in Seconds) OSM: {} CPU usage: {} Memory usage: {} Disk usage: {}", new Object[]{_timelineInSeconds, cpuUsage, memoryUsage, diskUsage});
+    }
+
+    private void logLaunchService() {
+        int numActivateTasks = _taskLauncherService.getActiveTasks();
+        long numTotalTasks = _taskLauncherService.getTaskCount();
+        long numCompletedTasks = _taskLauncherService.getCompletedTaskCount();
+        long numQueuedTasks = _taskLauncherService.getQueuedTaskCount();
+        LOG.debug("Time(in Seconds) ThreadPool: {} Active tasks: {} Total tasks: {} " +
+                        "Completed tasks: {} Queued tasks: {}",
+                new Object[]{_timelineInSeconds, numActivateTasks, numTotalTasks, numCompletedTasks, numQueuedTasks});
     }
 
     public void start() {

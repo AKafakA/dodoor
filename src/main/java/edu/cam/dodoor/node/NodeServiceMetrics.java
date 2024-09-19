@@ -1,16 +1,18 @@
 package edu.cam.dodoor.node;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import edu.cam.dodoor.DodoorConf;
-import edu.cam.dodoor.datastore.DataStore;
+import com.codahale.metrics.UniformReservoir;
 
 public class NodeServiceMetrics {
 
     private final Meter _tasksRate;
     private final Counter _waitingTasksCounter;
     private final Counter _finishedTasksCounter;
+    private final Histogram _taskWaitTimeHistogram;
     MetricRegistry _metrics;
 
     public NodeServiceMetrics(MetricRegistry metrics) {
@@ -18,6 +20,8 @@ public class NodeServiceMetrics {
         _tasksRate = _metrics.meter(DodoorConf.NODE_METRICS_TASKS_RATE);
         _waitingTasksCounter = _metrics.counter(DodoorConf.NODE_METRICS_WAITING_TASKS);
         _finishedTasksCounter = _metrics.counter(DodoorConf.NODE_METRICS_FINISHED_TASKS);
+        _taskWaitTimeHistogram = _metrics.histogram(DodoorConf.NODE_METRICS_TASKS_WAIT_TIME_HISTOGRAMS,
+                () -> new Histogram(new UniformReservoir()));
     }
 
     public void taskEnqueued() {
@@ -25,9 +29,9 @@ public class NodeServiceMetrics {
         _tasksRate.mark();
     }
 
-    public void taskLaunched() {
+    public void taskLaunched(long waitingDuration) {
         _waitingTasksCounter.dec();
-        _finishedTasksCounter.inc();
+        _taskWaitTimeHistogram.update(waitingDuration);
     }
 
     public void taskFinished() {

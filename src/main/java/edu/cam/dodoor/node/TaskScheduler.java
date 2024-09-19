@@ -1,6 +1,7 @@
 package edu.cam.dodoor.node;
 
 
+import edu.cam.dodoor.scheduler.Scheduler;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
@@ -9,85 +10,58 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class TaskScheduler {
 
     private final static Logger LOG = LoggerFactory.getLogger(TaskScheduler.class);;
 
     int _numSlots;
-    int _activeTasks;
 
-    double _cores_per_slots;
-    int _memory_per_slots;
-    int _disk_per_slots;
+    final NodeResources _nodeResources;
 
     protected Configuration _conf;
-    private final BlockingQueue<TaskSpec> _runnableTaskQueue =
-            new LinkedBlockingQueue<>();
 
-    public TaskScheduler(int numSlots) {
+    protected TaskLauncherService _taskLauncherService;
+
+
+    public static TaskScheduler getTaskScheduler(int numSlots, NodeResources nodeResources, String schedulerType,
+                                                 ThriftClientPool<SchedulerService.AsyncClient> schedulerClientPool,
+                                                 String nodeAddressStr) {
+        if (SchedulerUtils.isLateBindingScheduler(schedulerType)) {
+            return new LateBindTaskScheduler(numSlots, nodeResources,  schedulerClientPool, nodeAddressStr);
+        } else {
+            return new FifoTaskScheduler(numSlots, nodeResources);
+        }
+    }
+
+    public TaskScheduler(int numSlots, NodeResources nodeResources) {
         _numSlots = numSlots;
-        _activeTasks = 0;
+        _nodeResources = nodeResources;
     }
 
     /** Initialize the task scheduler, passing it the current available resources
      *  on the machine. */
-    void initialize(Configuration config) {
+    void initialize(Configuration config, TaskLauncherService taskLauncherService) {
         _conf = config;
-
-        _cores_per_slots = Resources.getSystemCPUCount(config) / _numSlots;
-        _memory_per_slots = Resources.getSystemMemoryMb(config) / _numSlots;
-        _disk_per_slots = Resources.getSystemDiskGb(config) / _numSlots;
+        _taskLauncherService = taskLauncherService;
     }
 
-    TaskSpec getNextTask() {
-        TaskSpec task = null;
-        try {
-            task = _runnableTaskQueue.take();
-        } catch (InterruptedException e) {
-            LOG.error("Interrupted while trying to get next task.");
-        }
-        return task;
-    }
-    /**
-     * Returns the current number of runnable tasks (for testing).
-     */
-    int runnableTasks() {
-        return _runnableTaskQueue.size();
-    }
 
     void tasksFinished(TFullTaskId finishedTask) {
         LOG.info(Logging.auditEventString("task_completed", finishedTask.getTaskId()));
-        handleTaskFinished(finishedTask.taskId);
+        handleTaskFinished(finishedTask);
     }
 
     protected void makeTaskRunnable(TaskSpec task) {
-        try {
-            LOG.debug("Putting reservation for task {} in runnable queue", task._taskId);
-            _runnableTaskQueue.put(task);
-        } catch (InterruptedException e) {
-            LOG.error("Unable to add task to runnable queue: {}", e.getMessage());
-        }
+        LOG.debug("Making task {} runnable", task._taskId);
+        _taskLauncherService.tryToLaunchTask(task);
     }
 
     public synchronized void submitTaskReservation(TEnqueueTaskReservationRequest request) {
-        TaskSpec reservation = new TaskSpec(request);
-        if (!enoughResourcesToRun(request.resourceRequested)){
-            LOG.info(Logging.auditEventString("big_task_failed_enqueued",
-                    reservation._taskId, request.resourceRequested.cores,
-                    request.resourceRequested.memory,
-                    request.resourceRequested.disks));
-            return;
-        }
-        int queuedReservations = handleSubmitTaskReservation(reservation);
+        int queuedReservations = handleSubmitTaskReservation(request);
         LOG.info(Logging.auditEventString("reservation_enqueued", request.taskId,
                 queuedReservations));
-    }
-
-    boolean enoughResourcesToRun(TResourceVector requestedResources) {
-        return requestedResources.cores <= _cores_per_slots
-                && requestedResources.memory <= _memory_per_slots
-                && requestedResources.disks <= _disk_per_slots;
     }
 
     // TASK SCHEDULERS MUST IMPLEMENT THE FOLLOWING.
@@ -95,18 +69,15 @@ public abstract class TaskScheduler {
     /**
      * Handles a task reservation. Returns the number of queued reservations.
      */
-    abstract int handleSubmitTaskReservation(TaskSpec taskReservation);
+    abstract int handleSubmitTaskReservation(TEnqueueTaskReservationRequest taskReservation);
 
 
     /**
      * Handles the completion of a task that has finished executing.
      */
-    protected abstract void handleTaskFinished(String taskId);
+    protected abstract void handleTaskFinished(TFullTaskId finishedTask);
 
-    /**
-     * Returns the maximum number of active tasks allowed (the number of slots).
-     *
-     * -1 signals that the scheduler does not enforce a maximum number of active tasks.
-     */
-    abstract int getNumSlots();
+
+    protected abstract boolean cancelTaskReservation(TFullTaskId taskId);
+
 }

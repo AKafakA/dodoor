@@ -32,7 +32,7 @@ public class ThriftClientPool<T extends TAsyncClient> {
   private static final Logger LOG = Logger.getLogger(ThriftClientPool.class);
 
   /** Get the configuration parameters used on the underlying client pool. */
-  protected static Config getPoolConfig() {
+  public static Config getPoolConfig() {
     Config conf = new Config();
     conf.minIdle = MIN_IDLE_CLIENTS_PER_ADDR;
     conf.maxIdle = -1;
@@ -149,7 +149,7 @@ public class ThriftClientPool<T extends TAsyncClient> {
   }
 
   /** Constructor (for unit tests) which overrides default configuration. */
-  protected ThriftClientPool(MakerFactory<T> maker, Config conf) {
+  public ThriftClientPool(MakerFactory<T> maker, Config conf) {
     this(maker);
     pool.setConfig(conf);
   }
