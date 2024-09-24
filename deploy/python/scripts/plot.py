@@ -17,13 +17,17 @@ target_dir = "deploy/resources/figure/{}".format(experiment_name)
 if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
-scheduler_name_map = {"powerOfTwo": "PowerOfTwo", "random": "Random", "prequal": "Prequal",
-                      "cachedPowerOfTwo": "CachedPowerOfTwo",
-                      "dodoor": "Dodoor"}
+scheduler_name_map = {"powerOfTwo": {"name": "powerOfTwo", "color": "orange"},
+                      "random": {"name": "random", "color": "green"},
+                      "prequal": {"name": "prequal", "color": "red"},
+                      "cachedPowerOfTwo": {"name": "cachedPowerOfTwo", "color": "purple"},
+                      "dodoor": {"name": "dodoor", "color": "blue"},
+                      "sparrow": {"name": "sparrow", "color": "black"}
+                      }
 
 time_steps = 10
 max_checkpoints = 1400
-composited_node_host_dir = "deploy/resources/log/node/{}".format(experiment_name)
+composited_node_host_dir = "deploy/resources/old_logs/0918/node/{}".format(experiment_name)
 
 var_resource_mean_lists = {}
 average_resource_mean_lists = {}
@@ -67,7 +71,9 @@ for scheduler_name in os.listdir(composited_node_host_dir):
     average_resource_mean_lists[scheduler_name] = average_resource_mean
     variance_waiting_task_lists[scheduler_name] = variance_waiting_tasks
 
-    scheduler_type = scheduler_name_map[scheduler_type]
+    scheduler_type = scheduler_name_map[scheduler_type]["name"]
+
+    color = scheduler_name_map[scheduler_type]["color"]
 
     all_nodes_metrics[scheduler_type] = {"average_resource_mean": average_resource_mean,
                                          "var_resource_mean": var_resource_mean,
@@ -76,25 +82,18 @@ for scheduler_name in os.listdir(composited_node_host_dir):
                                          "variance_waiting_tasks": variance_waiting_tasks,
                                          "average_waiting_time": average_waiting_time}
 
-    plt.figure(3)
-    plt.plot([max_num_waiting_tasks[i] - average_num_waiting_tasks[i] for i in range(max_checkpoints)],
-             label=scheduler_type)
-
-    plt.figure(4)
-    plt.plot(variance_waiting_tasks[:max_checkpoints], label=scheduler_type)
+    print("scheduler: {}, max resource usage variance: {},"
+          " max resource usage means: {}".format(scheduler_type, max(var_resource_mean), max(average_resource_mean)))
 
     plt.figure(5)
     plt.plot(average_waiting_time[:max_checkpoints], label=scheduler_type)
 
-    print("scheduler: {}, max resource usage variance: {},"
-          " max resource usage means: {}".format(scheduler_type, max(var_resource_mean), max(average_resource_mean)))
 
-plt.figure(3)
-if plot_with_legend:
-    plt.legend(loc='best', handlelength=1, frameon=False)
-plt.xlabel("{} seconds".format(time_steps))
-plt.ylabel("waiting tasks difference")
-plt.savefig("{}/waiting_tasks_max_average_difference.png".format(target_dir))
+    # if scheduler_type == 'sparrow':
+    #     continue
+
+    plt.figure(4)
+    plt.plot(variance_waiting_tasks[:max_checkpoints], label=scheduler_type, color=color)
 
 plt.figure(4)
 if plot_with_legend:
@@ -130,11 +129,19 @@ for scheduler_name in os.listdir(scheduler_host_dir):
             e2e_latency_p50 = nodes_metrics.get_e2e_latency_p50()
             e2e_latency_p99 = nodes_metrics.get_e2e_latency_p99()
             e2e_latency_p999 = nodes_metrics.get_e2e_latency_p999()
+
+            sum_late_binding_avg = None
+
+            if scheduler_type == "sparrow":
+                late_binding_enqueue_avg = nodes_metrics.get_late_binding_enqueue_avg()
+                late_binding_confirm_avg = nodes_metrics.get_late_binding_confirm_avg()
+                sum_late_binding_avg = [late_binding_enqueue_avg[i] + late_binding_confirm_avg[i]
+                                        for i in range(len(late_binding_enqueue_avg))]
+
             task_e2e_makespan_duration_avg = nodes_metrics.get_task_makespan_duration_avg()
             task_e2e_makespan_duration_p50 = nodes_metrics.get_task_makespan_duration_p50()
             task_e2e_makespan_duration_p99 = nodes_metrics.get_task_makespan_duration_p99()
             task_e2e_makespan_duration_p999 = nodes_metrics.get_task_makespan_duration_p999()
-            total_makespan = nodes_metrics.get_total_makespan()
             num_finished_tasks = nodes_metrics.get_finished_tasks()
 
             num_unfinished_tasks = [submitted - finished for submitted, finished in
@@ -144,7 +151,7 @@ for scheduler_name in os.listdir(scheduler_host_dir):
                   " final task e2e makespan duration (seconds) avg: {}, "
                   " final task e2e makespan duration p50: {}, "
                   " final task e2e makespan duration p99: {}, "
-                  " final task e2e makespan duration p999: {}, "      
+                  " final task e2e makespan duration p999: {}, "
                   " scheduling latency avg (ms): {}, "
                   " scheduling latency p50: {}, "
                   " scheduling latency p99: {}, "
@@ -160,7 +167,8 @@ for scheduler_name in os.listdir(scheduler_host_dir):
                                                         e2e_latency_p999[max_checkpoints - 1],
                                                         num_messages[max_checkpoints - 1]))
 
-            scheduler_type = scheduler_name_map[scheduler_type]
+            scheduler_type = scheduler_name_map[scheduler_type]["name"]
+            color = scheduler_name_map[scheduler_type]["color"]
 
             schedulers_metrics[scheduler_type] = {"num_messages": num_messages, "task_rate_m1": task_rate_m1,
                                                   "e2e_latency_avg": e2e_latency_avg,
@@ -168,11 +176,17 @@ for scheduler_name in os.listdir(scheduler_host_dir):
                                                   "num_unfinished_tasks": num_unfinished_tasks,
                                                   "submitted_tasks": submitted_tasks}
 
+            if scheduler_type == "sparrow":
+                schedulers_metrics[scheduler_type]["e2e_latency_avg"] = sum_late_binding_avg
+
             plt.figure(6)
-            plt.plot(num_messages[:max_checkpoints], label=scheduler_type)
+            plt.plot(num_messages[:max_checkpoints], label=scheduler_type, color=color)
 
             plt.figure(7)
-            plt.plot(task_rate_m1[:max_checkpoints], label=scheduler_type)
+            plt.plot(task_rate_m1[:max_checkpoints], label=scheduler_type, color=color)
+
+            plt.figure(8)
+            plt.plot(e2e_latency_avg[3:max_checkpoints], label=scheduler_type, color=color)
 
 plt.figure(6)
 if plot_with_legend:
@@ -189,17 +203,11 @@ plt.ylabel("task rate m1")
 plt.savefig("{}/task_rate_m1.png".format(target_dir))
 
 plt.figure(8)
-plt.plot(schedulers_metrics["Random"]["submitted_tasks"][:max_checkpoints], label="submitted_tasks")
-plt.xlabel("{} seconds".format(time_steps))
-plt.ylabel("submitted tasks")
-plt.savefig("{}/submitted_tasks.png".format(target_dir))
-
-scheduling_latency_fig, (scheduling_latency_ax1, scheduling_latency_ax2) = plt.subplots(2, 1, sharex=True)
-scheduling_latency_fig.subplots_adjust(hspace=0.05)
-
-scheduling_latency_fig.supxlabel('10 seconds')
-scheduling_latency_ax1.set_ylabel("Diff from Random")
-scheduling_latency_ax2.set_ylabel("Average Scheduling Latency in ms")
+if plot_with_legend:
+    plt.legend(loc='best', handlelength=1, frameon=False)
+plt.xlabel("{} milliseconds".format(time_steps))
+plt.ylabel("scheduling latency avg")
+plt.savefig("{}/scheduling_latency_avg.png".format(target_dir))
 
 e2e_latency_fig, (e2e_latency_ax1, e2e_latency_ax2) = plt.subplots(2, 1, sharex=True)
 e2e_latency_fig.subplots_adjust(hspace=0.05)
@@ -211,37 +219,35 @@ num_unfinished_tasks_fig, (num_unfinished_tasks_ax1, num_unfinished_tasks_ax2) =
 num_unfinished_tasks_fig.subplots_adjust(hspace=0.05)
 num_unfinished_tasks_fig.supxlabel('10 seconds')
 num_unfinished_tasks_ax1.set_ylabel("Diff from Random")
-num_unfinished_tasks_ax2.set_ylabel("Number of Unfinished Tasks")
+num_unfinished_tasks_ax2.set_ylabel("Number of Requests-In-Flight")
 
 for scheduler_type, nodes_metrics in schedulers_metrics.items():
-    calibrated_e2e_latency_avg = [e2e_latency - schedulers_metrics['Random']["e2e_latency_avg"][i] for i, e2e_latency in
-                                  enumerate(nodes_metrics["e2e_latency_avg"][:max_checkpoints])]
-    scheduling_latency_ax1.plot(calibrated_e2e_latency_avg[6:max_checkpoints], label=scheduler_type)
-    scheduling_latency_ax2.plot(nodes_metrics["e2e_latency_avg"][6:max_checkpoints], label=scheduler_type)
+    color = scheduler_name_map[scheduler_type]["color"]
+    # calibrated_e2e_latency_avg = [e2e_latency - schedulers_metrics['sparrow']["e2e_latency_avg"][i] for i, e2e_latency
+    #                               in
+    #                               enumerate(nodes_metrics["e2e_latency_avg"][:max_checkpoints])]
+    # scheduling_latency_ax1.plot(calibrated_e2e_latency_avg[6:max_checkpoints], label=scheduler_type, color=color)
+    # scheduling_latency_ax2.plot(nodes_metrics["e2e_latency_avg"][6:max_checkpoints], label=scheduler_type, color=color)
 
     calibrated_task_e2e_makespan_duration_avg = [
-        duration - schedulers_metrics['Random']["task_e2e_makespan_duration_avg"][i]
+        duration - schedulers_metrics['random']["task_e2e_makespan_duration_avg"][i]
         for i, duration in enumerate(nodes_metrics["task_e2e_makespan_duration_avg"][:max_checkpoints])]
     e2e_latency_ax1.plot([duration / 1000 for duration in calibrated_task_e2e_makespan_duration_avg],
-                         label=scheduler_type)
+                         label=scheduler_type, color=color)
     e2e_latency_ax2.plot(
         [duration / 1000 for duration in nodes_metrics["task_e2e_makespan_duration_avg"][:max_checkpoints]],
-        label=scheduler_type)
+        label=scheduler_type, color=color)
 
-    calibrated_num_unfinished_tasks = [num_unfinished_task - schedulers_metrics['Random']["num_unfinished_tasks"][i]
+    calibrated_num_unfinished_tasks = [num_unfinished_task - schedulers_metrics['random']["num_unfinished_tasks"][i]
                                        for i, num_unfinished_task in
                                        enumerate(nodes_metrics["num_unfinished_tasks"][:max_checkpoints])]
-    num_unfinished_tasks_ax1.plot(calibrated_num_unfinished_tasks, label=scheduler_type)
-    num_unfinished_tasks_ax2.plot(nodes_metrics["num_unfinished_tasks"][:max_checkpoints], label=scheduler_type)
+    num_unfinished_tasks_ax1.plot(calibrated_num_unfinished_tasks, label=scheduler_type, color=color)
+    num_unfinished_tasks_ax2.plot(nodes_metrics["num_unfinished_tasks"][:max_checkpoints], label=scheduler_type, color=color)
 
 if plot_with_legend:
-    scheduling_latency_fig.legend(*scheduling_latency_ax1.get_legend_handles_labels(), loc='upper center', ncol=4,
-                                  prop={'size': 9})
     num_unfinished_tasks_fig.legend(*num_unfinished_tasks_ax1.get_legend_handles_labels(), loc='upper center', ncol=4,
                                     prop={'size': 9})
 
-
-scheduling_latency_fig.savefig("{}/scheduling_latency_avg.png".format(target_dir))
 if plot_with_legend:
     e2e_latency_fig.legend(*e2e_latency_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
 e2e_latency_fig.savefig("{}/e2e_latency_avg.png".format(target_dir))
@@ -265,30 +271,32 @@ average_waiting_time_ax1.set_ylabel("Diff from Random")
 average_waiting_time_ax2.set_ylabel("Average Waiting Time in seconds")
 
 for scheduler_type, nodes_metrics in all_nodes_metrics.items():
-    calibrated_average_resource_mean = [resource - all_nodes_metrics['Random']["average_resource_mean"][i]
+    color = scheduler_name_map[scheduler_type]["color"]
+    calibrated_average_resource_mean = [resource - all_nodes_metrics['random']["average_resource_mean"][i]
                                         for i, resource in
                                         enumerate(nodes_metrics["average_resource_mean"][:max_checkpoints])]
-    average_resource_ax1.plot(calibrated_average_resource_mean, label=scheduler_type)
-    average_resource_ax2.plot(nodes_metrics["average_resource_mean"][:max_checkpoints], label=scheduler_type)
+    average_resource_ax1.plot(calibrated_average_resource_mean, label=scheduler_type, color=color)
+    average_resource_ax2.plot(nodes_metrics["average_resource_mean"][:max_checkpoints], label=scheduler_type, color=color)
 
-    calibrated_var_resource_mean = [variance - all_nodes_metrics['Random']["var_resource_mean"][i]
+    calibrated_var_resource_mean = [variance - all_nodes_metrics['random']["var_resource_mean"][i]
                                     for i, variance in enumerate(nodes_metrics["var_resource_mean"][:max_checkpoints])]
-    var_resource_ax1.plot(calibrated_var_resource_mean, label=scheduler_type)
-    var_resource_ax2.plot(nodes_metrics["var_resource_mean"][:max_checkpoints], label=scheduler_type)
+    var_resource_ax1.plot(calibrated_var_resource_mean, label=scheduler_type, color=color)
+    var_resource_ax2.plot(nodes_metrics["var_resource_mean"][:max_checkpoints], label=scheduler_type, color=color)
 
-    calibrated_average_waiting_time = [(waiting_time - all_nodes_metrics['Random']["average_waiting_time"][i]) / 1000
+    calibrated_average_waiting_time = [(waiting_time - all_nodes_metrics['random']["average_waiting_time"][i]) / 1000
                                        for i, waiting_time in
                                        enumerate(nodes_metrics["average_waiting_time"][:max_checkpoints])]
-    average_waiting_time_ax1.plot(calibrated_average_waiting_time, label=scheduler_type)
+    average_waiting_time_ax1.plot(calibrated_average_waiting_time, label=scheduler_type, color=color)
     average_waiting_time_ax2.plot([waiting_time / 1000 for waiting_time in
-                                   nodes_metrics["average_waiting_time"][:max_checkpoints]], label=scheduler_type)
-
+                                   nodes_metrics["average_waiting_time"][:max_checkpoints]], label=scheduler_type,
+                                  color=color)
 
 if plot_with_legend:
     average_resource_fig.legend(*average_resource_ax1.get_legend_handles_labels(), loc='upper center', ncol=4,
                                 prop={'size': 9})
     var_resource_fig.legend(*var_resource_ax1.get_legend_handles_labels(), loc='upper center', ncol=4, prop={'size': 9})
-    average_waiting_time_fig.legend(*average_waiting_time_ax1.get_legend_handles_labels(), loc='upper center', ncol=4,  prop={'size': 9})
+    average_waiting_time_fig.legend(*average_waiting_time_ax1.get_legend_handles_labels(), loc='upper center', ncol=4,
+                                    prop={'size': 9})
 
 average_resource_fig.savefig("{}/average_resource_mean.png".format(target_dir))
 
