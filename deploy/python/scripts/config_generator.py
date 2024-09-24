@@ -104,6 +104,8 @@ def parse_args():
     parser.add_option("--task_replay_time_scale", default=1.0,
                       help="The time scale to replay the tasks in the trace, used to speed up the replay process for "
                            "debugging scheduler performances")
+    parser.add_option("--task_duration_unit", default="ms",
+                      help="The unit of task duration in the trace file")
     return parser.parse_args()
 
 
@@ -215,6 +217,14 @@ def main():
     file.write("prequal.probe.age.budget.ms = {} \n".format(options.prequal_probe_age_budget_ms))
 
     file.write("task.replay.time.scale = {} \n".format(options.task_replay_time_scale))
+
+    if options.task_duration_unit == "s":
+        task_duration_unit = "SECONDS"
+    elif options.task_duration_unit == "ns":
+        task_duration_unit = "NANOSECONDS"
+    else:
+        task_duration_unit = "MILLISECONDS"
+    file.write("task.duration.unit = {} \n".format(task_duration_unit))
 
     file.close()
 

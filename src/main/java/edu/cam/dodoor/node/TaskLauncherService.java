@@ -1,5 +1,6 @@
 package edu.cam.dodoor.node;
 
+import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -17,12 +18,19 @@ public class TaskLauncherService {
     private Node _node;
     private NodeServiceMetrics _nodeServiceMetrics;
     private ThreadPoolExecutor _executor;
+    private TimeUnit _timeUnit;
 
     /** A runnable that spins in a loop asking for tasks to launch and launching them. */
     private class TaskLaunchRunnable implements Runnable {
         TaskSpec _task;
+        TimeUnit _timeUnit;
         public TaskLaunchRunnable(TaskSpec task) {
+            this(task, TimeUnit.MILLISECONDS);
+        }
+
+        public TaskLaunchRunnable(TaskSpec task, TimeUnit timeUnit) {
             _task = task;
+            _timeUnit = timeUnit;
         }
 
         @Override
@@ -35,7 +43,7 @@ public class TaskLauncherService {
                 Process process = executeLaunchTask(task);
                 long pid = process.pid();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
-                boolean terminated = process.waitFor(task._duration, TimeUnit.MILLISECONDS);
+                boolean terminated = process.waitFor(task._duration, _timeUnit);
                 if (!terminated) {
                     process.destroy();
                 }
@@ -54,13 +62,25 @@ public class TaskLauncherService {
         }
 
         /** Executes to launch a task */
-        private Process executeLaunchTask(TaskSpec task) throws IOException, InterruptedException {
+        private Process executeLaunchTask(TaskSpec task) throws IOException{
             Runtime rt = Runtime.getRuntime();
             long memory = task._resourceVector.memory;
             long disks = task._resourceVector.disks;
             int cpu = task._resourceVector.cores;
             long duration = task._duration;
-            long durationInSec = duration / 1000;
+            long durationInSec;
+            if (_timeUnit == TimeUnit.MILLISECONDS) {
+                durationInSec = duration / 1000;
+            } else if (_timeUnit == TimeUnit.NANOSECONDS) {
+                durationInSec = duration / 1000000000;
+            } else if (_timeUnit == TimeUnit.SECONDS) {
+                durationInSec = duration;
+            } else {
+                throw new RuntimeException("Unsupported time unit " + _timeUnit);
+            }
+            if (durationInSec <= 0) {
+                durationInSec = 1;
+            }
             return rt.exec(
                     generateStressCommand(cpu, memory, disks, durationInSec));
         }
@@ -78,10 +98,12 @@ public class TaskLauncherService {
         _nodeServiceMetrics = nodeThrift.getNodeServiceMetrics();
         LOG.debug("Initializing task launcher service with {} slots", numSlots);
         _executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numSlots);
+        String timeUnitStr = conf.getString(DodoorConf.TASK_DURATION_TIME_UNIT, "MILLISECONDS");
+        _timeUnit = TimeUnit.valueOf(timeUnitStr);
     }
 
     public void tryToLaunchTask(TaskSpec task) {
-        TaskLaunchRunnable taskLaunchRunnable = new TaskLaunchRunnable(task);
+        TaskLaunchRunnable taskLaunchRunnable = new TaskLaunchRunnable(task, _timeUnit);
         _executor.submit(taskLaunchRunnable);
     }
 
