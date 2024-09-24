@@ -6,6 +6,7 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -80,6 +81,7 @@ public class TaskLauncherService {
             } else {
                 throw new RuntimeException("Unsupported time unit " + _timeUnit);
             }
+            LOG.debug("Launching task {} with {} duration", task._taskId, durationInSec);
             if (durationInSec <= 0) {
                 durationInSec = 1;
             }
@@ -102,6 +104,7 @@ public class TaskLauncherService {
         _executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numSlots);
         String timeUnitStr = conf.getString(DodoorConf.TASK_DURATION_TIME_UNIT, "MILLISECONDS");
         _timeUnit = TimeUnit.valueOf(timeUnitStr);
+        LOG.debug("Task duration time unit is {}", _timeUnit);
     }
 
     public void tryToLaunchTask(TaskSpec task) {
