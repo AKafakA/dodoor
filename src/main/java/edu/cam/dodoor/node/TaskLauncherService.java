@@ -40,6 +40,7 @@ public class TaskLauncherService {
             _nodeServiceMetrics.taskLaunched(waitingDuration);
             LOG.debug("Received task {}", task._taskId);
             try {
+                long nanoTime = System.nanoTime();
                 Process process = executeLaunchTask(task);
                 long pid = process.pid();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
@@ -47,7 +48,8 @@ public class TaskLauncherService {
                 if (!terminated) {
                     process.destroy();
                 }
-                LOG.debug("Task {} completed", task._taskId);
+                long durationInNano = System.nanoTime() - nanoTime;
+                LOG.debug("Task {} completed in {} nanoseconds", task._taskId, durationInNano);
                 _node.taskFinished(task.getFullTaskId());
                 _nodeServiceMetrics.taskFinished();
                 BufferedReader stdError = new BufferedReader(new
