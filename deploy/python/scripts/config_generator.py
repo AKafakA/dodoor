@@ -224,7 +224,7 @@ def main():
         task_duration_unit = "NANOSECONDS"
     else:
         task_duration_unit = "MILLISECONDS"
-    file.write("task.duration.unit = {} \n".format(task_duration_unit))
+    file.write("task.duration.time.unit = {} \n".format(task_duration_unit))
 
     file.close()
 
