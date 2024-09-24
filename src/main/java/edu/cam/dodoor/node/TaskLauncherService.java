@@ -103,7 +103,15 @@ public class TaskLauncherService {
         LOG.debug("Initializing task launcher service with {} slots", numSlots);
         _executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numSlots);
         String timeUnitStr = conf.getString(DodoorConf.TASK_DURATION_TIME_UNIT, "MILLISECONDS");
-        _timeUnit = TimeUnit.valueOf(timeUnitStr);
+        if (timeUnitStr.equals("MILLISECONDS")) {
+            _timeUnit = TimeUnit.MILLISECONDS;
+        } else if (timeUnitStr.equals("NANOSECONDS")) {
+            _timeUnit = TimeUnit.NANOSECONDS;
+        } else if (timeUnitStr.equals("SECONDS")) {
+            _timeUnit = TimeUnit.SECONDS;
+        } else {
+            throw new RuntimeException("Unsupported time unit " + timeUnitStr);
+        }
         LOG.debug("Task duration time unit is {}", _timeUnit);
     }
 
