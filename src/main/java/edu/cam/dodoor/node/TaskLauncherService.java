@@ -41,16 +41,16 @@ public class TaskLauncherService {
             _nodeServiceMetrics.taskLaunched(waitingDuration);
             LOG.debug("Received task {}", task._taskId);
             try {
-                long nanoTime = System.nanoTime();
                 Process process = executeLaunchTask(task);
                 long pid = process.pid();
+                long triggerTime = System.currentTimeMillis();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
                 boolean terminated = process.waitFor(task._duration, _timeUnit);
                 if (!terminated) {
                     process.destroy();
                 }
-                long durationInNano = System.nanoTime() - nanoTime;
-                LOG.debug("Task {} completed in {} nanoseconds", task._taskId, durationInNano);
+                long durationInMs = System.currentTimeMillis() - triggerTime;
+                LOG.debug("Task {} completed in {} ms", task._taskId, durationInMs);
                 _node.taskFinished(task.getFullTaskId());
                 _nodeServiceMetrics.taskFinished();
                 BufferedReader stdError = new BufferedReader(new
