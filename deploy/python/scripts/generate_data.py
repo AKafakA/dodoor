@@ -1,9 +1,11 @@
 from deploy.python.data.generator.azure.azure_data_generator import AzureDataGenerator
 from deploy.python.data.generator.gcp.google_cloud_task_data_generator import GoogleCloudTaskDataGenerator
 from deploy.python.data.generator.gcp.google_cloud_v2_task_data_generator import GoogleCloudV2TaskDataGenerator
-import random
 
-generate_azure = True
+from deploy.python.data.generator.serverless.serverless_data_generator import ServerlessDataGenerator
+
+generate_azure = False
+generate_serverless = True
 if generate_azure:
     # random pick one hour in the first day to collect the trace
     # time_window = 1 / 48
@@ -70,3 +72,9 @@ if generate_gcp_v2:
     data_10m = gcp_datav2_generator.generate(10000000, 0, 1000 * 60 * 10, [0, 1 / 12],
                                              max_cores=8, max_memory=60 * 1024, max_disk=-1)
     gcp_datav2_generator.write_data_target_output(data_10m, gcp_output_path_10m)
+
+if generate_serverless:
+    serverless_dir = "deploy/resources/data/raw_data/huawei_serverless"
+    serverless_data_generator = ServerlessDataGenerator(serverless_dir)
+    data = serverless_data_generator.generate(-1, 0, -1, [0/144, 1/144])
+    serverless_data_generator.write_data_target_output(data, "deploy/resources/data/serverless_data_cloudlab")

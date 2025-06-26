@@ -54,5 +54,4 @@ deploy/resources/host_addresses/
 deploy/resources/figure/
 deploy/resources/data/raw_data/
 deploy/resources/old_logs/
-
 *.out

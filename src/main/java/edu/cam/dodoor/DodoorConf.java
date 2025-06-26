@@ -23,6 +23,10 @@ public class DodoorConf {
     public final static String TASK_REPLAY_TIME_SCALE = "task.replay.time.scale";
     public final static double DEFAULT_TASK_REPLAY_TIME_SCALE = 1.0;
 
+    public final static String TASK_DURATION_TIME_UNIT = "task.duration.time.unit";
+    public final static String MILLISECONDS = "MILLISECONDS";
+    public final static String NANOSECONDS = "NANOSECONDS";
+
 
 
     /**

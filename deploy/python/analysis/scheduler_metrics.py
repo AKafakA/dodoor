@@ -32,6 +32,30 @@ class SchedulerMetrics:
                                      "p999=\d+.\d+(E-\d+)?")
     finished_tasks_pattern = re.compile("type=COUNTER, name=scheduler.metrics.tasks.finished.count, count=\d+")
 
+    late_binding_enqueue_pattern = re.compile("type=HISTOGRAM, name=scheduler.metrics.tasks.e2e.late.binding.enqueue.latency.histograms, "
+                                       "count=\d+, min=\d+, "
+                                       "max=\d+, "
+                                       "mean=\d+.\d+(E-\d+)?, "
+                                       "stddev=\d+.\d+(E-\d+)?, "
+                                       "p50=\d+.\d+(E-\d+)?, "
+                                       "p75=\d+.\d+(E-\d+)?, "
+                                       "p95=\d+.\d+(E-\d+)?, "
+                                       "p98=\d+.\d+(E-\d+)?, "
+                                       "p99=\d+.\d+(E-\d+)?, "
+                                       "p999=\d+.\d+(E-\d+)?")
+
+    late_binding_confirm_pattern = re.compile("type=HISTOGRAM, name=scheduler.metrics.tasks.e2e.late.binding.confirm.latency.histograms, "
+                                      "count=\d+, min=\d+, "
+                                      "max=\d+, "
+                                      "mean=\d+.\d+(E-\d+)?, "
+                                      "stddev=\d+.\d+(E-\d+)?, "
+                                      "p50=\d+.\d+(E-\d+)?, "
+                                      "p75=\d+.\d+(E-\d+)?, "
+                                      "p95=\d+.\d+(E-\d+)?, "
+                                      "p98=\d+.\d+(E-\d+)?, "
+                                      "p99=\d+.\d+(E-\d+)?, "
+                                      "p999=\d+.\d+(E-\d+)?")
+
     def __init__(self, log_file, numTasks=8715):
         self.metrics = {"num_messages": [],
                         "e2e_latency_avg": [],
@@ -49,7 +73,9 @@ class SchedulerMetrics:
                         "task_makespan_duration_P99": [],
                         "task_makespan_duration_P999": [],
                         "submitted_tasks": [],
-                        "finished_tasks": []}
+                        "finished_tasks": [],
+                        "late_binding_enqueue_avg": [],
+                        "late_binding_confirm_ave": []}
         self.log_file = log_file
         self.numTasks = numTasks
         self.parse()
@@ -84,6 +110,10 @@ class SchedulerMetrics:
                     t += 10
                     if num_finished_tasks == self.numTasks:
                         self.metrics["total_makespan"] = t
+                elif self.late_binding_enqueue_pattern.match(line):
+                    self.metrics["late_binding_enqueue_avg"].append(float(line.split(",")[5].split("=")[1]))
+                elif self.late_binding_confirm_pattern.match(line):
+                    self.metrics["late_binding_confirm_ave"].append(float(line.split(",")[5].split("=")[1]))
         return self.metrics
 
     def get_num_messages(self):
@@ -125,12 +155,16 @@ class SchedulerMetrics:
     def get_task_makespan_duration_p999(self):
         return self.metrics["task_makespan_duration_P999"]
 
-    def get_total_makespan(self):
-        return self.metrics["total_makespan"]
 
     def get_finished_tasks(self):
         return self.metrics["finished_tasks"]
 
     def get_submitted_tasks(self):
         return self.metrics["submitted_tasks"]
+
+    def get_late_binding_enqueue_avg(self):
+        return self.metrics["late_binding_enqueue_avg"]
+
+    def get_late_binding_confirm_avg(self):
+        return self.metrics["late_binding_confirm_ave"]
 
