@@ -35,16 +35,14 @@ public class TaskLauncherService {
                 Process process = executeLaunchTask(task);
                 long pid = process.pid();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
-                boolean terminated = process.waitFor(task._duration, TimeUnit.MILLISECONDS);
-                if (!terminated) {
-                    process.destroy();
-                }
+                Thread.sleep(task._duration);
+                process.destroyForcibly();
                 LOG.debug("Task {} completed", task._taskId);
                 _node.taskFinished(task.getFullTaskId());
                 _nodeServiceMetrics.taskFinished();
                 BufferedReader stdError = new BufferedReader(new
                         InputStreamReader(process.getErrorStream()));
-                if (!stdError.readLine().isEmpty() || !terminated) {
+                if (!stdError.readLine().isEmpty()) {
                     LOG.error("Task {} failed to execute with error {} or unterminated", task._taskId, stdError.readLine());
                 }
             } catch (Exception e) {
@@ -58,7 +56,7 @@ public class TaskLauncherService {
             Runtime rt = Runtime.getRuntime();
             long memory = task._resourceVector.memory;
             long disks = task._resourceVector.disks;
-            int cpu = task._resourceVector.cores;
+            double cpu = task._resourceVector.cores;
             long duration = task._duration;
             long durationInSec = duration / 1000;
             return rt.exec(
@@ -101,24 +99,38 @@ public class TaskLauncherService {
         return _executor.getQueue().size();
     }
 
-    private String generateStressCommand(int cores, long memory, long disks, long durationInSec) {
-        if (disks > 0) {
-            cores = cores - 1; // hdd itself is cpu intensive and need to consume one core
-            if (cores < 1) {
-                cores = 1;
+    private String generateStressCommand(double cores, long memory, long disks, long durationInSec) {
+        if (Math.floor(cores) == cores) {
+            int intCores = (int) cores;
+            if (disks <= 0 && memory <= 0) {
+                return String.format("stress -c %d --timeout %d", intCores, durationInSec);
+            } else if (disks <= 0) {
+                return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %d --timeout %d",
+                        intCores, memory, durationInSec, durationInSec);
+            } else if (memory <= 0) {
+                return String.format("stress -c %d --hdd 1 --hdd-bytes %dM --timeout %d", intCores, disks, durationInSec);
+            } else {
+                return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %d -d 1 --hdd-bytes %dM --timeout %d",
+                        intCores, memory, durationInSec, disks, durationInSec);
+            }
+        } else {
+            // If cores is not an integer, we round it up to the next integer
+            int intCores = (int) Math.ceil(cores);
+            double load = cores / intCores; // load is the fraction of the core to be used
+            if (disks <= 0 && memory <= 0) {
+                return String.format("stress-ng -c %d -l %f --timeout %d",
+                        intCores, load, durationInSec);
+            } else if (disks <= 0) {
+                return String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %d --timeout %d",
+                        intCores, load, memory, durationInSec, durationInSec);
+            } else if (memory <= 0) {
+                return String.format("stress-ng -c %d -l %f --hdd 1 --hdd-bytes %dM --timeout %d",
+                        intCores, load, disks, durationInSec);
+            } else {
+                return String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %d -d 1 --hdd-bytes %dM --timeout %d",
+                        intCores, load, memory, durationInSec, disks, durationInSec);
             }
         }
 
-        if (disks <= 0 && memory <= 0) {
-            return String.format("stress -c %d --timeout %d", cores, durationInSec);
-        } else if (disks <= 0) {
-            return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %d --timeout %d",
-                    cores, memory, durationInSec, durationInSec);
-        } else if (memory <= 0) {
-            return String.format("stress -c %d --hdd 1 --hdd-bytes %dM --timeout %d", cores, disks, durationInSec);
-        } else {
-            return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %d -d 1 --hdd-bytes %dM --timeout %d",
-                    cores, memory, durationInSec, disks, durationInSec);
-        }
     }
 }

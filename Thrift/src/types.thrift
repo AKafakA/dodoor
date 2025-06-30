@@ -30,7 +30,7 @@ struct TPlacementPreference {
 }
 
 struct TResourceVector {
-  1: i32 cores;       // # Cores
+  1: double cores;       // # Cores
   2: i64 memory;      // Memory, in Mb
   3: i64 disks;
 }

@@ -1,6 +1,7 @@
 package edu.cam.dodoor.node;
 
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.AtomicDouble;
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
@@ -19,7 +20,7 @@ public class NodeImpl implements Node {
     private final static Logger LOG = LoggerFactory.getLogger(NodeImpl.class);
 
     private volatile TaskScheduler _taskScheduler;
-    private AtomicInteger _requestedCores;
+    private AtomicDouble _requestedCores;
     private AtomicLong _requestedMemory;
     private AtomicLong _requestedDisk;
     private AtomicLong _totalDurations;
@@ -57,7 +58,7 @@ public class NodeImpl implements Node {
             metricsTrackerService.start();
         }
 
-        _requestedCores = new AtomicInteger();
+        _requestedCores = new AtomicDouble();
         _requestedMemory = new AtomicLong();
         _requestedDisk = new AtomicLong();
         _totalDurations = new AtomicLong();
