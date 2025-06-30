@@ -3,100 +3,243 @@
         {
             "taskTypeId": "float_operation",
             "taskExecPath": "tree/master/google/cpu-memory/float_operation/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "linpack",
             "taskExecPath": "tree/master/google/cpu-memory/linpack/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "matmul",
             "taskExecPath": "tree/master/google/cpu-memory/matmul/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "image_processing",
             "taskExecPath": "tree/master/google/cpu-memory/image_processing/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "video_processing",
             "taskExecPath": "tree/master/google/cpu-memory/video_processing/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "map_reduce",
             "taskExecPath": "tree/master/google/cpu-memory/map_reduce/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "chameleon",
             "taskExecPath": "tree/master/google/cpu-memory/chameleon/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "pyaes",
             "taskExecPath": "tree/master/google/cpu-memory/pyaes/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "feature_generation",
             "taskExecPath": "tree/master/google/cpu-memory/feature_generation/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "model_training",
             "taskExecPath": "tree/master/google/cpu-memory/model_training/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         },
         {
             "taskTypeId": "model_serving",
             "taskExecPath": "tree/master/google/cpu-memory/model_serving/main.py",
-            "resourceVector": {"cores": 1, "memory": 1024, "disks": 1},
-            "estimatedDuration": {
-                "m400": 1000,
-                "m510": 1000
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
             }
         }
     ]
