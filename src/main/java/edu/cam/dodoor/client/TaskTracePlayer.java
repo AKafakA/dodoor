@@ -9,6 +9,8 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -76,40 +78,50 @@ public class TaskTracePlayer {
                 withRequiredArg().ofType(String.class);
         parser.accepts("c", "configuration file (required)").
                 withRequiredArg().ofType(String.class);
+        parser.accepts("host", "host configurations file (required)").
+                withRequiredArg().ofType(String.class);
         parser.accepts("help", "print help statement");
         OptionSet options = parser.parse(args);
 
 
         DodoorClient client = new DodoorClient();
-        Configuration config = new PropertiesConfiguration();
+        Configuration staticConfig = new PropertiesConfiguration();
 
         if (options.has("c")) {
             String configFile = (String) options.valueOf("c");
-            config = new PropertiesConfiguration(configFile);
+            staticConfig = new PropertiesConfiguration(configFile);
         }
-
-        String[] schedulerPorts = config.getStringArray(DodoorConf.SCHEDULER_THRIFT_PORTS);
-
-        if (schedulerPorts.length == 0) {
+        String[] schedulerPorts;
+        if (options.has("host")) {
+            String hostConfigFile = (String) options.valueOf("host");
+            JSONObject hostConfig = new JSONObject(Files.readString(Paths.get(hostConfigFile)));
+            JSONObject schedulerConfig = hostConfig.getJSONObject(DodoorConf.SCHEDULER_SERVICE_NAME);
+            JSONArray schedulerPortsJson = schedulerConfig.getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);
+            schedulerPorts = new String[schedulerPortsJson.length()];
+            for (int i = 0; i < schedulerPortsJson.length(); i++) {
+                schedulerPorts[i] = schedulerPortsJson.getString(i);
+            }
+        } else {
             schedulerPorts = new String[]{Integer.toString(DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT)};
         }
+
         InetSocketAddress[] schedulerAddresses = new InetSocketAddress[schedulerPorts.length];
         for (int i = 0; i < schedulerPorts.length; i++) {
             schedulerAddresses[i] = new InetSocketAddress("localhost", Integer.parseInt(schedulerPorts[i]));
         }
-        client.initialize(schedulerAddresses, config);
+        client.initialize(schedulerAddresses, staticConfig);
         long globalStartTime = System.currentTimeMillis();
 
         String traceFile = (String) options.valueOf("f");
         List<String> allLines = Files.readAllLines(Paths.get(traceFile));
 
-        boolean addDelay = config.getBoolean(DodoorConf.REPLAY_WITH_TIMELINE_DELAY,
+        boolean addDelay = staticConfig.getBoolean(DodoorConf.REPLAY_WITH_TIMELINE_DELAY,
                 DodoorConf.DEFAULT_REPLAY_WITH_TIMELINE_DELAY);
 
-        boolean replayWithDisk = config.getBoolean(DodoorConf.REPLAY_WITH_DISK,
+        boolean replayWithDisk = staticConfig.getBoolean(DodoorConf.REPLAY_WITH_DISK,
                 DodoorConf.DEFAULT_REPLAY_WITH_DISK);
 
-        double taskReplyRate = config.getDouble(DodoorConf.TASK_REPLAY_TIME_SCALE,
+        double taskReplyRate = staticConfig.getDouble(DodoorConf.TASK_REPLAY_TIME_SCALE,
                 DodoorConf.DEFAULT_TASK_REPLAY_TIME_SCALE);
 
         for (String line : allLines) {

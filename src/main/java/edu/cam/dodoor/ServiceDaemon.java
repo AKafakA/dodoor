@@ -11,6 +11,14 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.lang.reflect.Array;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ServiceDaemon {
     public final static Level DEFAULT_LOG_LEVEL = Level.DEBUG;
@@ -19,12 +27,16 @@ public class ServiceDaemon {
         OptionParser parser = new OptionParser();
         parser.accepts("c", "configuration file (required)").
                 withRequiredArg().ofType(String.class);
+        parser.accepts("host", "host configurations file (required)").
+                withRequiredArg().ofType(String.class);
         parser.accepts("s", "If contains scheduler or not").
                 withRequiredArg().ofType(Boolean.class);
         parser.accepts("d", "If contains a datastore service or not").
                 withRequiredArg().ofType(Boolean.class);
         parser.accepts("n", "If contains a node service or not").
                 withRequiredArg().ofType(Boolean.class);
+        parser.accepts("type", "The node type of current hosts").
+                withRequiredArg().ofType(String.class);
         parser.accepts("help", "print help statement");
         OptionSet options = parser.parse(args);
 
@@ -39,6 +51,10 @@ public class ServiceDaemon {
         String configFile = (String) options.valueOf("c");
         Configuration conf = new PropertiesConfiguration(configFile);
 
+        String hostConfigFile = (String) options.valueOf("host");
+        JSONObject hostConfig = new JSONObject(
+                Files.readString(Paths.get(hostConfigFile)));
+
         Boolean isScheduler = (Boolean) options.valueOf("s");
         Boolean isDataStore = (Boolean) options.valueOf("d");
         Boolean isNode = (Boolean) options.valueOf("n");
@@ -47,11 +63,14 @@ public class ServiceDaemon {
             throw new ConfigurationException("At least one service must be specified");
         }
 
+        String nodeType = (String) options.valueOf("nodeType");
         ServiceDaemon daemon = new ServiceDaemon();
-        daemon.initialize(conf, isScheduler, isDataStore, isNode);
+        daemon.initialize(conf, hostConfig, nodeType, isScheduler, isDataStore, isNode);
     }
 
     private void initialize(Configuration config,
+                            JSONObject hostConfig,
+                            String nodeType,
                             boolean isScheduler,
                             boolean isDataStore,
                             boolean isNode) throws Exception{
@@ -61,36 +80,45 @@ public class ServiceDaemon {
 
         if (isNode) {
             // current nmPort and nePort are only supported to be one in each node
-            int nmPorts = config.getInt(DodoorConf.NODE_MONITOR_THRIFT_PORTS, DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT);
-            int nePorts = config.getInt(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS, DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT);
-            new NodeThrift().initialize(config, nmPorts, nePorts);
+            JSONObject nodeConfig = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME);
+            int nmPorts = nodeConfig.getInt(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
+            int nePorts = nodeConfig.getInt(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
+            JSONArray nodeTypes = nodeConfig.getJSONArray(DodoorConf.NODE_TYPE_LIST_KEY);
+            JSONObject nodeTypeConfig = null;
+            for (int i = 0; i < nodeTypes.length(); i++) {
+                JSONObject nodeTypeJson = nodeTypes.getJSONObject(i);
+                String nodeTypeName = nodeTypeJson.getString(DodoorConf.NODE_TYPE);
+                if (nodeTypeName.equals(nodeType)) {
+                    nodeTypeConfig = nodeTypeJson;
+                    new NodeThrift().initialize(config, nmPorts, nePorts, nodeTypeConfig);
+                    break;
+                }
+            }
+            if (nodeTypeConfig == null) {
+                throw new ConfigurationException("Node type " + nodeType + " not found in configuration");
+            }
         }
 
         if (isDataStore) {
             boolean logKicked = false;
-            String[] dataStorePorts = config.getStringArray(DodoorConf.DATA_STORE_THRIFT_PORTS);
-            if (dataStorePorts.length == 0 ) {
-                dataStorePorts = new String[]{Integer.toString(DodoorConf.DEFAULT_DATA_STORE_THRIFT_PORT)};
-            }
-
-            for (String dataStorePort : dataStorePorts) {
+            JSONArray dataStorePortsArray = hostConfig.getJSONObject(DodoorConf.DATA_STORE_SERVICE_NAME)
+                    .getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);
+            for (int i = 0; i < dataStorePortsArray.length(); i++) {
+                String dataStorePort = dataStorePortsArray.getString(i);
                 DataStoreThrift dataStore = new DataStoreThrift();
-                dataStore.initialize(config, Integer.parseInt(dataStorePort), logKicked);
+                dataStore.initialize(config, Integer.parseInt(dataStorePort), logKicked, hostConfig);
                 logKicked = true;
             }
         }
 
         if (isScheduler) {
-            String[] schedulerPorts = config.getStringArray(DodoorConf.SCHEDULER_THRIFT_PORTS);
+            JSONArray schedulerPorts = hostConfig.getJSONObject(DodoorConf.SCHEDULER_SERVICE_NAME)
+                    .getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);
             boolean logKicked = false;
-
-            if (schedulerPorts.length == 0) {
-                schedulerPorts = new String[]{Integer.toString(DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT)};
-            }
-
-            for (String schedulerPort : schedulerPorts) {
+            for (int i = 0; i < schedulerPorts.length(); i++) {
+                String schedulerPort = schedulerPorts.getString(i);
                 SchedulerThrift scheduler = new SchedulerThrift();
-                scheduler.initialize(config, Integer.parseInt(schedulerPort), logKicked);
+                scheduler.initialize(config, Integer.parseInt(schedulerPort), logKicked, hostConfig);
                 logKicked = true;
             }
         }

@@ -28,22 +28,22 @@ public class Network {
 
   /** Return the hostname of this machine, based on configured value, or system
    * Interrogation. */
-  public static String getHostName(Configuration conf) {
+  public static String getHostName() {
     String defaultHostname = null;
     try {
       defaultHostname = InetAddress.getLocalHost().getHostName();
     } catch (UnknownHostException e) {
       defaultHostname = "localhost";
     }
-    return conf.getString(DodoorConf.HOSTNAME, defaultHostname);
+    return defaultHostname;
   }
   
   /**
    * Return the IP address of this machine, as determined from the hostname
    * specified in configuration or from querying the machine.
    */
-  public static String getLocalIPAddress(Configuration conf) {
-    String hostname = getHostName(conf);
+  public static String getLocalIPAddress() {
+    String hostname = getHostName();
     try {
       return InetAddress.getByName(hostname).getHostAddress();
     } catch (UnknownHostException e) {
@@ -71,6 +71,6 @@ public class Network {
         }
       }
     }
-    return new THostPort(Network.getLocalIPAddress(config), port);
+    return new THostPort(Network.getLocalIPAddress(), port);
   }
 }

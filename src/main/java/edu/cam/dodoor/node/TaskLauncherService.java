@@ -2,6 +2,7 @@ package edu.cam.dodoor.node;
 
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,13 +65,13 @@ public class TaskLauncherService {
         }
     }
 
-    public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift) {
+    public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift, JSONObject nodeConfig) {
         /* The number of threads used by the service. */
         int numSlots = numSlot;
         if (numSlots <= 0) {
             // If the scheduler does not enforce a maximum number of tasks, just use a number of
             // threads equal to the number of cores.
-            numSlots = Resources.getSystemCoresCapacity(conf);
+            numSlots = Resources.getSystemCoresCapacity(nodeConfig);
         }
         _node = nodeThrift._node;
         _nodeServiceMetrics = nodeThrift.getNodeServiceMetrics();

@@ -42,15 +42,15 @@ public class LoadScore {
                                                                double memWeight,
                                                                double diskWeight,
                                                                double totalDurationWeight,
-                                                               TResourceVector resourceCapacity) {
+                                                               Map<String, TResourceVector> resourceCapacityMap) {
       if (totalDurationWeight < 0 || totalDurationWeight > 1) {
         throw new IllegalArgumentException("totalDurationWeight must be between 0 and 1");
       }
 
-      double firstResourceLoad = getResourceLoadScores(firstNodeState.resourceRequested, taskResources,
-                                                      cpuWeight, memWeight, diskWeight, resourceCapacity);
-      double secondResourceLoad = getResourceLoadScores(secondNodeState.resourceRequested, taskResources,
-                                                         cpuWeight, memWeight, diskWeight, resourceCapacity);
+      double firstResourceLoad = getResourceLoadScores(firstNodeState.resourceRequested,
+              taskResources, cpuWeight, memWeight, diskWeight, resourceCapacityMap.get(firstNodeState.nodeType));
+      double secondResourceLoad = getResourceLoadScores(secondNodeState.resourceRequested,
+              taskResources, cpuWeight, memWeight, diskWeight, resourceCapacityMap.get(firstNodeState.nodeType));
 
       double firstNormalizedResourceLoad = firstResourceLoad / (firstResourceLoad + secondResourceLoad);
       double secondNormalizedResourceLoad = secondResourceLoad / (firstResourceLoad + secondResourceLoad);

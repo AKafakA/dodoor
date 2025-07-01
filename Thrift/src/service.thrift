@@ -25,7 +25,7 @@ service SchedulerService {
   # Update the a view of state of the nodes for scheduling decisions
   void updateNodeState(1: map<string, types.TNodeState> snapshot);
   # Register a node with the given socket address for enqueue and monitoring (IP: nmPort:nePort)
-  void registerNode(1: string nodeFullAddress);
+  void registerNode(1: string nodeFullAddress, 2: string nodeType);
     # Register a datastore with the given socket address (IP: Port)
   void registerDataStore(1: string dataStoreAddress);
   # used to caculate the end 2 end latency
@@ -39,7 +39,7 @@ service DataStoreService {
   # Register a scheduler with the given socket address (IP: Port)
   void registerScheduler(1: string schedulerAddress);
   # Register a node with the given socket address for enqueue and monitoring (IP: nmPort:nePort)
-  void registerNode(1: string nodeFullAddress);
+  void registerNode(1: string nodeFullAddress, 2: string nodeType);
   # Update the state of the nodes for scheduling decisions by given the node enqueue socket address and the node state
   void overrideNodeState(1:string nodeEnqueueAddress, 2:types.TNodeState nodeState);
   # Add the load of set of tasks to the node specified by the nodeEnqueueAddress

@@ -75,6 +75,7 @@ struct TNodeState {
   2: i32 numTasks;  # Number of tasks running on the node
   3: i64 totalDurations;  # Total duration of all tasks pending on the node
   4: string nodeIp;  # The address of the node's enqueue service
+  5: string nodeType;  # The type of the node, e.g. "HW", "LW", "GPU"
 }
 
 exception ServerNotReadyException {

@@ -11,8 +11,8 @@ public class CachedTaskPlacer extends TaskPlacer{
     public static final Logger LOG = LoggerFactory.getLogger(CachedTaskPlacer.class);
 
     public CachedTaskPlacer(double beta, PackingStrategy packingStrategy,
-                            TResourceVector resourceCapacity) {
-        this(beta, packingStrategy, resourceCapacity, 1, 1, 1, 1);
+                            Map<String, TResourceVector> resourceCapacityMap) {
+        this(beta, packingStrategy, resourceCapacityMap, 1, 1, 1, 1);
         if (packingStrategy == PackingStrategy.SCORE) {
             throw new IllegalArgumentException("Packing strategy should not be SCORE without resource weights");
         }
@@ -20,9 +20,9 @@ public class CachedTaskPlacer extends TaskPlacer{
 
     
     public CachedTaskPlacer(double beta, PackingStrategy packingStrategy,
-                            TResourceVector resourceCapacity,
+                            Map<String, TResourceVector> resourceCapacityMap,
                             float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
-        super(beta, packingStrategy, resourceCapacity, cpuWeight, memWeight, diskWeight, totalDurationWeight);
+        super(beta, packingStrategy, resourceCapacityMap, cpuWeight, memWeight, diskWeight, totalDurationWeight);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class CachedTaskPlacer extends TaskPlacer{
                 if (_packingStrategy == PackingStrategy.SCORE) {
                     Map.Entry<Double, Double> scores = LoadScore.getLoadScoresPairs(loadMaps.get(nodeAddresses.get(firstIndex)),
                             loadMaps.get(nodeAddresses.get(secondIndex)), taskResources, _cpuWeight, _memWeight, _diskWeight,
-                            _totalDurationWeight, _resourceCapacity);
+                            _totalDurationWeight, _resourceCapacityMap);
                     score1 = scores.getKey();
                     score2 = scores.getValue();
                 } else if (_packingStrategy == PackingStrategy.RIF) {

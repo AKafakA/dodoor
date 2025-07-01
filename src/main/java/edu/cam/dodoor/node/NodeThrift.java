@@ -9,6 +9,7 @@ import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
      * within this class under certain configurations (e.g. a config file specifies
      * multiple NodeMonitors).
      */
-    public void initialize(Configuration config, int nmPort, int nePort)
+    public void initialize(Configuration staticConfig, int nmPort, int nePort, JSONObject nodeConfig)
             throws IOException, TException {
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
         _nodeServiceMetrics = new NodeServiceMetrics(metrics);
@@ -49,38 +50,37 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         _dataStoreAddress = new ArrayList<>();
 
         boolean cachedEnabled = SchedulerUtils.isCachedEnabled(
-                config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
+                staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
         // Setup internal-facing agent service.
         NodeEnqueueService.Processor<NodeEnqueueService.Iface> nodeEnqueueProcessor =
                 new NodeEnqueueService.Processor<>(this);
-        int neThreads = config.getInt(
+        int neThreads = staticConfig.getInt(
                 DodoorConf.INTERNAL_THRIFT_THREADS,
                 DodoorConf.DEFAULT_NM_INTERNAL_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(nePort,neThreads, nodeEnqueueProcessor);
 
         if (cachedEnabled) {
-            for (String dataStoreAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_DATA_STORE,
-                    DodoorConf.DATA_STORE_THRIFT_PORTS)) {
+            for (String dataStoreAddress : ConfigUtil.parseNodeAddress(nodeConfig, DodoorConf.DATA_STORE_SERVICE_NAME)) {
                handleRegisterDataStore(dataStoreAddress);
             }
         }
-        _neAddressStr = Network.thriftToSocketStr(Network.getInternalHostPort(nePort, config));
-        _nodeIp = Network.getInternalHostPort(nePort, config).host;
+        _neAddressStr = Network.thriftToSocketStr(Network.getInternalHostPort(nePort, staticConfig));
+        _nodeIp = Network.getInternalHostPort(nePort, staticConfig).host;
 
         _node = new NodeImpl();
-        _node.initialize(config, this);
+        _node.initialize(staticConfig, this, nodeConfig);
 
         // Setup application-facing agent service.
         NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
                 new NodeMonitorService.Processor<>(this);
 
-        int threads = config.getInt(DodoorConf.NM_THRIFT_THREADS,
+        int threads = staticConfig.getInt(DodoorConf.NM_THRIFT_THREADS,
                 DodoorConf.DEFAULT_NM_THRIFT_THREADS);
 
         TServers.launchThreadedThriftServer(nmPort, threads, processor);
 
-        _schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
+        _schedulerType = staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
     }
 
     @Override

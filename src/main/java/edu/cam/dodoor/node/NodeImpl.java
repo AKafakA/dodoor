@@ -8,6 +8,7 @@ import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,24 +37,23 @@ public class NodeImpl implements Node {
 
     private boolean _isLateBindingEnabled;
 
-
     @Override
-    public void initialize(Configuration config, NodeThrift nodeThrift) {
-        int numSlots = config.getInt(DodoorConf.NUM_SLOTS, DodoorConf.DEFAULT_NUM_SLOTS);
+    public void initialize(Configuration staticConfig, NodeThrift nodeThrift, JSONObject nodeConfig) {
+        int numSlots = nodeConfig.getInt(DodoorConf.NUM_SLOTS);
         _taskReceivedTime = Maps.newConcurrentMap();
         // TODO(wda): add more task scheduler
-        _nodeResources = new NodeResources(Resources.getSystemCoresCapacity(config),
-                Resources.getMemoryMbCapacity(config), Resources.getSystemDiskGbCapacity(config));
-        String schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
+        _nodeResources = new NodeResources(Resources.getSystemCoresCapacity(nodeConfig),
+                Resources.getMemoryMbCapacity(nodeConfig), Resources.getSystemDiskGbCapacity(nodeConfig));
+        String schedulerType = staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _isLateBindingEnabled = SchedulerUtils.isLateBindingScheduler(schedulerType);
         String nodeAddressStr = nodeThrift._neAddressStr;
         TaskLauncherService taskLauncherService = new TaskLauncherService();
-        taskLauncherService.initialize(config, numSlots, nodeThrift);
+        taskLauncherService.initialize(staticConfig, numSlots, nodeThrift, nodeConfig);
 
-        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
-            int trackingInterval = config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,
+        if (staticConfig.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
+            int trackingInterval = staticConfig.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,
                     DodoorConf.DEFAULT_TRACKING_INTERVAL);
-            MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval, config,
+            MetricsTrackerService metricsTrackerService = new MetricsTrackerService(trackingInterval, staticConfig,
                     nodeThrift.getNodeServiceMetrics(), taskLauncherService);
             metricsTrackerService.start();
         }
@@ -69,7 +69,7 @@ public class NodeImpl implements Node {
         _nodeThrift = nodeThrift;
         _taskScheduler = TaskScheduler.getTaskScheduler(numSlots, _nodeResources, schedulerType, _schedulerClientPool,
                 nodeAddressStr);
-        _taskScheduler.initialize(config, taskLauncherService);
+        _taskScheduler.initialize(staticConfig, taskLauncherService);
     }
 
     @Override

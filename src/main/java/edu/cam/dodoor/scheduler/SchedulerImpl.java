@@ -10,6 +10,8 @@ import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,21 +75,32 @@ public class SchedulerImpl implements Scheduler{
 
 
     @Override
-    public void initialize(Configuration config, THostPort localAddress,
-                           SchedulerServiceMetrics schedulerServiceMetrics) throws IOException {
+    public void initialize(Configuration staticConfig, THostPort localAddress,
+                           SchedulerServiceMetrics schedulerServiceMetrics,
+                           JSONObject hostConfig) throws IOException {
         _nodeLoadChanges = Maps.newConcurrentMap();
         _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = localAddress;
         _loadMapEqueueSocketToNodeState = new ConcurrentHashMap<>();
         _taskReceivedTime = new HashMap<>();
-        _schedulingStrategy = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
-        double beta = config.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
+        _schedulingStrategy = staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
+        double beta = staticConfig.getDouble(DodoorConf.BETA, DodoorConf.DEFAULT_BETA);
         _nodeEqueueSocketToNodeMonitorClients = Collections.synchronizedMap(new HashMap<>());
         _dataStoreAddress = new ArrayList<>();
         _nodeAddressToNeSocket = Maps.newHashMap();
         _neSocketToNmSocket = Maps.newHashMap();
-        List<String> nmPorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)));
-        List<String> nePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)));
+        List<String> nmPorts = new ArrayList<>();
+        JSONArray nodeMonitorPorts = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME)
+                .getJSONArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
+        for (int i = 0; i < nodeMonitorPorts.length(); i++) {
+            nmPorts.add(nodeMonitorPorts.getString(i));
+        }
+        List<String> nePorts = new ArrayList<>();
+        JSONArray nodeEnqueuePorts = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME)
+                .getJSONArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
+        for (int i = 0; i < nodeEnqueuePorts.length(); i++) {
+            nePorts.add(nodeEnqueuePorts.getString(i));
+        }
 
         if (nmPorts.size() != nePorts.size()) {
             throw new IllegalArgumentException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
@@ -97,20 +110,39 @@ public class SchedulerImpl implements Scheduler{
             nmPorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_MONITOR_THRIFT_PORT));
             nePorts.add(Integer.toString(DodoorConf.DEFAULT_NODE_ENQUEUE_THRIFT_PORT));
         }
-        for (String nodeIp : config.getStringArray(DodoorConf.STATIC_NODE)) {
-            for (int i = 0; i < nmPorts.size(); i++) {
-                String nodeFullAddress = nodeIp + ":" + nmPorts.get(i) + ":" + nePorts.get(i);
-                try {
-                    this.registerNode(nodeFullAddress);
-                } catch (TException e) {
-                    throw new RuntimeException(e);
+        JSONObject nodeConfig = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME);
+        JSONArray nodeTypes = nodeConfig.getJSONArray(DodoorConf.NODE_TYPE_LIST_KEY);
+        Map<String, TResourceVector> resourceCapacityMap = new HashMap<>();
+        for (int i = 0; i < nodeTypes.length(); i++) {
+            JSONObject nodeType = nodeTypes.getJSONObject(i);
+            TResourceVector resourceCapacity = Resources.getSystemResourceVector(staticConfig, nodeType);
+            resourceCapacityMap.put(nodeType.getString(DodoorConf.NODE_TYPE), resourceCapacity);
+            JSONArray hosts = nodeType.getJSONArray(DodoorConf.SERVICE_HOST_LIST_KEY);
+            String nodeTypeName = nodeType.getString(DodoorConf.NODE_TYPE);
+            for (int j = 0; j < hosts.length(); j++) {
+                String nodeIp = hosts.getString(j);
+                for (int k = 0; k < nmPorts.size(); k++) {
+                    String nodeFullAddress = nodeIp + ":" + nmPorts.get(k) + ":" + nePorts.get(k);
+                    try {
+                        this.registerNode(nodeFullAddress, nodeTypeName);
+                    } catch (TException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }
-        List<String> dataStorePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.DATA_STORE_THRIFT_PORTS)));
-        boolean isBatchScheduler = SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
+        List<String> dataStorePorts = new ArrayList<>();
+        JSONArray dataStoreThriftPorts = hostConfig.getJSONObject(DodoorConf.DATA_STORE_SERVICE_NAME)
+                .getJSONArray(DodoorConf.DATA_STORE_THRIFT_PORTS);
+        for (int i = 0; i < dataStoreThriftPorts.length(); i++) {
+            dataStorePorts.add(dataStoreThriftPorts.getString(i));
+        }
+        boolean isBatchScheduler = SchedulerUtils.isCachedEnabled(staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
         if (isBatchScheduler) {
-            for (String dataStoreIp : config.getStringArray(DodoorConf.STATIC_DATA_STORE)) {
+            JSONObject dataStoreConfig = hostConfig.getJSONObject(DodoorConf.DATA_STORE_SERVICE_NAME);
+            JSONArray dataStoreIPs = dataStoreConfig.getJSONArray(DodoorConf.SERVICE_HOST_LIST_KEY);
+            for (int i = 0; i < dataStoreIPs.length(); i++) {
+                String dataStoreIp = dataStoreIPs.getString(i);
                 for (String dataStorePort : dataStorePorts) {
                     String dataStoreFullAddress = dataStoreIp + ":" + dataStorePort;
                     try {
@@ -123,29 +155,27 @@ public class SchedulerImpl implements Scheduler{
         }
 
         if (_schedulingStrategy.equals(DodoorConf.PREQUAL)) {
-            _probeRateForPrequal = config.getInt(DodoorConf.PREQUAL_PROBE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_RATE);
-            _rifQuantile = config.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
+            _probeRateForPrequal = staticConfig.getInt(DodoorConf.PREQUAL_PROBE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_RATE);
+            _rifQuantile = staticConfig.getDouble(DodoorConf.PREQUAL_RIF_QUANTILE, DodoorConf.DEFAULT_PREQUAL_RIF_QUANTILE);
             _probeInfo = Collections.synchronizedMap(new LinkedHashMap<>());
-            _probeDeleteRate = config.getInt(DodoorConf.PREQUAL_PROBE_DELETE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE_RATE);
-            _delta = config.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
-            _probePoolSize = config.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
-            _probeAgeBudget = config.getInt(DodoorConf.PREQUAL_PROBE_AGE_BUDGET_MS, DodoorConf.DEFAULT_PREQUAL_PROBE_AGE_BUDGET_MS);
+            _probeDeleteRate = staticConfig.getInt(DodoorConf.PREQUAL_PROBE_DELETE_RATE, DodoorConf.DEFAULT_PREQUAL_PROBE_DELETE_RATE);
+            _delta = staticConfig.getInt(DodoorConf.PREQUAL_DELTA, DodoorConf.DEFAULT_PREQUAL_DELTA);
+            _probePoolSize = staticConfig.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
+            _probeAgeBudget = staticConfig.getInt(DodoorConf.PREQUAL_PROBE_AGE_BUDGET_MS, DodoorConf.DEFAULT_PREQUAL_PROBE_AGE_BUDGET_MS);
         }
 
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
                 _nodeEqueueSocketToNodeMonitorClients,
                 schedulerServiceMetrics,
-                config,
-                _nodeMonitorServiceAsyncClientPool,
-                _nodeAddressToNeSocket,
-                _neSocketToNmSocket,
+                staticConfig,
+                resourceCapacityMap,
                 _probeInfo);
-        _numTasksToUpdateDataStore = config.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
+        _numTasksToUpdateDataStore = staticConfig.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
 
         if (SchedulerUtils.isLateBindingScheduler(_schedulingStrategy)) {
             _nodePreservedForTask = Collections.synchronizedMap(new HashMap<>());
-            _roundOfReservations = config.getInt(DodoorConf.LATE_BINDING_PROBE_COUNT, DodoorConf.DEFAULT_LATE_BINDING_PROBE_COUNT);
+            _roundOfReservations = staticConfig.getInt(DodoorConf.LATE_BINDING_PROBE_COUNT, DodoorConf.DEFAULT_LATE_BINDING_PROBE_COUNT);
             _nodeAskToExecute = new ConcurrentHashMap<>();
             _taskToRequest = new ConcurrentHashMap<>();
             _taskEnqueueTime = new ConcurrentHashMap<>();
@@ -370,7 +400,7 @@ public class SchedulerImpl implements Scheduler{
     }
 
     @Override
-    public void registerNode(String nodeAddress) throws TException {
+    public void registerNode(String nodeAddress, String nodeTypeName) throws TException {
         String[] nodeAddressParts = nodeAddress.split(":");
         if (nodeAddressParts.length != 3) {
             throw new TException("Invalid address: " + nodeAddress);
@@ -386,9 +416,9 @@ public class SchedulerImpl implements Scheduler{
             InetSocketAddress nmSocket = nmAddress.get();
             InetSocketAddress neSocket = neAddress.get();
             _loadMapEqueueSocketToNodeState.put(neSocket, new TNodeState(
-                    new TResourceVector(0, 0, 0), 0, 0, nodeIp));
+                    new TResourceVector(0, 0, 0), 0, 0, nodeIp, nodeTypeName));
             _nodeLoadChanges.put(Serialization.getStrFromSocket(neSocket), new TNodeState(
-                    new TResourceVector(0, 0, 0), 0, 0, nodeIp));
+                    new TResourceVector(0, 0, 0), 0, 0, nodeIp, nodeTypeName));
             _nodeAddressToNeSocket.put(nodeIp, neSocket);
             _neSocketToNmSocket.put(neSocket, nmSocket);
             if (!SchedulerUtils.isCachedEnabled(_schedulingStrategy) && !SchedulerUtils.isAsyncScheduler(_schedulingStrategy)) {

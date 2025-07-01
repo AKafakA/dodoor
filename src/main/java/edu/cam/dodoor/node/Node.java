@@ -6,10 +6,11 @@ import edu.cam.dodoor.thrift.TNodeState;
 import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
+import org.json.JSONObject;
 
 public interface Node {
 
-    void initialize(Configuration config, NodeThrift nodeMonitorClient);
+    void initialize(Configuration config, NodeThrift nodeMonitorClient, JSONObject nodeConfig);
 
     void taskFinished(TFullTaskId task) throws TException;
 

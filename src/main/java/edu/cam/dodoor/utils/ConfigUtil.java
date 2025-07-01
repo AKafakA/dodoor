@@ -13,6 +13,8 @@ import com.google.common.base.Optional;
 
 import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.TResourceVector;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Utilities to aid the configuration file-based scheduler and node monitor.
@@ -20,29 +22,35 @@ import edu.cam.dodoor.thrift.TResourceVector;
 public class ConfigUtil {
   private final static Logger LOG = Logger.getLogger(ConfigUtil.class);
 
-  /**
-   * Parses the list of backends from a {@link Configuration}.
-   *
-   * Returns a map of address of backends to a {@link TResourceVector} describing the
-   * total resource capacity for that backend.
-   */
+
   public static List<String> parseNodeAddress(
-      Configuration conf, String ipKey, String portKey) {
+          JSONObject conf, String serviceTypeKey) {
 
     List<String> nodeAddress = new ArrayList<>();
-
-    for (String node: conf.getStringArray(ipKey)) {
-      for (String port: conf.getStringArray(portKey)) {
-        String nodePort = node + ":" + port;
-        Optional<InetSocketAddress> addr = Serialization.strToSocket(nodePort);
-        if (!addr.isPresent()) {
-          LOG.warn("Bad backend address: " + node);
-        } else {
-          nodeAddress.add(nodePort);
+    JSONObject serviceConfig = conf.getJSONObject(serviceTypeKey);
+    if (serviceConfig == null) {
+      LOG.warn("No configuration found for " + serviceTypeKey);
+      return nodeAddress;
+    }
+    if (serviceTypeKey.equals(DodoorConf.NODE_SERVICE_NAME)) {
+      throw new IllegalArgumentException("Node service not supported in this method. ");
+    } else {
+      JSONArray hosts = serviceConfig.getJSONArray(DodoorConf.SERVICE_HOST_LIST_KEY);
+      JSONArray ports = serviceConfig.getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);
+      for (int i = 0; i < hosts.length(); i++) {
+        String host = hosts.getString(i);
+        for (int j = 0; j < ports.length(); j++) {
+          String port = ports.getString(j);
+          String nodePort = host + ":" + port;
+          Optional<InetSocketAddress> addr = Serialization.strToSocket(nodePort);
+          if (!addr.isPresent()) {
+            LOG.warn("Bad backend address: " + nodePort);
+          } else {
+            nodeAddress.add(nodePort);
+          }
         }
       }
     }
-
     return nodeAddress;
   }
 }

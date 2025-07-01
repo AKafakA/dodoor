@@ -14,6 +14,8 @@ import org.apache.commons.logging.Log;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.PatternLayout;
 import org.apache.thrift.TException;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
 
@@ -45,8 +47,8 @@ public class SchedulerThrift implements SchedulerService.Iface{
     }
 
     @Override
-    public void registerNode(String nodeAddress) throws TException {
-        _scheduler.registerNode(nodeAddress);
+    public void registerNode(String nodeAddress, String nodeType) throws TException {
+        _scheduler.registerNode(nodeAddress, nodeType);
     }
 
     @Override
@@ -69,25 +71,27 @@ public class SchedulerThrift implements SchedulerService.Iface{
 
     }
 
-    public void initialize(Configuration config, int port, boolean logKicked) throws TException, IOException {
+    public void initialize(Configuration staticConfig, int port, boolean logKicked,
+                           JSONObject hostConfigs) throws TException, IOException {
         _scheduler = new SchedulerImpl();
         SchedulerService.Processor<SchedulerService.Iface> processor =
                 new SchedulerService.Processor<>(this);
-        int threads = config.getInt(DodoorConf.SCHEDULER_THRIFT_THREADS,
+        int threads = staticConfig.getInt(DodoorConf.SCHEDULER_THRIFT_THREADS,
                 DodoorConf.DEFAULT_SCHEDULER_THRIFT_THREADS);
-        _schedulerType = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
+        _schedulerType = staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.SCHEDULER_METRICS_REGISTRY);
         boolean lateBindingEnabled = SchedulerUtils.isLateBindingScheduler(_schedulerType);
         SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics, lateBindingEnabled);
         _numMessages = schedulerMetrics.getTotalMessages();
-        _scheduler.initialize(config, Network.getInternalHostPort(port, config), schedulerMetrics);
+        _scheduler.initialize(staticConfig, Network.getInternalHostPort(port, staticConfig), schedulerMetrics,
+                hostConfigs);
         TServers.launchThreadedThriftServer(port, threads, processor);
 
         // Avoid one log kicked duplicated from different scheduler instances
-        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && !logKicked) {
-            String schedulerLogPathSuffix = config.getString(DodoorConf.SCHEDULER_METRICS_LOG_FILE_SUFFIX,
+        if (staticConfig.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && !logKicked) {
+            String schedulerLogPathSuffix = staticConfig.getString(DodoorConf.SCHEDULER_METRICS_LOG_FILE_SUFFIX,
                     DodoorConf.DEFAULT_SCHEDULER_METRICS_LOG_FILE_SUFFIX);
-            String schedulerLogPath = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER)
+            String schedulerLogPath = staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER)
                     + "_" +schedulerLogPathSuffix;
             org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(SchedulerThrift.class);
             logger.setAdditivity(false);
@@ -102,7 +106,7 @@ public class SchedulerThrift implements SchedulerService.Iface{
                     .convertRatesTo(TimeUnit.SECONDS)
                     .convertDurationsTo(TimeUnit.MILLISECONDS)
                     .build();
-            reporter.start(config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS, DodoorConf.DEFAULT_TRACKING_INTERVAL),
+            reporter.start(staticConfig.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS, DodoorConf.DEFAULT_TRACKING_INTERVAL),
                     TimeUnit.SECONDS);
         }
     }

@@ -19,7 +19,8 @@ public class PrequalTaskPlacer extends TaskPlacer{
     private final int _probeDeleteRate;
     private final long _probeAgeBudget;
 
-    public PrequalTaskPlacer(double beta, TResourceVector resourceCapacity,
+    public PrequalTaskPlacer(double beta,
+                             Map<String, TResourceVector> resourceCapacityMap,
                              double rifQuantile,
                              Map<InetSocketAddress, Map.Entry<Long, Integer>> probeInfo,
                              int probePoolSize,
@@ -27,7 +28,7 @@ public class PrequalTaskPlacer extends TaskPlacer{
                              int probeRate,
                              int probeDeleteRate,
                              long probeAgeBudget) {
-        super(beta, PackingStrategy.NONE, resourceCapacity, 1, 1, 1, 1);
+        super(beta, PackingStrategy.NONE, resourceCapacityMap, 1, 1, 1, 1);
         _rifQuantile = rifQuantile;
         _probePoolSize = probePoolSize;
         _delta = delta;

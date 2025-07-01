@@ -15,10 +15,10 @@ public class RunTimeProbeTaskPlacer extends TaskPlacer{
 
     public RunTimeProbeTaskPlacer(double beta,
                                   PackingStrategy packingStrategy,
-                                  TResourceVector resourceCapacity,
+                                  Map<String, TResourceVector> resourceCapacityMap,
                                   Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
                                   SchedulerServiceMetrics schedulerMetrics) {
-        this(beta, packingStrategy, resourceCapacity, nodeMonitorClients, schedulerMetrics,
+        this(beta, packingStrategy, resourceCapacityMap, nodeMonitorClients, schedulerMetrics,
                 1, 1, 1, 1);
         if (packingStrategy == PackingStrategy.SCORE) {
             throw new IllegalArgumentException("Packing strategy should not be SCORE without resource weights");
@@ -26,21 +26,21 @@ public class RunTimeProbeTaskPlacer extends TaskPlacer{
     }
 
     public RunTimeProbeTaskPlacer(double beta,
-                             TResourceVector resourceCapacity,
-                             Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
-                             SchedulerServiceMetrics schedulerMetrics,
-                             float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
-        this(beta, PackingStrategy.SCORE, resourceCapacity, nodeMonitorClients, schedulerMetrics,
+                                  Map<String, TResourceVector> resourceCapacityMap,
+                                  Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
+                                  SchedulerServiceMetrics schedulerMetrics,
+                                  float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
+        this(beta, PackingStrategy.SCORE, resourceCapacityMap, nodeMonitorClients, schedulerMetrics,
                 cpuWeight, memWeight, diskWeight, totalDurationWeight);
     }
 
     public RunTimeProbeTaskPlacer(double beta,
                                   PackingStrategy packingStrategy,
-                                  TResourceVector resourceCapacity,
+                                  Map<String, TResourceVector> resourceCapacityMap,
                                   Map<InetSocketAddress, NodeMonitorService.Client> nodeMonitorClients,
                                   SchedulerServiceMetrics schedulerMetrics,
                                   float cpuWeight, float memWeight, float diskWeight, float totalDurationWeight) {
-        super(beta, packingStrategy, resourceCapacity, cpuWeight, memWeight, diskWeight, totalDurationWeight);
+        super(beta, packingStrategy, resourceCapacityMap, cpuWeight, memWeight, diskWeight, totalDurationWeight);
         _schedulerMetrics = schedulerMetrics;
         _nodeMonitorClients = nodeMonitorClients;
         _packingStrategy = packingStrategy;
@@ -77,7 +77,7 @@ public class RunTimeProbeTaskPlacer extends TaskPlacer{
                     }
                     if (_packingStrategy == PackingStrategy.SCORE) {
                         Map.Entry<Double, Double> scores = LoadScore.getLoadScoresPairs(nodeState1, nodeState2, taskResources,
-                                _cpuWeight, _memWeight, _diskWeight, _totalDurationWeight, _resourceCapacity);
+                                _cpuWeight, _memWeight, _diskWeight, _totalDurationWeight, _resourceCapacityMap);
                         double loadScore1 = scores.getKey();
                         double loadScore2 = scores.getValue();
                         if (loadScore1 > loadScore2) {

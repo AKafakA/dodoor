@@ -39,17 +39,18 @@ public class BasicDataStoreImpl implements DataStore{
             String nodeEnqueueAddress = entry.getKey();
             TNodeState nodeState = entry.getValue();
             addSingleNodeLoad(nodeEnqueueAddress, nodeState.resourceRequested, nodeState.numTasks,
-                    nodeState.totalDurations, sign);
+                    nodeState.totalDurations, sign, nodeState.nodeType);
         }
     }
 
     private synchronized void addSingleNodeLoad(String nodeEnqueueAddress, TResourceVector resourceVector,
-                                                int numTasks, long newTotalDurations, int sign) {
+                                                int numTasks, long newTotalDurations, int sign,
+                                                String nodeType) {
         TNodeState nodeState = _nodeStates.get(nodeEnqueueAddress);
         String nodeIp = nodeEnqueueAddress.split(":")[0];
         if (nodeState == null) {
             LOG.warn("Node {} not found in the data store. Creating a new entry.", nodeEnqueueAddress);
-            nodeState = new TNodeState(new TResourceVector(), 0, 0, nodeIp);
+            nodeState = new TNodeState(new TResourceVector(), 0, 0, nodeIp, nodeType);
         } else if (!nodeState.nodeIp.equals(nodeIp)) {
            LOG.error("Node {} already exists in the data store but with different IP address {}",
                    nodeEnqueueAddress, nodeState.nodeIp);

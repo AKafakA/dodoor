@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import edu.cam.dodoor.utils.ConfigUtil;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,7 @@ public class DataStoreThrift implements DataStoreService.Iface {
     private Meter _getRequestsRate;
     private Counter _numMessages;
 
-    public void initialize(Configuration config, int port, boolean logKicked)
+    public void initialize(Configuration staticConfig, int port, boolean logKicked, JSONObject hostConfig)
             throws TException, IOException {
         _metrics = SharedMetricRegistries.getOrCreate(DodoorConf.DATA_STORE_METRICS_REGISTRY);
         _overrideRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_OVERRIDE_REQUEST_RATE);
@@ -44,22 +46,31 @@ public class DataStoreThrift implements DataStoreService.Iface {
         _addRequestsRate = _metrics.meter(DodoorConf.DATA_STORE_METRICS_ADD_REQUEST_RATE);
         _numMessages = _metrics.counter(DodoorConf.DATA_STORE_METRICS_NUM_MESSAGES);
         boolean cachedEnabled =
-                SchedulerUtils.isCachedEnabled(config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
+                SchedulerUtils.isCachedEnabled(staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
 
         _dataStore = new BasicDataStoreImpl();
-        _config = config;
+        _config = staticConfig;
         _dataStore.initialize(_config);
         _counter = new AtomicLong(0);
-        _batchSize = config.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
+        _batchSize = staticConfig.getInt(DodoorConf.BATCH_SIZE, DodoorConf.DEFAULT_BATCH_SIZE);
         _schedulerClientPool = new ThriftClientPool<>(new ThriftClientPool.SchedulerServiceMakerFactory());
 
         _schedulerAddress = new ArrayList<>();
         LOG = LoggerFactory.getLogger(DataStoreThrift.class);
 
 
-        List<String> nmPorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS)));
-        List<String> nePorts = new ArrayList<>(List.of(config.getStringArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS)));
+        List<String> nmPorts = new ArrayList<>();
+        List<String> nePorts = new ArrayList<>();
 
+        JSONObject nodeConfig = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME);
+        JSONArray nmPortsArray = nodeConfig.getJSONArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
+        JSONArray nePortsArray = nodeConfig.getJSONArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
+        for (int i = 0; i < nmPortsArray.length(); i++) {
+            nmPorts.add(nmPortsArray.getString(i));
+        }
+        for (int i = 0; i < nePortsArray.length(); i++) {
+            nePorts.add(nePortsArray.getString(i));
+        }
         if (nmPorts.size() != nePorts.size()) {
             throw new IllegalArgumentException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
                     DodoorConf.NODE_ENQUEUE_THRIFT_PORTS + " not of equal length");
@@ -70,27 +81,34 @@ public class DataStoreThrift implements DataStoreService.Iface {
         }
 
         if (cachedEnabled) {
-            for (String schedulerAddress : ConfigUtil.parseNodeAddress(config, DodoorConf.STATIC_SCHEDULER,
-                    DodoorConf.SCHEDULER_THRIFT_PORTS)) {
+            for (String schedulerAddress : ConfigUtil.parseNodeAddress(hostConfig, DodoorConf.SCHEDULER_SERVICE_NAME)) {
                 this.handleRegisterScheduler(schedulerAddress);
             }
-
-            for (String nodeIp : config.getStringArray(DodoorConf.STATIC_NODE)) {
-                for (int i = 0; i < nmPorts.size(); i++) {
-                    String nodeFullAddress = nodeIp + ":" + nmPorts.get(i) + ":" + nePorts.get(i);
-                    try {
-                        this.handleRegisterNode(nodeFullAddress);
-                    } catch (TException e) {
-                        throw new RuntimeException(e);
+            JSONArray nodeTypes = nodeConfig.getJSONArray(DodoorConf.NODE_TYPE_LIST_KEY);
+            for (int i = 0; i < nodeTypes.length(); i++) {
+                JSONObject nodeTypeJson = nodeTypes.getJSONObject(i);
+                String nodeType = nodeTypeJson.getString(DodoorConf.NODE_TYPE);
+                JSONArray nodeIps = nodeTypeJson.getJSONArray(DodoorConf.SERVICE_HOST_LIST_KEY);
+                for (int j = 0; j < nodeIps.length(); j++) {
+                    String nodeIp = nodeIps.getString(j);
+                    for (int k = 0; k < nmPorts.size(); k++) {
+                        String nodeFullAddress = nodeIp + ":" + nmPorts.get(k) + ":" + nePorts.get(k);
+                        try {
+                            this.handleRegisterNode(nodeFullAddress, nodeType);
+                        } catch (TException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }
         }
 
-        if (config.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && !logKicked) {
-            String datastoreLogPathSuffix = config.getString(DodoorConf.DATA_STORE_METRICS_LOG_FILE_SUFFIX,
+        if (staticConfig.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED) && !logKicked) {
+            String datastoreLogPathSuffix = staticConfig.getString(DodoorConf.DATA_STORE_METRICS_LOG_FILE_SUFFIX,
                     DodoorConf.DEFAULT_DATA_STORE_METRICS_LOG_FILE_SUFFIX);
-            String datastoreLogPath = config.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER) + "_" + datastoreLogPathSuffix;
+            String datastoreLogPath =
+                    staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER) + "_"
+                            + datastoreLogPathSuffix;
             org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(DataStoreThrift.class);
             logger.setAdditivity(false);
             try {
@@ -104,12 +122,13 @@ public class DataStoreThrift implements DataStoreService.Iface {
                     .convertRatesTo(TimeUnit.SECONDS)
                     .convertDurationsTo(TimeUnit.MILLISECONDS)
                     .build();
-            reporter.start(config.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS, DodoorConf.DEFAULT_TRACKING_INTERVAL),
-                    TimeUnit.SECONDS);
+            reporter.start(staticConfig.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,
+                            DodoorConf.DEFAULT_TRACKING_INTERVAL), TimeUnit.SECONDS);
         }
 
         DataStoreService.Processor<DataStoreService.Iface> processor = new DataStoreService.Processor<>(this);
-        int threads = _config.getInt(DodoorConf.DATA_STORE_THRIFT_THREADS, DodoorConf.DEFAULT_DATA_STORE_THRIFT_THREADS);
+        int threads = _config.getInt(DodoorConf.DATA_STORE_THRIFT_THREADS,
+                DodoorConf.DEFAULT_DATA_STORE_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(port, threads, processor);
     }
 
@@ -129,12 +148,12 @@ public class DataStoreThrift implements DataStoreService.Iface {
     }
 
     @Override
-    public void registerNode(String nodeFullAddress) throws TException {
+    public void registerNode(String nodeFullAddress, String nodeType) throws TException {
         _numMessages.inc();
-        handleRegisterNode(nodeFullAddress);
+        handleRegisterNode(nodeFullAddress, nodeType);
     }
 
-    private void handleRegisterNode(String nodeFullAddress) throws TException {
+    private void handleRegisterNode(String nodeFullAddress, String nodeType) throws TException {
         String[] nodeAddressParts = nodeFullAddress.split(":");
         if (nodeAddressParts.length != 3) {
             throw new TException("Invalid address: " + nodeFullAddress);
@@ -145,7 +164,8 @@ public class DataStoreThrift implements DataStoreService.Iface {
         Optional<InetSocketAddress> neAddress = Serialization.strToSocket(nodeEnqueueAddress);
         if (neAddress.isPresent()) {
             LOG.debug(Logging.auditEventString("register_node", neAddress.get().getHostName()));
-            _dataStore.overrideNodeLoad(nodeEnqueueAddress, new TNodeState(new TResourceVector(), 0, 0, nodeIp));
+            _dataStore.overrideNodeLoad(nodeEnqueueAddress, new TNodeState(new TResourceVector(), 0, 0, nodeIp,
+                    nodeType));
         } else {
             throw new TException("Node monitor address " + nodeEnqueueAddress + " not found");
         }

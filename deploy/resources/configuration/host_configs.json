@@ -1,0 +1,32 @@
+{
+  "scheduler": {
+    "hosts": ["128.232.80.11"],
+    "ports": [20503]
+  },
+  "datastore": {
+    "hosts": ["128.232.80.11"],
+    "ports": [20510]
+  },
+  "nodes": {
+    "node.monitor.thrift.ports": [20501],
+    "node.enqueue.thrift.ports": [20502],
+    "node.types": [
+      {
+        "node.type": "m510-4",
+        "system.cores": 24,
+        "system.memory": 20480,
+        "system.disks": 40960,
+        "node_monitor.num_slots": 4,
+        "hosts": ["128.232.80.12"]
+      },
+      {
+        "node.type": "m510-2",
+        "system.cores": 24,
+        "system.memory": 20480,
+        "system.disks": 40960,
+        "node_monitor.num_slots": 2,
+        "hosts": ["128.232.80.13"]
+      }
+    ]
+  }
+}
