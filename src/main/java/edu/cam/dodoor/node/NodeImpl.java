@@ -36,19 +36,21 @@ public class NodeImpl implements Node {
     private Map<String, Long> _taskReceivedTime;
 
     private boolean _isLateBindingEnabled;
+    private String _nodeType;
 
     @Override
-    public void initialize(Configuration staticConfig, NodeThrift nodeThrift, JSONObject nodeConfig) {
-        int numSlots = nodeConfig.getInt(DodoorConf.NUM_SLOTS);
+    public void initialize(Configuration staticConfig, NodeThrift nodeThrift, JSONObject nodeTypeConfig) {
+        int numSlots = nodeTypeConfig.getInt(DodoorConf.NUM_SLOTS);
+        _nodeType = nodeTypeConfig.getString(DodoorConf.NODE_TYPE);
         _taskReceivedTime = Maps.newConcurrentMap();
         // TODO(wda): add more task scheduler
-        _nodeResources = new NodeResources(Resources.getSystemCoresCapacity(nodeConfig),
-                Resources.getMemoryMbCapacity(nodeConfig), Resources.getSystemDiskGbCapacity(nodeConfig));
+        _nodeResources = new NodeResources(Resources.getSystemCoresCapacity(nodeTypeConfig),
+                Resources.getMemoryMbCapacity(nodeTypeConfig), Resources.getSystemDiskGbCapacity(nodeTypeConfig));
         String schedulerType = staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _isLateBindingEnabled = SchedulerUtils.isLateBindingScheduler(schedulerType);
         String nodeAddressStr = nodeThrift._neAddressStr;
         TaskLauncherService taskLauncherService = new TaskLauncherService();
-        taskLauncherService.initialize(staticConfig, numSlots, nodeThrift, nodeConfig);
+        taskLauncherService.initialize(staticConfig, numSlots, nodeThrift, nodeTypeConfig);
 
         if (staticConfig.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = staticConfig.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,
@@ -94,7 +96,7 @@ public class NodeImpl implements Node {
     @Override
     public TNodeState getNodeState() {
         return new TNodeState(getRequestedResourceVector(), _waitingOrRunningTasksCounter.get(), _totalDurations.get(),
-                _nodeThrift.getNodeIp());
+                _nodeThrift.getNodeIp(), _nodeType);
     }
 
     @Override

@@ -65,13 +65,13 @@ public class TaskLauncherService {
         }
     }
 
-    public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift, JSONObject nodeConfig) {
+    public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift, JSONObject nodeTypeConfig) {
         /* The number of threads used by the service. */
         int numSlots = numSlot;
         if (numSlots <= 0) {
             // If the scheduler does not enforce a maximum number of tasks, just use a number of
             // threads equal to the number of cores.
-            numSlots = Resources.getSystemCoresCapacity(nodeConfig);
+            numSlots = Resources.getSystemCoresCapacity(nodeTypeConfig);
         }
         _node = nodeThrift._node;
         _nodeServiceMetrics = nodeThrift.getNodeServiceMetrics();

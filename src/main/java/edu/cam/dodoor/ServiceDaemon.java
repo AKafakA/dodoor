@@ -35,8 +35,6 @@ public class ServiceDaemon {
                 withRequiredArg().ofType(Boolean.class);
         parser.accepts("n", "If contains a node service or not").
                 withRequiredArg().ofType(Boolean.class);
-        parser.accepts("type", "The node type of current hosts").
-                withRequiredArg().ofType(String.class);
         parser.accepts("help", "print help statement");
         OptionSet options = parser.parse(args);
 
@@ -63,14 +61,12 @@ public class ServiceDaemon {
             throw new ConfigurationException("At least one service must be specified");
         }
 
-        String nodeType = (String) options.valueOf("nodeType");
         ServiceDaemon daemon = new ServiceDaemon();
-        daemon.initialize(conf, hostConfig, nodeType, isScheduler, isDataStore, isNode);
+        daemon.initialize(conf, hostConfig, isScheduler, isDataStore, isNode);
     }
 
     private void initialize(Configuration config,
                             JSONObject hostConfig,
-                            String nodeType,
                             boolean isScheduler,
                             boolean isDataStore,
                             boolean isNode) throws Exception{
@@ -83,20 +79,7 @@ public class ServiceDaemon {
             JSONObject nodeConfig = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME);
             int nmPorts = nodeConfig.getInt(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
             int nePorts = nodeConfig.getInt(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
-            JSONArray nodeTypes = nodeConfig.getJSONArray(DodoorConf.NODE_TYPE_LIST_KEY);
-            JSONObject nodeTypeConfig = null;
-            for (int i = 0; i < nodeTypes.length(); i++) {
-                JSONObject nodeTypeJson = nodeTypes.getJSONObject(i);
-                String nodeTypeName = nodeTypeJson.getString(DodoorConf.NODE_TYPE);
-                if (nodeTypeName.equals(nodeType)) {
-                    nodeTypeConfig = nodeTypeJson;
-                    new NodeThrift().initialize(config, nmPorts, nePorts, nodeTypeConfig);
-                    break;
-                }
-            }
-            if (nodeTypeConfig == null) {
-                throw new ConfigurationException("Node type " + nodeType + " not found in configuration");
-            }
+            new NodeThrift().initialize(config, nmPorts, nePorts, hostConfig);
         }
 
         if (isDataStore) {

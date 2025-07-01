@@ -9,6 +9,7 @@ import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
     private String _nodeIp;
     private String _schedulerType;
     protected String _neAddressStr;
+    protected String _nodeType;
 
 
     /**
@@ -42,7 +44,7 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
      * within this class under certain configurations (e.g. a config file specifies
      * multiple NodeMonitors).
      */
-    public void initialize(Configuration staticConfig, int nmPort, int nePort, JSONObject nodeConfig)
+    public void initialize(Configuration staticConfig, int nmPort, int nePort, JSONObject hostConfig)
             throws IOException, TException {
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
         _nodeServiceMetrics = new NodeServiceMetrics(metrics);
@@ -60,16 +62,39 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
                 DodoorConf.DEFAULT_NM_INTERNAL_THRIFT_THREADS);
         TServers.launchThreadedThriftServer(nePort,neThreads, nodeEnqueueProcessor);
 
-        if (cachedEnabled) {
-            for (String dataStoreAddress : ConfigUtil.parseNodeAddress(nodeConfig, DodoorConf.DATA_STORE_SERVICE_NAME)) {
-               handleRegisterDataStore(dataStoreAddress);
-            }
-        }
         _neAddressStr = Network.thriftToSocketStr(Network.getInternalHostPort(nePort, staticConfig));
         _nodeIp = Network.getInternalHostPort(nePort, staticConfig).host;
 
-        _node = new NodeImpl();
-        _node.initialize(staticConfig, this, nodeConfig);
+        JSONObject nodeConfig = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME);
+        JSONArray nodeTypes = nodeConfig.getJSONArray(DodoorConf.NODE_TYPE_LIST_KEY);
+        JSONObject nodeTypeConfig = null;
+        for (int i = 0; i < nodeTypes.length(); i++) {
+            JSONObject nodeTypeJson = nodeTypes.getJSONObject(i);
+            JSONArray host = nodeTypeJson.getJSONArray(DodoorConf.SERVICE_HOST_LIST_KEY);
+            for (int j = 0; j < host.length(); j++) {
+                String hostName = host.getString(j);
+                if (_nodeIp.equals(hostName)) {
+                    // If the node IP matches the host name, we can use this node type.
+                    _nodeType = nodeTypeJson.getString(DodoorConf.NODE_TYPE);
+                    nodeTypeConfig = nodeTypeJson;
+                }
+            }
+        }
+        if (nodeTypeConfig == null) {
+            throw new TException("Node type not found for node IP: " + _nodeIp);
+        } else {
+            LOG.info("Node type found: " + _nodeType);
+            _node = new NodeImpl();
+            _node.initialize(staticConfig, this, nodeTypeConfig);
+        }
+
+        if (cachedEnabled) {
+            for (String dataStoreAddress : ConfigUtil.parseNodeAddress(hostConfig,
+                    DodoorConf.DATA_STORE_SERVICE_NAME)) {
+               handleRegisterDataStore(dataStoreAddress);
+            }
+        }
+
 
         // Setup application-facing agent service.
         NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
