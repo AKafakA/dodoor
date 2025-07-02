@@ -1,0 +1,50 @@
+{
+  "scheduler": {
+    "type": "d6515",
+    "hosts": [],
+    "ports": [20503]
+  },
+  "datastore": {
+    "type": "d6515",
+    "hosts": [],
+    "ports": [20510]
+  },
+  "nodes": {
+    "node.monitor.thrift.ports": [20501],
+    "node.enqueue.thrift.ports": [20502],
+    "node.types": [
+      {
+        "node.type": "m510",
+        "system.cores": 8,
+        "system.memory": 65536,
+        "system.disks": 0,
+        "node_monitor.num_slots": 1,
+        "hosts": []
+      },
+      {
+        "node.type": "xl170",
+        "system.cores": 10,
+        "system.memory": 65536,
+        "system.disks": 0,
+        "node_monitor.num_slots": 1,
+        "hosts": []
+      },
+      {
+        "node.type": "c6525-25g",
+        "system.cores": 16,
+        "system.memory": 131072,
+        "system.disks": 0,
+        "node_monitor.num_slots": 2,
+        "hosts": []
+      },
+      {
+        "node.type": "c6525-25g",
+        "system.cores": 28,
+        "system.memory": 131072,
+        "system.disks": 0,
+        "node_monitor.num_slots": 4,
+        "hosts": []
+      }
+    ]
+  }
+}
