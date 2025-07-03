@@ -41,6 +41,7 @@ struct TFullTaskId {
   1: string taskId;
   2: TResourceVector resourceRequest;
   3: i64 durationInMs;
+  4: string taskType = "simulate";
 }
 
 struct TUserGroupInfo {
@@ -58,6 +59,7 @@ struct TTaskSpec {
   3: binary message;
   4: TResourceVector resourceRequest;
   5: i64 durationInMs;
+  6: string taskType = "simulate";
 }
 
 struct TSchedulingRequest {
@@ -90,4 +92,5 @@ struct TEnqueueTaskReservationRequest {
   5: i64 durationInMs;
   6: THostPort nodeEnqueueAddress;
   7: i64 enqueueTime;
+  8: string taskType = "simulate"; // The type of the task, e.g. "simulate", "train", "inference"
 }

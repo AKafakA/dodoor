@@ -10,7 +10,8 @@ import org.json.JSONObject;
 
 public interface Node {
 
-    void initialize(Configuration config, NodeThrift nodeMonitorClient, JSONObject nodeConfig);
+    void initialize(Configuration config, NodeThrift nodeMonitorClient, JSONObject nodeConfig,
+                    JSONObject taskConfig);
 
     void taskFinished(TFullTaskId task) throws TException;
 

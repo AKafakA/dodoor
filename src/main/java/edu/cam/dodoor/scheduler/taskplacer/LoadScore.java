@@ -1,6 +1,8 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
 import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.node.TaskMapsPerNodeType;
+import edu.cam.dodoor.node.TaskTypeID;
 import edu.cam.dodoor.thrift.TNodeState;
 import edu.cam.dodoor.thrift.TResourceVector;
 import org.slf4j.Logger;
@@ -37,20 +39,27 @@ public class LoadScore {
 
     public static Map.Entry<Double, Double> getLoadScoresPairs(TNodeState firstNodeState,
                                                                TNodeState secondNodeState,
+                                                               String taskTypeId,
                                                                TResourceVector taskResources,
                                                                double cpuWeight,
                                                                double memWeight,
                                                                double diskWeight,
                                                                double totalDurationWeight,
-                                                               Map<String, TResourceVector> resourceCapacityMap) {
+                                                               Map<String, TResourceVector> resourceCapacityMap,
+                                                               Map<String, TaskMapsPerNodeType> taskNodeStateMap) {
       if (totalDurationWeight < 0 || totalDurationWeight > 1) {
         throw new IllegalArgumentException("totalDurationWeight must be between 0 and 1");
       }
-
+      TResourceVector firstResourceVector = taskResources;
+      TResourceVector secondResourceVector = taskResources;
+      if (!taskTypeId.equals(TaskTypeID.SIMULATED.toString())) {
+          firstResourceVector = taskNodeStateMap.get(firstNodeState.nodeType).getResourceVector(taskTypeId);
+          secondResourceVector = taskNodeStateMap.get(secondNodeState.nodeType).getResourceVector(taskTypeId);
+      }
       double firstResourceLoad = getResourceLoadScores(firstNodeState.resourceRequested,
-              taskResources, cpuWeight, memWeight, diskWeight, resourceCapacityMap.get(firstNodeState.nodeType));
+              firstResourceVector, cpuWeight, memWeight, diskWeight, resourceCapacityMap.get(firstNodeState.nodeType));
       double secondResourceLoad = getResourceLoadScores(secondNodeState.resourceRequested,
-              taskResources, cpuWeight, memWeight, diskWeight, resourceCapacityMap.get(firstNodeState.nodeType));
+              secondResourceVector, cpuWeight, memWeight, diskWeight, resourceCapacityMap.get(firstNodeState.nodeType));
 
       double firstNormalizedResourceLoad = firstResourceLoad / (firstResourceLoad + secondResourceLoad);
       double secondNormalizedResourceLoad = secondResourceLoad / (firstResourceLoad + secondResourceLoad);

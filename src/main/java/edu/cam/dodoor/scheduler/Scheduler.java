@@ -15,7 +15,8 @@ public interface Scheduler {
 
     void initialize(Configuration staticConf, THostPort schedulerAddress,
                     SchedulerServiceMetrics schedulerServiceMetrics,
-                    JSONObject hostConfig) throws IOException;
+                    JSONObject hostConfig,
+                    JSONObject taskTypeConfig) throws IOException;
     void submitJob(TSchedulingRequest request) throws TException;
     Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> handleJobSubmission(TSchedulingRequest request,
                                                                                      long startTime) throws TException;

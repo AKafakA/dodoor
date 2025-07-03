@@ -72,7 +72,8 @@ public class SchedulerThrift implements SchedulerService.Iface{
     }
 
     public void initialize(Configuration staticConfig, int port, boolean logKicked,
-                           JSONObject hostConfigs) throws TException, IOException {
+                           JSONObject hostConfigs,
+                           JSONObject taskTypeConfigs) throws TException, IOException {
         _scheduler = new SchedulerImpl();
         SchedulerService.Processor<SchedulerService.Iface> processor =
                 new SchedulerService.Processor<>(this);
@@ -84,7 +85,7 @@ public class SchedulerThrift implements SchedulerService.Iface{
         SchedulerServiceMetrics schedulerMetrics = new SchedulerServiceMetrics(metrics, lateBindingEnabled);
         _numMessages = schedulerMetrics.getTotalMessages();
         _scheduler.initialize(staticConfig, Network.getInternalHostPort(port, staticConfig), schedulerMetrics,
-                hostConfigs);
+                hostConfigs, taskTypeConfigs);
         TServers.launchThreadedThriftServer(port, threads, processor);
 
         // Avoid one log kicked duplicated from different scheduler instances

@@ -64,7 +64,8 @@ public class DodoorClient {
         _schedulerAddresses = Arrays.asList(schedulerAddresses);
     }
 
-    public void submitTask(String taskId, int cores, long memory, long disks, long durationInMs)
+    public void submitTask(String taskId, int cores, long memory, long disks, long durationInMs,
+                           String taskType)
             throws TException {
         List<TTaskSpec> tasks = new ArrayList<>();
         TResourceVector resources = new TResourceVector(cores, memory, disks);
@@ -72,7 +73,8 @@ public class DodoorClient {
                 NO_PREFERENCE,
                 java.nio.ByteBuffer.wrap("".getBytes()),
                 resources,
-                durationInMs);
+                durationInMs,
+                taskType);
         tasks.add(task);
         submitJob(tasks);
     }

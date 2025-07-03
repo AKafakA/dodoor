@@ -28,7 +28,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -36,7 +36,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -50,7 +50,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -58,7 +58,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -72,7 +72,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -80,7 +80,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -94,7 +94,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -102,7 +102,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -116,7 +116,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -124,7 +124,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -138,7 +138,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -146,7 +146,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -160,7 +160,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -168,7 +168,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -182,7 +182,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -204,7 +204,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -212,7 +212,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -226,7 +226,7 @@
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },
@@ -234,7 +234,7 @@
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
+                        "cores": 1.0,
                         "memory": 1024,
                         "disks": 0
                     },

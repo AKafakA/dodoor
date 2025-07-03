@@ -1,5 +1,7 @@
 package edu.cam.dodoor.scheduler.taskplacer;
 
+import edu.cam.dodoor.node.TaskMapsPerNodeType;
+import edu.cam.dodoor.node.TaskTypeID;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.MetricsUtils;
 import edu.cam.dodoor.utils.SchedulerUtils;
@@ -27,8 +29,10 @@ public class PrequalTaskPlacer extends TaskPlacer{
                              int delta,
                              int probeRate,
                              int probeDeleteRate,
-                             long probeAgeBudget) {
-        super(beta, PackingStrategy.NONE, resourceCapacityMap, 1, 1, 1, 1);
+                             long probeAgeBudget,
+                             Map<String, TaskMapsPerNodeType> taskNodeStateMap) {
+        super(beta, PackingStrategy.NONE, resourceCapacityMap, 1, 1, 1, 1,
+                taskNodeStateMap);
         _rifQuantile = rifQuantile;
         _probePoolSize = probePoolSize;
         _delta = delta;
@@ -47,19 +51,30 @@ public class PrequalTaskPlacer extends TaskPlacer{
         int[] numPendingTasks = loadMaps.values().stream().mapToInt(e -> e.numTasks).toArray();
         int cutoff = MetricsUtils.getQuantile(numPendingTasks, _rifQuantile);
         // TODO(wda): Always send the tasks inside one request to the same node, which can be improved in the future.
-        InetSocketAddress selectedNode = selectLeastNodeFromPrequalPool(loadMaps, cutoff);
+        Map.Entry<InetSocketAddress, TNodeState> selectedResults = selectLeastNodeFromPrequalPool(loadMaps, cutoff);
+        InetSocketAddress selectedNode = selectedResults.getKey();
+        TNodeState selectedNodeState = selectedResults.getValue();
         for (TTaskSpec taskSpec : schedulingRequest.tasks) {
-            TResourceVector taskResources = taskSpec.resourceRequest;
+            TResourceVector taskResources;
+            if (taskSpec.taskType.equals(TaskTypeID.SIMULATED.toString())) {
+                // Simulated tasks are not placed, so we skip them.
+                taskResources = taskSpec.resourceRequest;
+            } else {
+                taskResources = _taskNodeStateMap.get(selectedNodeState.nodeType).getResourceVector(taskSpec.taskType);
+                taskSpec.resourceRequest = taskResources;
+                taskSpec.durationInMs = _taskNodeStateMap.get(selectedNodeState.nodeType).getTaskDuration(taskSpec.taskType);
+            }
             updateSchedulingResults(allocations, selectedNode, schedulingRequest, taskSpec, schedulerAddress, taskResources);
         }
         return allocations;
     }
 
 
-    private InetSocketAddress selectLeastNodeFromPrequalPool(Map<InetSocketAddress, TNodeState> loadMaps,
-                                                             int taskCountCutoff) {
+    private Map.Entry<InetSocketAddress, TNodeState> selectLeastNodeFromPrequalPool(Map<InetSocketAddress, TNodeState> loadMaps,
+                                                                                    int taskCountCutoff) {
         Map<InetSocketAddress, TNodeState> prequalLoadMaps = new HashMap<>();
-
+        InetSocketAddress selectedAddress;
+        TNodeState selectedNodeState;
         synchronized (_probeInfo) {
             List<InetSocketAddress> probeAddresses = new ArrayList<>(_probeInfo.keySet());
             Collections.reverse(probeAddresses);
@@ -79,11 +94,14 @@ public class PrequalTaskPlacer extends TaskPlacer{
         if (prequalLoadMaps.isEmpty() || prequalLoadMaps.size() <= 2) {
             LOG.debug("Prequal queue is empty or too small, selecting random node");
             Random random = new Random();
-            return (InetSocketAddress) loadMaps.keySet().toArray()[random.nextInt(loadMaps.size())];
+            selectedAddress = (InetSocketAddress) loadMaps.keySet().toArray()[random.nextInt(loadMaps.size())];
+        } else {
+            Optional<InetSocketAddress> selectedNodeOptional = prequalLoadMaps.entrySet().stream().filter(e -> e.getValue().numTasks < taskCountCutoff)
+                    .sorted(Comparator.comparingLong(e -> e.getValue().totalDurations)).map(Map.Entry::getKey).findFirst();
+            selectedAddress  =
+                    selectedNodeOptional.orElseGet(() -> prequalLoadMaps.entrySet().stream().min(Comparator.comparingInt(e -> e.getValue().numTasks)).get().getKey());
         }
-
-        Optional<InetSocketAddress> selectedNodeOptional = prequalLoadMaps.entrySet().stream().filter(e -> e.getValue().numTasks < taskCountCutoff)
-                .sorted(Comparator.comparingLong(e -> e.getValue().totalDurations)).map(Map.Entry::getKey).findFirst();
-        return selectedNodeOptional.orElseGet(() -> prequalLoadMaps.entrySet().stream().min(Comparator.comparingInt(e -> e.getValue().numTasks)).get().getKey());
+        selectedNodeState = loadMaps.get(selectedAddress);
+        return new AbstractMap.SimpleEntry<>(selectedAddress, selectedNodeState);
     }
 }

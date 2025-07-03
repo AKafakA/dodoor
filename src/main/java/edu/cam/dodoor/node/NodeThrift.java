@@ -44,7 +44,8 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
      * within this class under certain configurations (e.g. a config file specifies
      * multiple NodeMonitors).
      */
-    public void initialize(Configuration staticConfig, int nmPort, int nePort, JSONObject hostConfig)
+    public void initialize(Configuration staticConfig, int nmPort, int nePort, JSONObject hostConfig,
+                           JSONObject taskConfig)
             throws IOException, TException {
         MetricRegistry metrics = SharedMetricRegistries.getOrCreate(DodoorConf.NODE_METRICS_REGISTRY);
         _nodeServiceMetrics = new NodeServiceMetrics(metrics);
@@ -83,9 +84,8 @@ public class NodeThrift implements NodeMonitorService.Iface, NodeEnqueueService.
         if (nodeTypeConfig == null) {
             throw new TException("Node type not found for node IP: " + _nodeIp);
         } else {
-            LOG.info("Node type found: " + _nodeType);
             _node = new NodeImpl();
-            _node.initialize(staticConfig, this, nodeTypeConfig);
+            _node.initialize(staticConfig, this, nodeTypeConfig, taskConfig);
         }
 
         if (cachedEnabled) {

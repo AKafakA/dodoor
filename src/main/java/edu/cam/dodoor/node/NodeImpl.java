@@ -8,11 +8,13 @@ import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,8 +40,11 @@ public class NodeImpl implements Node {
     private boolean _isLateBindingEnabled;
     private String _nodeType;
 
+    public Map<String, String> _taskTypeToScriptPath;
+
     @Override
-    public void initialize(Configuration staticConfig, NodeThrift nodeThrift, JSONObject nodeTypeConfig) {
+    public void initialize(Configuration staticConfig, NodeThrift nodeThrift, JSONObject nodeTypeConfig,
+                           JSONObject taskTypeConfig) {
         int numSlots = nodeTypeConfig.getInt(DodoorConf.NUM_SLOTS);
         _nodeType = nodeTypeConfig.getString(DodoorConf.NODE_TYPE);
         _taskReceivedTime = Maps.newConcurrentMap();
@@ -50,7 +55,19 @@ public class NodeImpl implements Node {
         _isLateBindingEnabled = SchedulerUtils.isLateBindingScheduler(schedulerType);
         String nodeAddressStr = nodeThrift._neAddressStr;
         TaskLauncherService taskLauncherService = new TaskLauncherService();
-        taskLauncherService.initialize(staticConfig, numSlots, nodeThrift, nodeTypeConfig);
+
+        JSONArray taskTypes = taskTypeConfig.getJSONArray("tasks");
+        _taskTypeToScriptPath = new HashMap<>();
+
+        for (int i = 0; i < taskTypes.length(); i++) {
+            JSONObject taskTypeJson = taskTypes.getJSONObject(i);
+            String taskType = taskTypeJson.getString("taskTypeId");
+            String taskScriptPath = taskTypeJson.getString("taskExecPath");
+            _taskTypeToScriptPath.put(taskType, taskScriptPath);
+        }
+
+        taskLauncherService.initialize(staticConfig, numSlots, nodeThrift, nodeTypeConfig,
+                _taskTypeToScriptPath);
 
         if (staticConfig.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = staticConfig.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,

@@ -1,7 +1,9 @@
 package edu.cam.dodoor.node;
 
+import edu.cam.dodoor.thrift.TResourceVector;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +22,7 @@ public class TaskLauncherService {
     private Node _node;
     private NodeServiceMetrics _nodeServiceMetrics;
     private ThreadPoolExecutor _executor;
+    private Map<String, String> _taskScriptPaths = new HashMap<>();
 
     /** A runnable that spins in a loop asking for tasks to launch and launching them. */
     private class TaskLaunchRunnable implements Runnable {
@@ -36,9 +41,19 @@ public class TaskLauncherService {
                 Process process = executeLaunchTask(task);
                 long pid = process.pid();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
-                Thread.sleep(task._duration);
-                process.destroyForcibly();
-                LOG.debug("Task {} completed", task._taskId);
+                if (task._taskType.equals("simulated")) {
+                    Thread.sleep(task._duration);
+                    process.destroyForcibly();
+                    LOG.debug("Task {} completed", task._taskId);
+                } else {
+                    // Wait for the process to complete
+                    int exitCode = process.waitFor();
+                    if (exitCode != 0) {
+                        LOG.error("Task {} failed with exit code {}", task._taskId, exitCode);
+                    } else {
+                        LOG.debug("Task {} completed successfully", task._taskId);
+                    }
+                }
                 _node.taskFinished(task.getFullTaskId());
                 _nodeServiceMetrics.taskFinished();
                 BufferedReader stdError = new BufferedReader(new
@@ -55,17 +70,29 @@ public class TaskLauncherService {
         /** Executes to launch a task */
         private Process executeLaunchTask(TaskSpec task) throws IOException, InterruptedException {
             Runtime rt = Runtime.getRuntime();
-            long memory = task._resourceVector.memory;
-            long disks = task._resourceVector.disks;
-            double cpu = task._resourceVector.cores;
-            long duration = task._duration;
-            long durationInSec = duration / 1000;
-            return rt.exec(
-                    generateStressCommand(cpu, memory, disks, durationInSec));
+            String taskType = task._taskType;
+            String command;
+            if (taskType.equals(TaskTypeID.SIMULATED.toString())) {
+                long memory = task._resourceVector.memory;
+                long disks = task._resourceVector.disks;
+                double cpu = task._resourceVector.cores;
+                long duration = task._duration;
+                long durationInSec = duration / 1000;
+                command = generateStressCommand(cpu, memory, disks, durationInSec);
+            } else {
+                String scriptPath = _taskScriptPaths.get(taskType);
+                if (scriptPath == null) {
+                    LOG.error("No script path found for task type {}", taskType);
+                    throw new IOException("No script path found for task type " + taskType);
+                }
+                command = generatePythonCommand(scriptPath);
+            }
+            return rt.exec(command);
         }
     }
 
-    public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift, JSONObject nodeTypeConfig) {
+    public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift,
+                           JSONObject nodeTypeConfig, Map<String, String> taskScriptPaths) {
         /* The number of threads used by the service. */
         int numSlots = numSlot;
         if (numSlots <= 0) {
@@ -75,8 +102,9 @@ public class TaskLauncherService {
         }
         _node = nodeThrift._node;
         _nodeServiceMetrics = nodeThrift.getNodeServiceMetrics();
-        LOG.debug("Initializing task launcher service with {} slots", numSlots);
         _executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numSlots);
+        _taskScriptPaths = taskScriptPaths;
+        LOG.debug("Initializing task launcher service with {} slots", numSlots);
     }
 
     public void tryToLaunchTask(TaskSpec task) {
@@ -132,6 +160,10 @@ public class TaskLauncherService {
                         intCores, load, memory, durationInSec, disks, durationInSec);
             }
         }
+    }
 
+    private String generatePythonCommand(String pythonScriptPath) {
+        // Assuming the Python script is in the same directory as the Java class
+        return String.format("python3 %s", pythonScriptPath);
     }
 }

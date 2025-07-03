@@ -29,6 +29,8 @@ public class ServiceDaemon {
                 withRequiredArg().ofType(String.class);
         parser.accepts("host", "host configurations file (required)").
                 withRequiredArg().ofType(String.class);
+        parser.accepts("task", "task configurations file (required)").
+                withRequiredArg().ofType(String.class);
         parser.accepts("s", "If contains scheduler or not").
                 withRequiredArg().ofType(Boolean.class);
         parser.accepts("d", "If contains a datastore service or not").
@@ -53,6 +55,10 @@ public class ServiceDaemon {
         JSONObject hostConfig = new JSONObject(
                 Files.readString(Paths.get(hostConfigFile)));
 
+        String taskConfigFile = (String) options.valueOf("task");
+        JSONObject taskConfig = new JSONObject(
+                Files.readString(Paths.get(taskConfigFile)));
+
         Boolean isScheduler = (Boolean) options.valueOf("s");
         Boolean isDataStore = (Boolean) options.valueOf("d");
         Boolean isNode = (Boolean) options.valueOf("n");
@@ -62,11 +68,12 @@ public class ServiceDaemon {
         }
 
         ServiceDaemon daemon = new ServiceDaemon();
-        daemon.initialize(conf, hostConfig, isScheduler, isDataStore, isNode);
+        daemon.initialize(conf, hostConfig, taskConfig, isScheduler, isDataStore, isNode);
     }
 
     private void initialize(Configuration config,
                             JSONObject hostConfig,
+                            JSONObject taskConfig,
                             boolean isScheduler,
                             boolean isDataStore,
                             boolean isNode) throws Exception{
@@ -79,7 +86,7 @@ public class ServiceDaemon {
             JSONObject nodeConfig = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME);
             int nmPorts = nodeConfig.getInt(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
             int nePorts = nodeConfig.getInt(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
-            new NodeThrift().initialize(config, nmPorts, nePorts, hostConfig);
+            new NodeThrift().initialize(config, nmPorts, nePorts, hostConfig, taskConfig);
         }
 
         if (isDataStore) {
@@ -101,7 +108,8 @@ public class ServiceDaemon {
             for (int i = 0; i < schedulerPorts.length(); i++) {
                 String schedulerPort = schedulerPorts.getString(i);
                 SchedulerThrift scheduler = new SchedulerThrift();
-                scheduler.initialize(config, Integer.parseInt(schedulerPort), logKicked, hostConfig);
+                scheduler.initialize(config, Integer.parseInt(schedulerPort), logKicked, hostConfig,
+                        taskConfig);
                 logKicked = true;
             }
         }

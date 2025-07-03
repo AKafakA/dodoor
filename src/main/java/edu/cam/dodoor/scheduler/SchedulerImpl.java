@@ -4,6 +4,7 @@ package edu.cam.dodoor.scheduler;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import edu.cam.dodoor.DodoorConf;
+import edu.cam.dodoor.node.TaskMapsPerNodeType;
 import edu.cam.dodoor.scheduler.taskplacer.TaskPlacer;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
@@ -77,7 +78,8 @@ public class SchedulerImpl implements Scheduler{
     @Override
     public void initialize(Configuration staticConfig, THostPort localAddress,
                            SchedulerServiceMetrics schedulerServiceMetrics,
-                           JSONObject hostConfig) throws IOException {
+                           JSONObject hostConfig,
+                           JSONObject taskTypeConfig) throws IOException {
         _nodeLoadChanges = Maps.newConcurrentMap();
         _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = localAddress;
@@ -163,13 +165,15 @@ public class SchedulerImpl implements Scheduler{
             _probePoolSize = staticConfig.getInt(DodoorConf.PREQUAL_PROBE_POOL_SIZE, DodoorConf.DEFAULT_PREQUAL_PROBE_POOL_SIZE);
             _probeAgeBudget = staticConfig.getInt(DodoorConf.PREQUAL_PROBE_AGE_BUDGET_MS, DodoorConf.DEFAULT_PREQUAL_PROBE_AGE_BUDGET_MS);
         }
-
+        Map<String, TaskMapsPerNodeType> taskNodeStateMap =
+                TaskMapsPerNodeType.createTaskMapsPerNodeTypeMap(taskTypeConfig, nodeConfig);
         _taskPlacer = TaskPlacer.createTaskPlacer(beta,
                 _nodeEqueueSocketToNodeMonitorClients,
                 schedulerServiceMetrics,
                 staticConfig,
                 resourceCapacityMap,
-                _probeInfo);
+                _probeInfo,
+                taskNodeStateMap);
         _numTasksToUpdateDataStore = staticConfig.getInt(DodoorConf.SCHEDULER_NUM_TASKS_TO_UPDATE,
                 DodoorConf.DEFAULT_SCHEDULER_NUM_TASKS_TO_UPDATE);
 
