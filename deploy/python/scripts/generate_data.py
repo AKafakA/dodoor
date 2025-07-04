@@ -1,72 +1,58 @@
+import argparse
+
 from deploy.python.data.generator.azure.azure_data_generator import AzureDataGenerator
-from deploy.python.data.generator.gcp.google_cloud_task_data_generator import GoogleCloudTaskDataGenerator
-from deploy.python.data.generator.gcp.google_cloud_v2_task_data_generator import GoogleCloudV2TaskDataGenerator
 import random
 
-generate_azure = True
-if generate_azure:
-    # random pick one hour in the first day to collect the trace
-    # time_window = 1 / 48
-    # start_point = random.uniform(0, 1 - time_window)
-    # end_point = start_point + time_window
 
-    # pick 2 hour traces in the first day from 2:00 to 4:00
-    time_window = 1 / 12
-    start_point = 2 / 24
-    end_point = start_point + time_window
+def generate_azure_data(azure_data_path, azure_output_path, max_cores=8, max_memory=62 * 1024,
+                        num_records=10000000, max_duration=1000 * 60):
+    """
+    # read all trace from azure data and generate a new trace with 10 million records
+    :param azure_data_path: Path to the Azure trace data
+    :param azure_output_path: Path to save the processed Azure data for replaying
+    :param max_cores: Maximum number of cores for the generated records
+    :param max_memory: Maximum memory for the generated records in MB
+    :param num_records: Number of records to generate
+    :param max_duration: Maximum duration for the generated records in milliseconds
 
-    azure_data_path = "deploy/resources/data/raw_data/azure_trace.sqlite"
-    azure_output_path_10m = "deploy/resources/data/azure_data_cloudlab_10m"
-    print("tracking all trace between {} and {} (in days)".format(start_point, end_point))
+    """
+
+    # azure_data_path = "deploy/resources/data/raw_data/azure_trace.sqlite"
+    # azure_output_path_10m = "deploy/resources/data/azure_data_cloudlab_10m"
 
     azure_data_generator = AzureDataGenerator(azure_data_path, machine_ids=range(1, 2),
                                               max_cores=48,
                                               max_memory=348 * 1024)
-    data_10m = azure_data_generator.generate(10000000, 0, 1000 * 60 * 10,
-                                             [start_point, end_point],
-                                             time_shift=1.0,
-                                             timeline_compress_ratio=1.0,
-                                             max_cores=8, max_memory=62 * 1024, max_disk=-1)
-    azure_data_generator.write_data_target_output(data_10m, azure_output_path_10m)
-    azure_output_path_1m = "deploy/resources/data/azure_data_cloudlab_1m"
-    data_1m = azure_data_generator.generate(10000000, 0, 1000 * 60,
-                                            [start_point, end_point],
-                                            time_shift=1.0,
-                                            timeline_compress_ratio=1.0,
-                                            max_cores=8, max_memory=62 * 1024, max_disk=-1)
-    # azure_data_generator.write_data_target_output(data_1m, azure_output_path_1m)
+    data_10m = azure_data_generator.generate(num_records, 0, max_duration,
+                                             [0, 14],
+                                             max_cores=max_cores, max_memory=max_memory, max_disk=-1)
+    azure_data_generator.write_data_target_output(data_10m, azure_output_path)
 
-    print("Azure Data generation completed")
 
-generate_gcp = False
-
-if generate_gcp:
-    gcp_event_path_dir = "deploy/resources/data/raw_data/google_task_events"
-    gcp_output_path_1m = "deploy/resources/data/gcp_data_cloudlab_1m"
-    gcp_output_path_10m = "deploy/resources/data/gcp_data_cloudlab_10m"
-    gcp_data_generator = GoogleCloudTaskDataGenerator(gcp_event_path_dir,
-                                                      max_cores=48,
-                                                      max_memory=384 * 1024)
-    data_1m = gcp_data_generator.generate(10000000, 0, 1000 * 1, [0, 1 / 12],
-                                          max_cores=8, max_memory=60 * 1024, max_disk=-1)
-    gcp_data_generator.write_data_target_output(data_1m, gcp_output_path_1m)
-
-    data_10m = gcp_data_generator.generate(10000000, 0, 1000 * 60 * 10, [0, 1 / 12],
-                                           max_cores=8, max_memory=60 * 1024, max_disk=-1)
-    gcp_data_generator.write_data_target_output(data_10m, gcp_output_path_10m)
-
-generate_gcp_v2 = False
-
-if generate_gcp_v2:
-    gcp_event_path_dir = "deploy/resources/data/raw_data/google_cloud_v2/instance_events-000000000000.json"
-    gcp_output_path_1m = "deploy/resources/data/gcp_v2_data_cloudlab_1m"
-    gcp_output_path_10m = "deploy/resources/data/gcp_v2_data_cloudlab_10m"
-    gcp_datav2_generator = GoogleCloudV2TaskDataGenerator(gcp_event_path_dir,
-                                                          max_cores=48,
-                                                          max_memory=384 * 1024)
-    data_1m = gcp_datav2_generator.generate(10000000, 0, 1000 * 60 * 1, [0, 1 / 12],
-                                            max_cores=8, max_memory=60 * 1024, max_disk=-1)
-    gcp_datav2_generator.write_data_target_output(data_1m, gcp_output_path_1m)
-    data_10m = gcp_datav2_generator.generate(10000000, 0, 1000 * 60 * 10, [0, 1 / 12],
-                                             max_cores=8, max_memory=60 * 1024, max_disk=-1)
-    gcp_datav2_generator.write_data_target_output(data_10m, gcp_output_path_10m)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_records", type=int, default=10000000,
+                        help="Number of records to generate")
+    parser.add_argument("--max_cores", type=int, default=8,
+                        help="Maximum number of cores for the generated records")
+    parser.add_argument("--max_memory", type=int, default=62 * 1024,
+                        help="Maximum memory for the generated records in MB")
+    parser.add_argument("--max_duration", type=int, default=1000 * 60,
+                        help="Maximum duration for the generated records in milliseconds")
+    parser.add_argument("--generated_dataset", nargs='+',
+                        default=["azure", "huawei_serverless", "function_bench"])
+    parser.add_argument("--azure_data_path", type=str,
+                        default="deploy/resources/data/raw_data/azure_trace.sqlite",
+                        help="Path to Azure trace data")
+    parser.add_argument("--azure_output_path", type=str,
+                        default="deploy/resources/data/azure_data",
+                        help="Path to save the processed Azure data for replaying")
+    parser.add_argument("--function_bench_config", type=str,
+                        default="deploy/configurations/function_bench_config.json",
+                        help="Path to Function Bench trace data")
+    args = parser.parse_args()
+    if "azure" in args.generated_dataset:
+        assert args.azure_data_path is not None, "Azure data path must be provided"
+        assert args.azure_output_path is not None, "Azure output path must be provided"
+        generate_azure_data(args.azure_data_path, args.azure_output_path, args.max_cores, args.max_memory,
+                            args.num_records, args.max_duration)

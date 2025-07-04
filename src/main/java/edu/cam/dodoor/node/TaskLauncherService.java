@@ -164,6 +164,6 @@ public class TaskLauncherService {
 
     private String generatePythonCommand(String pythonScriptPath) {
         // Assuming the Python script is in the same directory as the Java class
-        return String.format("python3 %s", pythonScriptPath);
+        return String.format("cd ~/dodoor && python3 %s", pythonScriptPath);
     }
 }

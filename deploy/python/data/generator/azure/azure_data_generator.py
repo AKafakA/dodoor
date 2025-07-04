@@ -9,7 +9,7 @@ MIN_CORES = 1
 
 class AzureDataGenerator(DataGenerator, ABC):
     def __init__(self, db_path, machine_ids=None,
-                 max_cores=24,
+                 max_cores=28,
                  max_memory=30720,
                  max_disk=307200, time_interval=86400000):
 
@@ -24,7 +24,8 @@ class AzureDataGenerator(DataGenerator, ABC):
         self.time_interval = time_interval
 
     def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None,
-                 timeline_compress_ratio=1, time_shift=-1, reassign_ids=True, max_cores=-1, max_memory=-1, max_disk=-1,
+                 timeline_compress_ratio=1, time_shift=-1, reassign_ids=True,
+                 max_cores=-1, max_memory=-1, max_disk=-1,
                  take_before_request=False,
                  cores_scale=1, memory_scale=1, disk_scale=1):
         """
@@ -67,7 +68,7 @@ class AzureDataGenerator(DataGenerator, ABC):
                 if max_cores > 0:
                     if cores * cores_scale > max_cores:
                         continue
-                    cores = math.ceil(min(cores * cores_scale, max_cores))
+                    cores = min(cores * cores_scale, max_cores)
                 if max_memory > 0:
                     if memory * memory_scale > max_memory:
                         continue
@@ -82,7 +83,7 @@ class AzureDataGenerator(DataGenerator, ABC):
 
                 data.append({
                     "taskId": task_id,
-                    "cores": int(cores),
+                    "cores": float(cores),
                     "memory": int(memory),
                     "disk": int(disk),
                     "duration": int(duration),

@@ -8,7 +8,7 @@ MIN_CORES = 1
 class DataGenerator(ABC):
     input_data_schema = Schema({
         "taskId": int,
-        "cores": int,
+        "cores": float,
         "memory": int,
         "disk": int,
         "duration": int,

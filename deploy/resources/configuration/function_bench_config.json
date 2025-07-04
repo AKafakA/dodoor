@@ -2,7 +2,7 @@
     "tasks": [
         {
             "taskTypeId": "float_operation",
-            "taskExecPath": "tree/master/google/cpu-memory/float_operation/main.py",
+            "taskExecPath": "deploy/python/function_bench/float_operation.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -24,7 +24,7 @@
         },
         {
             "taskTypeId": "linpack",
-            "taskExecPath": "tree/master/google/cpu-memory/linpack/main.py",
+            "taskExecPath": "deploy/python/function_bench/linpack.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -46,73 +46,7 @@
         },
         {
             "taskTypeId": "matmul",
-            "taskExecPath": "tree/master/google/cpu-memory/matmul/main.py",
-            "instanceInfo": {
-                "m400": {
-                    "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
-                    },
-                    "estimatedDuration": 1000
-                },
-                "m510": {
-                    "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
-                    },
-                    "estimatedDuration": 1000
-                }
-            }
-        },
-        {
-            "taskTypeId": "image_processing",
-            "taskExecPath": "tree/master/google/cpu-memory/image_processing/main.py",
-            "instanceInfo": {
-                "m400": {
-                    "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
-                    },
-                    "estimatedDuration": 1000
-                },
-                "m510": {
-                    "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
-                    },
-                    "estimatedDuration": 1000
-                }
-            }
-        },
-        {
-            "taskTypeId": "video_processing",
-            "taskExecPath": "tree/master/google/cpu-memory/video_processing/main.py",
-            "instanceInfo": {
-                "m400": {
-                    "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
-                    },
-                    "estimatedDuration": 1000
-                },
-                "m510": {
-                    "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
-                    },
-                    "estimatedDuration": 1000
-                }
-            }
-        },
-        {
-            "taskTypeId": "map_reduce",
-            "taskExecPath": "tree/master/google/cpu-memory/map_reduce/main.py",
+            "taskExecPath": "deploy/python/function_bench/matmul.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -134,7 +68,7 @@
         },
         {
             "taskTypeId": "chameleon",
-            "taskExecPath": "tree/master/google/cpu-memory/chameleon/main.py",
+            "taskExecPath": "deploy/python/function_bench/chameleon.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -156,7 +90,7 @@
         },
         {
             "taskTypeId": "pyaes",
-            "taskExecPath": "tree/master/google/cpu-memory/pyaes/main.py",
+            "taskExecPath": "deploy/python/function_bench/pyaes.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -177,30 +111,8 @@
             }
         },
         {
-            "taskTypeId": "feature_generation",
-            "taskExecPath": "tree/master/google/cpu-memory/feature_generation/main.py",
-            "instanceInfo": {
-                "m400": {
-                    "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
-                    },
-                    "estimatedDuration": 1000
-                },
-                "m510": {
-                    "resourceVector": {
-                        "cores": 1,
-                        "memory": 1024,
-                        "disks": 0
-                    },
-                    "estimatedDuration": 1000
-                }
-            }
-        },
-        {
-            "taskTypeId": "model_training",
-            "taskExecPath": "tree/master/google/cpu-memory/model_training/main.py",
+            "taskTypeId": "lr_train",
+            "taskExecPath": "deploy/python/function_bench/lr_model_train.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -221,8 +133,30 @@
             }
         },
         {
-            "taskTypeId": "model_serving",
-            "taskExecPath": "tree/master/google/cpu-memory/model_serving/main.py",
+            "taskTypeId": "lr_prediction",
+            "taskExecPath": "deploy/python/function_bench/lr_prediction.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        },
+        {
+            "taskTypeId": "rnn_name_generation",
+            "taskExecPath": "deploy/python/function_bench/rnn_name_generation.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
