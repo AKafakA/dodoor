@@ -30,7 +30,7 @@ def monitor_process(process: subprocess.Popen, results: Dict[str, Any]):
         while process.poll() is None:
             with p.oneshot():
                 # Get CPU percentage. The first call is inaccurate, but it's fine in a loop.
-                cpu_percent = p.cpu_percent(interval=0.01)
+                cpu_percent = p.cpu_percent(interval=0.1)
                 if cpu_percent > peak_cpu:
                     peak_cpu = cpu_percent
 
