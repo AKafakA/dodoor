@@ -67,8 +67,8 @@
             }
         },
         {
-            "taskTypeId": "chameleon",
-            "taskExecPath": "deploy/python/function_bench/chameleon.py",
+            "taskTypeId": "chameleon_rendering",
+            "taskExecPath": "deploy/python/function_bench/chameleon_rendering.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -89,8 +89,8 @@
             }
         },
         {
-            "taskTypeId": "pyaes",
-            "taskExecPath": "deploy/python/function_bench/pyaes.py",
+            "taskTypeId": "pyaes_generation",
+            "taskExecPath": "deploy/python/function_bench/pyaes_generation.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
