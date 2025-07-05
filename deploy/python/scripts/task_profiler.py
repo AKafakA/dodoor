@@ -55,11 +55,13 @@ def monitor_process(process: subprocess.Popen, results: Dict[str, Any]):
 
 # --- Main Profiling Logic ---
 
-def profile_tasks(config_path: str, instance_id: str, iterations: int, output_path: str):
+def profile_tasks(config_path: str, instance_id: str, iterations: int, output_path: str,
+                  verbose: bool = False):
     """
     Profiles tasks from a config file and generates a new config with measured data.
 
     Args:
+        verbose:
         config_path (str): Path to the input JSON config file.
         instance_id (str): Identifier for the current machine instance.
         iterations (int): Number of times to run each task.
@@ -101,7 +103,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         peak_memories_mb = []
 
         for n in range(iterations):
-            print(f"  - Iteration {n + 1}/{iterations}...", end='\r')
+            if verbose:
+                print(f"  - Iteration {n + 1}/{iterations}...", end='\r')
 
             start_time = time.perf_counter()
 
@@ -132,8 +135,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
             durations_ms.append((end_time - start_time) * 1000)
             peak_cpus.append(monitor_results.get('peak_cpu', 0.0))
             peak_memories_mb.append(monitor_results.get('peak_memory_mb', 0.0))
-
-        print(f"  - Completed {iterations} iterations.                ")
+        if verbose:
+            print(f"  - Completed {iterations} iterations.                ")
 
         # Calculate averages if we have successful runs
         if not durations_ms:
@@ -210,6 +213,11 @@ if __name__ == "__main__":
         default="profiler_output.json",
         help="Path to save the generated JSON file. Default is 'profiler_output.json'."
     )
+    parser.add_argument(
+        '--verbose',
+        action='store_true',
+        help="Enable verbose output for detailed profiling information."
+    )
 
     args = parser.parse_args()
 
@@ -224,5 +232,6 @@ if __name__ == "__main__":
         config_path=args.config_path,
         instance_id=args.instance_id,
         iterations=args.iterations,
-        output_path=args.output_path
+        output_path=args.output_path,
+        verbose=args.verbose
     )

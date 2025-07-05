@@ -11,8 +11,7 @@ class AzureDataGenerator(DataGenerator, ABC):
     def __init__(self, db_path, machine_ids=None,
                  max_cores=28,
                  max_memory=30720,
-                 max_disk=307200, time_interval=86400000):
-
+                 max_disk=307200, time_interval=24 * 60 * 60 * 1000):
         super().__init__()
         self.machine_ids = [0]
         if machine_ids is not None:
@@ -41,8 +40,10 @@ class AzureDataGenerator(DataGenerator, ABC):
         if time_range_in_days is None:
             time_range_in_days = [0, 0.1]
         for machine_id in self.machine_ids:
+            if len(data) >= num_records:
+                break
             vm_requests = self.sqlite_processor.get_vm_resource_requests_in_batch(machine_id=machine_id,
-                                                                                  num_requests_per_machine=num_records)
+                                                                                  num_requests_per_machine=-1)
             for vm in vm_requests:
                 task_id = vm[TableKeys.VM_ID]
                 if None in vm.values() or task_id < start_id or task_ids.get(task_id, False):
@@ -87,16 +88,18 @@ class AzureDataGenerator(DataGenerator, ABC):
                     "memory": int(memory),
                     "disk": int(disk),
                     "duration": int(duration),
-                    "startTime": int(start_time)
+                    "startTime": int(start_time),
+                    "taskType": "simulated"
                 })
                 cpu_cores_list.append(int(cores))
                 memory_list.append(int(memory))
                 task_ids[task_id] = True
-        data = sorted(data, key=lambda x: x["startTime"])[:num_records]
+                if len(data) >= num_records:
+                    break
+        data = sorted(data, key=lambda x: x["startTime"])
         if reassign_ids:
             for i in range(len(data)):
                 data[i]["taskId"] = i
         print("Average cores: {}, Average memory: {}".format(sum(cpu_cores_list) / len(cpu_cores_list),
                                                              sum(memory_list) / len(memory_list)))
-        print("Total tasks: {}".format(len(data)))
         return data

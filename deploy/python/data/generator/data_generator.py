@@ -13,6 +13,7 @@ class DataGenerator(ABC):
         "disk": int,
         "duration": int,
         "startTime": int,
+        "taskType": str
     })
 
     @abstractmethod

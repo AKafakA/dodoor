@@ -31,7 +31,7 @@ def get_wait_time(qps: float, distribution: str, burstiness: float = 1.0) -> flo
 
 
 class FunctionBenchGenerator(DataGenerator, ABC):
-    def __init__(self, db_path, config_address, target_instance_qps,
+    def __init__(self, config_address, target_cluster_qps,
                  task_distribution=None,
                  distribution_type="gamma",
                  burstiness=1.0):
@@ -40,7 +40,7 @@ class FunctionBenchGenerator(DataGenerator, ABC):
         config = json.load(open(config_address, 'r'))
         self._task_list = config.get(TableKeys.TASK_FIELD, [])
         assert self._task_list, "Task list is empty in the configuration file."
-        self._target_qps = target_instance_qps
+        self._target_qps = target_cluster_qps
         self._task_distribution = task_distribution if task_distribution else {}
         self._distribution_bucket = []
 
@@ -64,6 +64,8 @@ class FunctionBenchGenerator(DataGenerator, ABC):
         start_time = time_range_in_days[0] * 24 * 3600 * 1000  # Convert to milliseconds
         task_id = start_id
         generated_tasks = []
+        cpu_cores_list = []
+        memory_list = []
 
         while len(generated_tasks) < num_records:
             if self._task_distribution:
@@ -76,13 +78,14 @@ class FunctionBenchGenerator(DataGenerator, ABC):
             task_waiting_time = get_wait_time(self._target_qps,
                                               self._distribution_type,
                                               self._burstiness) * 1000
-            start_time += task_waiting_time
+            start_time += int(task_waiting_time)
             task_type = self._task_list[task_type_index]
             instance_info = task_type.get(TableKeys.INSTANCE_INFO_ID, {})
-            first_instance = next(iter(instance_info.values()), {})
-            cores = first_instance.get(TableKeys.CORES)
-            memory = first_instance.get(TableKeys.MEMORY)
-            disk = first_instance.get(TableKeys.DISKS, 0)
+            first_instance = next(iter(instance_info.values()))
+            resource_vector = first_instance.get(TableKeys.RESOURCE_VECTOR, {})
+            cores = resource_vector.get(TableKeys.CORES)
+            memory = resource_vector.get(TableKeys.MEMORY)
+            disk = resource_vector.get(TableKeys.DISKS, 0)
             duration = first_instance.get(TableKeys.DURATION)
 
             generated_tasks.append({
@@ -95,3 +98,8 @@ class FunctionBenchGenerator(DataGenerator, ABC):
                 "taskType": task_type[TableKeys.TASK_TYPE_ID],
             })
             task_id += 1
+            cpu_cores_list.append(float(cores))
+            memory_list.append(int(memory))
+        print("Average cores: {}, Average memory: {}".format(sum(cpu_cores_list) / len(cpu_cores_list),
+                                                             sum(memory_list) / len(memory_list)))
+        return generated_tasks
