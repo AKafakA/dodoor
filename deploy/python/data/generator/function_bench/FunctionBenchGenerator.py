@@ -1,0 +1,97 @@
+import random
+from abc import ABC
+import json
+import numpy as np
+
+from deploy.python.data.generator.data_generator import DataGenerator
+
+
+class TableKeys:
+    TASK_FIELD = "tasks"
+    TASK_TYPE_ID = "taskTypeId"
+    INSTANCE_INFO_ID = "instanceInfo"
+    RESOURCE_VECTOR = "resourceVector"
+    CORES = "cores"
+    MEMORY = "memory"
+    DISKS = "disks"
+    DURATION = "estimatedDuration"
+
+
+def get_wait_time(qps: float, distribution: str, burstiness: float = 1.0) -> float:
+    mean_time_between_requests = 1.0 / qps
+    if distribution == "uniform":
+        return mean_time_between_requests
+    elif distribution == "gamma":
+        assert burstiness > 0, (
+            f"A positive burstiness factor is expected, but given {burstiness}.")
+        theta = 1.0 / (qps * burstiness)
+        return np.random.gamma(shape=burstiness, scale=theta)
+    else:
+        return np.random.exponential(mean_time_between_requests)
+
+
+class FunctionBenchGenerator(DataGenerator, ABC):
+    def __init__(self, db_path, config_address, target_instance_qps,
+                 task_distribution=None,
+                 distribution_type="gamma",
+                 burstiness=1.0):
+        super().__init__()
+        self._config_address = config_address
+        config = json.load(open(config_address, 'r'))
+        self._task_list = config.get(TableKeys.TASK_FIELD, [])
+        assert self._task_list, "Task list is empty in the configuration file."
+        self._target_qps = target_instance_qps
+        self._task_distribution = task_distribution if task_distribution else {}
+        self._distribution_bucket = []
+
+        self._distribution_type = distribution_type
+        self._burstiness = burstiness
+        if task_distribution:
+            assert sum(task_distribution) == 1, \
+                "Task distribution must sum to 1. Provided distribution: {}".format(task_distribution)
+            assert len(task_distribution) == len(self._task_list), \
+                "Task distribution length must match the number of tasks in the configuration file."
+
+            start_bucket = 0
+            for i in range(len(self._task_list)):
+                task_type_id = self._task_list[i][TableKeys.TASK_TYPE_ID]
+                start_bucket += self._task_distribution.get(task_type_id)
+                self._distribution_bucket.append(start_bucket)
+
+    def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None):
+        if time_range_in_days is None:
+            time_range_in_days = [0, 1]
+        start_time = time_range_in_days[0] * 24 * 3600 * 1000  # Convert to milliseconds
+        task_id = start_id
+        generated_tasks = []
+
+        while len(generated_tasks) < num_records:
+            if self._task_distribution:
+                random_selected_task_index = random.randint(0, self._distribution_bucket[-1] - 1)
+                task_type_index = next(i for i, bucket in enumerate(self._distribution_bucket)
+                                    if bucket > random_selected_task_index) - 1
+            else:
+                task_type_index = random.randint(0, len(self._task_list) - 1)
+
+            task_waiting_time = get_wait_time(self._target_qps,
+                                              self._distribution_type,
+                                              self._burstiness) * 1000
+            start_time += task_waiting_time
+            task_type = self._task_list[task_type_index]
+            instance_info = task_type.get(TableKeys.INSTANCE_INFO_ID, {})
+            first_instance = next(iter(instance_info.values()), {})
+            cores = first_instance.get(TableKeys.CORES)
+            memory = first_instance.get(TableKeys.MEMORY)
+            disk = first_instance.get(TableKeys.DISKS, 0)
+            duration = first_instance.get(TableKeys.DURATION)
+
+            generated_tasks.append({
+                "taskId": task_id,
+                "cores": float(cores),
+                "memory": int(memory),
+                "disk": int(disk),
+                "duration": int(duration),
+                "startTime": start_time,
+                "taskType": task_type[TableKeys.TASK_TYPE_ID],
+            })
+            task_id += 1

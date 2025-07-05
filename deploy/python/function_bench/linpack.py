@@ -32,5 +32,5 @@ def linpack(N):
 
 
 if __name__ == "__main__":
-    N = 8196  # Adjust N as needed for testing
+    N = 4096  # Adjust N as needed for testing
     result = linpack(N)
