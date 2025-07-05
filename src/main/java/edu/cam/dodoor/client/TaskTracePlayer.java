@@ -161,7 +161,7 @@ public class TaskTracePlayer {
                 int waitTime = poissonDistribution.sample();
                 startTime += waitTime;
             }
-            String taskType = parts.length > 6 ? parts[6] : TaskTypeID.SIMULATED.toString();
+            String taskType = parts[6];
             TaskLaunchRunnable task = new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs,
                     startTime, client, globalStartTime, addDelay, taskType);
             Thread t = new Thread(task);

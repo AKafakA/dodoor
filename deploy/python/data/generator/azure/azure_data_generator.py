@@ -3,6 +3,7 @@ from abc import ABC
 
 from deploy.python.data.generator.azure.azure_sqlite_processor import AzureSqliteProcessor, TableKeys
 from deploy.python.data.generator.data_generator import DataGenerator
+from deploy.python.data.generator.utils import get_wait_time
 
 MIN_CORES = 1
 
@@ -11,7 +12,10 @@ class AzureDataGenerator(DataGenerator, ABC):
     def __init__(self, db_path, machine_ids=None,
                  max_cores=28,
                  max_memory=30720,
-                 max_disk=307200, time_interval=24 * 60 * 60 * 1000):
+                 max_disk=307200, time_interval=24 * 60 * 60 * 1000,
+                 target_qps=-1,
+                 distribution_type="gamma",
+                 burstiness=1.0):
         super().__init__()
         self.machine_ids = [0]
         if machine_ids is not None:
@@ -21,12 +25,12 @@ class AzureDataGenerator(DataGenerator, ABC):
         self.max_memory = max_memory
         self.max_disk = max_disk
         self.time_interval = time_interval
+        self.target_qps = target_qps
+        self.distribution_type = distribution_type
+        self.burstiness = burstiness
 
     def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None,
-                 timeline_compress_ratio=1, time_shift=-1, reassign_ids=True,
-                 max_cores=-1, max_memory=-1, max_disk=-1,
-                 take_before_request=False,
-                 cores_scale=1, memory_scale=1, disk_scale=1):
+                 max_cores=8, max_memory=62 * 1024, max_disk=0, reassign_ids=True):
         """
             timeline_compress_ratio is used to compress the timeline to smaller value for fasting replay.
             e.g if last events is submitted in 14th days, so the timeline should be 60000 * 60 * 24 * 14
@@ -37,6 +41,7 @@ class AzureDataGenerator(DataGenerator, ABC):
         memory_list = []
         task_ids = {}
         data = []
+        exp_timeline = 0
         if time_range_in_days is None:
             time_range_in_days = [0, 0.1]
         for machine_id in self.machine_ids:
@@ -49,38 +54,26 @@ class AzureDataGenerator(DataGenerator, ABC):
                 if None in vm.values() or task_id < start_id or task_ids.get(task_id, False):
                     continue
                 start_time = vm[TableKeys.START_TIME]
-                if start_time > time_range_in_days[1]:
+                end_time = vm[TableKeys.END_TIME]
+                if not (time_range_in_days[0] <= start_time <= end_time <= time_range_in_days[1]):
                     continue
-                if start_time <= time_range_in_days[0]:
-                    if take_before_request:
-                        start_time = time_range_in_days[0]
-                    else:
-                        continue
-                if time_shift > 0:
-                    start_time = start_time % time_shift
-                start_time -= time_range_in_days[0]
-                start_time *= self.time_interval * timeline_compress_ratio
                 duration = (vm[TableKeys.END_TIME] - vm[TableKeys.START_TIME]) * self.time_interval
                 if 0 < max_duration < duration:
                     continue
                 cores = vm[TableKeys.RESOURCE_TYPE[0]] * self.max_cores
                 memory = vm[TableKeys.RESOURCE_TYPE[1]] * self.max_memory
                 disk = vm[TableKeys.RESOURCE_TYPE[2]] * self.max_disk
-                if max_cores > 0:
-                    if cores * cores_scale > max_cores:
-                        continue
-                    cores = min(cores * cores_scale, max_cores)
-                if max_memory > 0:
-                    if memory * memory_scale > max_memory:
-                        continue
-                    memory = math.ceil(min(memory * memory_scale, max_memory))
-                if max_disk > 0:
-                    if disk * disk_scale > max_disk:
-                        continue
-                    disk = math.ceil(min(disk * disk_scale, max_disk))
 
-                if cores <= 0 or memory <= 0 or disk <= 0:
+                if cores <= 0 and memory <= 0 and disk <= 0:
                     continue
+                # generate the override start time specify target qps
+                if self.target_qps > 0:
+                    wait_time = int(get_wait_time(self.target_qps, self.distribution_type, self.burstiness) * 1000)
+                    exp_timeline += wait_time
+                    start_time = exp_timeline
+                else:
+                    start_time -= time_range_in_days[0]
+                    start_time *= self.time_interval
 
                 data.append({
                     "taskId": task_id,
