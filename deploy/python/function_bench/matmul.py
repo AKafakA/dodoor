@@ -14,5 +14,6 @@ def matmul(N):
     return latency
 
 if __name__ == "__main__":
-    N = random.randint(4094, 8192)  # Adjust N as needed for testing
-    latency = matmul(N)
+    N = [1024, 2048, 4096, 8192]  # Adjust N as needed for testing
+    for n in N:
+        latency = matmul(N)

@@ -93,25 +93,23 @@ if __name__ == "__main__":
         "French": ["J", "M", "P", "R", "S", "T"],
         "English": ["J", "K", "L", "M", "N", "P", "R", "S", "T"],
     }
-    language = random.choice(list(start_letter_maps.keys()))
-    start_letters = random.choice(start_letter_maps[language])
 
-    # Load pre-processing parameters
-    # Check if model parameters are available
     parameter_path = "deploy/resources/data/workload_data/rnn/params.pkl"
-
     with open(parameter_path, 'rb') as pkl:
         params = pickle.load(pkl)
 
-    all_categories = params['all_categories']
-    n_categories = params['n_categories']
-    all_letters = params['all_letters']
-    n_letters = params['n_letters']
+    for language, start_letters in start_letter_maps.items():
+        for start_letter in start_letters:
+            all_categories = params['all_categories']
+            n_categories = params['n_categories']
+            all_letters = params['all_letters']
+            n_letters = params['n_letters']
 
-    # Check if models are available
-    # Download model from S3 if model is not already present
-    model_path = "deploy/resources/data/workload_data/rnn/model.pth"
+            # Check if models are available
+            # Download model from S3 if model is not already present
+            model_path = "deploy/resources/data/workload_data/rnn/model.pth"
 
-    rnn_model = RNN(n_letters, 128, n_letters, all_categories, n_categories, all_letters, n_letters)
-    rnn_model.load_state_dict(torch.load(model_path))
-    rnn_model.eval()
+            rnn_model = RNN(n_letters, 128, n_letters, all_categories, n_categories, all_letters, n_letters)
+            rnn_model.load_state_dict(torch.load(model_path))
+            rnn_model.eval()
+            rnn_model.sample(language, start_letter)

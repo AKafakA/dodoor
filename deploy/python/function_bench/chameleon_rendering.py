@@ -16,19 +16,15 @@ tal:content="python: d" />
 
 
 if __name__ == "__main__":
-    num_of_rows = random.randint(1024, 2048)
-    num_of_cols = random.randint(1024, 2048)
-
-    # 128-bit key (16 bytes)
+    num_of_rows = [1024, 2048, 4096, 8192]  # Adjust as needed for testing
+    num_of_cols = [1024, 2048, 4096, 8192]
     KEY = b'\xa1\xf6%\x8c\x87}_\xcd\x89dHE8\xbf\xc9,'
-
-    tmpl = PageTemplate(BIGTABLE_ZPT)
-
-    data = {}
-    for i in range(num_of_cols):
-        data[str(i)] = i
-
-    table = [data for x in range(num_of_rows)]
-    options = {'table': table}
-
-    data = tmpl.render(options=options)
+    for rows in num_of_rows:
+        for cols in num_of_cols:
+            tmpl = PageTemplate(BIGTABLE_ZPT)
+            data = {}
+            for i in range(cols):
+                data[str(i)] = i
+            table = [data for x in range(rows)]
+            options = {'table': table}
+            data = tmpl.render(options=options)
