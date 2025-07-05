@@ -9,49 +9,48 @@ import os
 from typing import List, Dict, Any
 
 
-# --- Helper Function to Monitor a Process ---
+# --- Helper Function to Monitor a Process (Corrected) ---
 def monitor_process(process: subprocess.Popen, results: Dict[str, Any]):
     """
     Monitors a given process for CPU and memory usage in a separate thread.
+
+    This version is corrected to handle short-lived processes accurately.
 
     Args:
         process (subprocess.Popen): The process to monitor.
         results (Dict[str, Any]): A dictionary to store the peak usage results.
     """
-    p = psutil.Process(process.pid)
-    peak_cpu = 0.0
-    peak_memory_mb = 0.0
-
-    results['peak_cpu'] = peak_cpu
-    results['peak_memory_mb'] = peak_memory_mb
-
     try:
-        # Monitor in a tight loop until the process finishes
+        p = psutil.Process(process.pid)
+        # Initialize peak values in the results dictionary
+        results['peak_cpu'] = 0.0
+        results['peak_memory_mb'] = 0.0
+
+        # CRITICAL FIX: Call cpu_percent once before the loop.
+        # The first call with interval=None is non-blocking and returns 0.0,
+        # but it initializes the baseline for subsequent calls.
+        p.cpu_percent(interval=None)
+
         while process.poll() is None:
-            with p.oneshot():
-                # Get CPU percentage. The first call is inaccurate, but it's fine in a loop.
-                cpu_percent = p.cpu_percent(interval=0.1)
-                if cpu_percent > peak_cpu:
-                    peak_cpu = cpu_percent
+            # CRITICAL FIX: Call cpu_percent with interval=None in the loop.
+            # This is non-blocking and gets CPU usage since the last call.
+            cpu_percent = p.cpu_percent(interval=None)
+            if cpu_percent > results['peak_cpu']:
+                results['peak_cpu'] = cpu_percent
 
-                # Get memory usage in Megabytes
-                memory_mb = p.memory_info().rss / (1024 * 1024)
-                if memory_mb > peak_memory_mb:
-                    peak_memory_mb = memory_mb
+            # Get memory usage in Megabytes
+            memory_mb = p.memory_info().rss / (1024 * 1024)
+            if memory_mb > results['peak_memory_mb']:
+                results['peak_memory_mb'] = memory_mb
 
-            # Store the latest peak values
-            results['peak_cpu'] = peak_cpu
-            results['peak_memory_mb'] = peak_memory_mb
+            # CRITICAL FIX: Add a short sleep.
+            # This prevents the monitoring loop from being a "busy-wait" that
+            # would consume high CPU itself and pollute the measurement.
+            time.sleep(0.02)
 
     except (psutil.NoSuchProcess, psutil.AccessDenied):
-        # Process might have finished before we could query it again
+        # This is an expected condition, as the process will eventually terminate.
         pass
-    finally:
-        # Final check after the loop exits
-        if 'peak_cpu' not in results or peak_cpu > results['peak_cpu']:
-            results['peak_cpu'] = peak_cpu
-        if 'peak_memory_mb' not in results or peak_memory_mb > results['peak_memory_mb']:
-            results['peak_memory_mb'] = peak_memory_mb
 
 
 # --- Main Profiling Logic ---
