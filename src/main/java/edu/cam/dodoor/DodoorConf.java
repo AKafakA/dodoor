@@ -131,6 +131,12 @@ public class DodoorConf {
     public final static String SYSTEM_DISK = "system.disk";
     public final static int DEFAULT_SYSTEM_DISK = 10240;
 
+    public final static String AVERAGE_CLUSTER_LOAD = "cluster.average.load";
+    public final static double DEFAULT_AVERAGE_CLUSTER_LOAD = 0.0;
+    public final static String CLUSTER_LOAD_GENERATION_K = "host.load.beta.k";
+    public final static double DEFAULT_CLUSTER_LOAD_GENERATION_K = 10.0;
+
+
     /** The hostname of this machine. */
     public final static String HOSTNAME = "hostname";
     public final static String STATIC_NODE = "static.node";

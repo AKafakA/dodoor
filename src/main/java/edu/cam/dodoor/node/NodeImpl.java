@@ -6,6 +6,8 @@ import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.BetaDistributionImpl;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
 import org.json.JSONArray;
@@ -18,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.commons.math.distribution.BetaDistribution;
 
 public class NodeImpl implements Node {
     private final static Logger LOG = LoggerFactory.getLogger(NodeImpl.class);
@@ -41,16 +44,40 @@ public class NodeImpl implements Node {
     private String _nodeType;
 
     public Map<String, String> _taskTypeToScriptPath;
+    public double _hostLoad;
+
+    private double generateBetaRandom(double avgClusterLoad, double k) {
+        try {
+            double alpha = avgClusterLoad * k;
+            double beta = (1 - avgClusterLoad) * k;
+            BetaDistributionImpl betaDistribution = new BetaDistributionImpl(alpha, beta);
+            return betaDistribution.sample();
+        } catch (MathException e) {
+            LOG.error("Error generating beta random value", e);
+            return 0.0; // Fallback value in case of error
+        }
+    }
 
     @Override
     public void initialize(Configuration staticConfig, NodeThrift nodeThrift, JSONObject nodeTypeConfig,
                            JSONObject taskTypeConfig) {
-        int numSlots = nodeTypeConfig.getInt(DodoorConf.NUM_SLOTS);
+
+        double avgClusterLoad =
+                staticConfig.getDouble(DodoorConf.AVERAGE_CLUSTER_LOAD, DodoorConf.DEFAULT_AVERAGE_CLUSTER_LOAD);
+        double betaK =
+                staticConfig.getDouble(DodoorConf.CLUSTER_LOAD_GENERATION_K, DodoorConf.DEFAULT_CLUSTER_LOAD_GENERATION_K);
+        double _hostLoad = generateBetaRandom(avgClusterLoad, betaK);
+        int numSlots = Math.max((int) Math.floor(nodeTypeConfig.getInt(DodoorConf.NUM_SLOTS) * (1 - _hostLoad)), 1);
+        double loadedCores = Math.max(Resources.getSystemCoresCapacity(nodeTypeConfig) * (1 - _hostLoad), 1);
+        int loadedMemoryMb = (int)Math.max(Resources.getMemoryMbCapacity(nodeTypeConfig) * (1 - _hostLoad), 1);
+        int loadedDiskGb = (int)Math.max(Resources.getSystemDiskGbCapacity(nodeTypeConfig) * (1 - _hostLoad), 0);
+        LOG.info("Node {} initialized with {} slots, loaded cores: {}, loaded memory: {}, loaded disk: {} " +
+                        "with generated host load: {}",
+                nodeThrift.getNodeIp(), numSlots, loadedCores, loadedMemoryMb, loadedDiskGb, _hostLoad);
+        _nodeResources = new NodeResources(loadedCores, loadedMemoryMb, loadedDiskGb);
+
         _nodeType = nodeTypeConfig.getString(DodoorConf.NODE_TYPE);
         _taskReceivedTime = Maps.newConcurrentMap();
-        // TODO(wda): add more task scheduler
-        _nodeResources = new NodeResources(Resources.getSystemCoresCapacity(nodeTypeConfig),
-                Resources.getMemoryMbCapacity(nodeTypeConfig), Resources.getSystemDiskGbCapacity(nodeTypeConfig));
         String schedulerType = staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER);
         _isLateBindingEnabled = SchedulerUtils.isLateBindingScheduler(schedulerType);
         String nodeAddressStr = nodeThrift._neAddressStr;

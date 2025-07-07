@@ -68,6 +68,10 @@ def parse_args():
     parser.add_option("--task_replay_time_scale", default=1.0,
                       help="The time scale to replay the tasks in the trace, used to speed up the replay process for "
                            "debugging scheduler performances")
+    parser.add_option("--cluster_avg_load", default=0.0,
+                      help="The average load of the cluster, used to scale the load score of the tasks in the trace")
+    parser.add_option("--host_load_beta_k", default=10,
+                        help="The beta value used to scale the load ratio of the tasks in the trace")
     return parser.parse_args()
 
 
@@ -122,6 +126,9 @@ def main():
     file.write("prequal.probe.age.budget.ms = {} \n".format(options.prequal_probe_age_budget_ms))
 
     file.write("task.replay.time.scale = {} \n".format(options.task_replay_time_scale))
+
+    file.write("cluster.average.load = {} \n".format(options.cluster_avg_load))
+    file.write("host.load.beta.k = {} \n".format(options.host_load_beta_k))
 
     file.close()
 
