@@ -1,69 +1,79 @@
 import re
 import sys
-from deploy.python.analysis.utils import collect_logs
+import os
+import shutil
+import subprocess
 
 
-def get_host_address(host_input, test_on_caelum=False):
-    caelum_prefix = "wd312@caelum-"
-    if test_on_caelum:
-        return caelum_prefix + host_input.strip().split(":")[0] + ".cl.cam.ac.uk"
+def collect_logs(host_list,
+                 output_dir,
+                 node_log_name,
+                 node_log_target_file_prefix,
+                 node_log_target_file_suffix=".log"):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     else:
-        return host_input.strip()
-
+        shutil.rmtree(output_dir, ignore_errors=True)
+        os.makedirs(output_dir)
+    for host in host_list:
+        if host == None:
+            continue
+        target_name = host.split("@")[1].split(".")[0]
+        target_file_path = os.path.join(os.getcwd(),
+                                        output_dir + "/" + node_log_target_file_prefix + "_"
+                                        + target_name + node_log_target_file_suffix)
+        command = "scp -r %s:%s %s" % (host, node_log_name, target_file_path)
+        subprocess.call(command, shell=True)
+        print("{} logs collected.".format(host))
+    return
 
 scheduler_name = sys.argv[1]
 batch_size = sys.argv[2]
-slot_size = sys.argv[3]
-beta = sys.argv[4]
-cpu_weight = sys.argv[5]
-duration_weight = sys.argv[6]
-num_scheduler = sys.argv[7]
-scheduler_names = [scheduler_name]
-caelum_test = False
+beta = sys.argv[3]
+cpu_weight = sys.argv[4]
+duration_weight = sys.argv[5]
+system_load = sys.argv[6]
+root_dir = sys.argv[7]
 
-for scheduler in scheduler_names:
-    exp_name = "azure/{}_batch_{}_beta_{}_cpu_{}_slot_{}_duration_{}_scheduler_{}".format(scheduler, batch_size, beta,
-                                                                                          cpu_weight, slot_size,
-                                                                                          duration_weight,
-                                                                                          num_scheduler)
-    node_host = []
-    if caelum_test:
-        node_host_file = "deploy/resources/host_addresses/caelum/caelum_host_ip"
-        scheduler_host_file = "deploy/resources/host_addresses/caelum/caelum_scheduler_ip"
-        exp_name = "caelum_" + exp_name
-    else:
-        node_host_file = "deploy/resources/host_addresses/cloud_lab/test_nodes"
-        scheduler_host_file = "deploy/resources/host_addresses/cloud_lab/test_scheduler"
-        exp_name = "cloud_lab_" + exp_name
+exp_name = "{}/{}_batch_{}_beta_{}_cpu_{}_duration_{}_load_{}".format(root_dir,
+                                                                      scheduler_name,
+                                                                      batch_size,
+                                                                      beta,
+                                                                      cpu_weight,
+                                                                      duration_weight,
+                                                                      system_load)
+node_host = []
+node_host_file = "deploy/resources/host_addresses/cloud_lab/test_nodes"
+scheduler_host_file = "deploy/resources/host_addresses/cloud_lab/test_scheduler"
 
-    ip_pattern = re.compile("\d+:\d+.\d+.\d+.\d+")
-    host_patter = re.compile("\w+@\w+")
 
-    with open(node_host_file, "r") as f:
-        node_hosts = f.readlines()
-        for host in node_hosts:
-            if ip_pattern.match(host) or host_patter.match(host):
-                node_host.append(get_host_address(host, test_on_caelum=caelum_test))
+ip_pattern = re.compile("\d+:\d+.\d+.\d+.\d+")
+host_patter = re.compile("\w+@\w+")
+
+with open(node_host_file, "r") as f:
+    node_hosts = f.readlines()
+    for host in node_hosts:
+        if ip_pattern.match(host) or host_patter.match(host):
+            node_host.append(host.strip())
 
     target_dir = "deploy/resources/log/node/{}".format(exp_name)
-    node_log_name = scheduler + "_node_metrics.log"
-    node_log_target_file_prefix = scheduler + "_node_metrics"
-
-    scheduler_host = []
-    with open(scheduler_host_file, "r") as f:
-        scheduler_hosts = f.readlines()
-        for host in scheduler_hosts:
-            if ip_pattern.match(host) or host_patter.match(host):
-                scheduler_host.append(get_host_address(host, test_on_caelum=caelum_test))
-
-    target_scheduler_dir = "deploy/resources/log/scheduler/{}".format(exp_name)
-    scheduler_log_name = scheduler + "_scheduler_metrics.log"
-    scheduler_log_target_file_prefix = scheduler + "_scheduler_metrics"
-
+    node_log_name = scheduler_name + "_node_metrics.log"
+    node_log_target_file_prefix = scheduler_name + "_node_metrics"
     collect_logs(node_host, output_dir=target_dir,
                  node_log_name=node_log_name,
                  node_log_target_file_prefix=node_log_target_file_prefix)
 
+
+with open(scheduler_host_file, "r") as f:
+    scheduler_host = []
+    scheduler_hosts = f.readlines()
+    for host in scheduler_hosts:
+        if ip_pattern.match(host) or host_patter.match(host):
+            scheduler_host.append(host.strip())
+
+    target_scheduler_dir = "deploy/resources/log/scheduler/{}".format(exp_name)
+    scheduler_log_name = scheduler_name + "_scheduler_metrics.log"
+    scheduler_log_target_file_prefix = scheduler_name + "_scheduler_metrics"
     collect_logs(scheduler_host, output_dir=target_scheduler_dir,
                  node_log_name=scheduler_log_name,
                  node_log_target_file_prefix=scheduler_log_target_file_prefix)

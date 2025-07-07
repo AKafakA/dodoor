@@ -63,7 +63,6 @@ public class DodoorConf {
     public final static String PREQUAL_PROBE_AGE_BUDGET_MS = "prequal.probe.age.budget.ms";
     public final static int DEFAULT_PREQUAL_PROBE_AGE_BUDGET_MS = 1000;
 
-    public final static String SCHEDULER_THRIFT_PORTS = "scheduler.thrift.ports";
     public final static int DEFAULT_SCHEDULER_THRIFT_PORT = 20504;
     public final static String SCHEDULER_THRIFT_THREADS =
             "scheduler.thrift.threads";
@@ -87,7 +86,6 @@ public class DodoorConf {
     public final static String DATA_STORE_THRIFT_THREADS =
             "datastore.thrift.threads";
 
-    public final static int DEFAULT_DATA_STORE_THRIFT_PORT = 20503;
     public final static int DEFAULT_DATA_STORE_THRIFT_THREADS = 1;
     public final static String BATCH_SIZE = "dodoor.batch_size";
     public final static int DEFAULT_BATCH_SIZE = 1024;
@@ -117,10 +115,8 @@ public class DodoorConf {
 
     /** Type of task scheduler to use on node monitor. Values: "fifo," "round_robin, " "priority" to be implemented.
      **/
-    public final static String NM_TASK_SCHEDULER_TYPE = "node_monitor.task_scheduler";
 
     public final static String NUM_SLOTS = "node_monitor.num_slots";
-    public final static int DEFAULT_NUM_SLOTS = 4;
 
     public final static String SYSTEM_MEMORY = "system.memory";
     public final static int DEFAULT_SYSTEM_MEMORY = 1024;
@@ -136,12 +132,6 @@ public class DodoorConf {
     public final static String CLUSTER_LOAD_GENERATION_K = "host.load.beta.k";
     public final static double DEFAULT_CLUSTER_LOAD_GENERATION_K = 10.0;
 
-
-    /** The hostname of this machine. */
-    public final static String HOSTNAME = "hostname";
-    public final static String STATIC_NODE = "static.node";
-    public final static String STATIC_SCHEDULER = "static.scheduler";
-    public final static String STATIC_DATA_STORE = "static.datastore";
 
 
     /** Config for tracing and monitoring. */

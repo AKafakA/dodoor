@@ -85,7 +85,7 @@ public class TaskTracePlayer {
                 withRequiredArg().ofType(String.class);
         parser.accepts("c", "configuration file (required)").
                 withRequiredArg().ofType(String.class);
-        parser.accepts("host", "host configurations file (required)").
+        parser.accepts("hc", "host configurations file (required)").
                 withRequiredArg().ofType(String.class);
         parser.accepts("q", "QPS to replay the trace, -1 means no external QPS specified " +
                         "and the timeline in trace will be used").
@@ -103,8 +103,8 @@ public class TaskTracePlayer {
             staticConfig = new PropertiesConfiguration(configFile);
         }
         String[] schedulerPorts;
-        if (options.has("host")) {
-            String hostConfigFile = (String) options.valueOf("host");
+        if (options.has("hc")) {
+            String hostConfigFile = (String) options.valueOf("hc");
             JSONObject hostConfig = new JSONObject(Files.readString(Paths.get(hostConfigFile)));
             JSONObject schedulerConfig = hostConfig.getJSONObject(DodoorConf.SCHEDULER_SERVICE_NAME);
             JSONArray schedulerPortsJson = schedulerConfig.getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);

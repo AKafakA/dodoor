@@ -27,9 +27,9 @@ public class ServiceDaemon {
         OptionParser parser = new OptionParser();
         parser.accepts("c", "configuration file (required)").
                 withRequiredArg().ofType(String.class);
-        parser.accepts("host", "host configurations file (required)").
+        parser.accepts("hc", "host configurations file (required)").
                 withRequiredArg().ofType(String.class);
-        parser.accepts("task", "task configurations file (required)").
+        parser.accepts("tc", "task configurations file (required)").
                 withRequiredArg().ofType(String.class);
         parser.accepts("s", "If contains scheduler or not").
                 withRequiredArg().ofType(Boolean.class);
@@ -51,11 +51,11 @@ public class ServiceDaemon {
         String configFile = (String) options.valueOf("c");
         Configuration conf = new PropertiesConfiguration(configFile);
 
-        String hostConfigFile = (String) options.valueOf("host");
+        String hostConfigFile = (String) options.valueOf("hc");
         JSONObject hostConfig = new JSONObject(
                 Files.readString(Paths.get(hostConfigFile)));
 
-        String taskConfigFile = (String) options.valueOf("task");
+        String taskConfigFile = (String) options.valueOf("tc");
         JSONObject taskConfig = new JSONObject(
                 Files.readString(Paths.get(taskConfigFile)));
 
