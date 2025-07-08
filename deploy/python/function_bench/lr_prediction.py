@@ -26,13 +26,11 @@ if __name__ == "__main__":
         lines = f.readlines()
         inputs = [line.strip() for line in lines if line.strip()]
     df = pd.read_csv(dataset_path)
-    start = time()
     df['train'] = df['Text'].apply(cleanup)
     tfidf_vect = TfidfVectorizer(min_df=100).fit(df['train'])
     for x in inputs:
         df_input = pd.DataFrame()
         df_input['x'] = [x]
         X = tfidf_vect.transform(df_input['x'])
-        train = tfidf_vect.transform(df['train'])
         model = joblib.load(model_file_path)
         y = model.predict(X)
