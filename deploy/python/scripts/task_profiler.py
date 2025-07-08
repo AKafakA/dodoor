@@ -86,10 +86,16 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
     for i, task in enumerate(original_config.get('tasks', [])):
         task_id = task.get('taskTypeId', 'unknown_task')
         exec_path = task.get('taskExecPath')
+        command_list = ["python3", exec_path]
 
         if not exec_path:
             print(f"\nSkipping task '{task_id}' due to missing 'taskExecPath'.")
             continue
+
+        if "inputs" in task:
+            inputs = task.get('inputs', {})
+            for key, value in inputs.items():
+                command_list.append(f"--{key}={value}")
 
         # Check if the python script exists before trying to run it
         if not os.path.exists(exec_path):
@@ -110,7 +116,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
 
             # Use Popen to run the script as a non-blocking child process
             process = subprocess.Popen(
-                ['python3', exec_path],
+                command_list,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )

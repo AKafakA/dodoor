@@ -19,7 +19,7 @@ def cleanup(sentence):
 
 
 if __name__ == "__main__":
-    dataset_path = "deploy/resources/data/workload_data/lr/amzn_fine_food_reviews/reviews100mb.csv"
+    dataset_path = "deploy/resources/data/workload_data/lr/train_data/reviews100mb.csv"
     model_file_path = "deploy/resources/data/workload_data/lr/model.pk"
     input_file = "deploy/resources/data/workload_data/lr/input.txt"
     with open(input_file, 'r') as f:

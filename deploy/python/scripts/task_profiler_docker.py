@@ -114,6 +114,12 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         script_name = os.path.basename(exec_path)
         container_script_path = f"/app/{script_name}"
 
+        if "inputs" in task:
+            inputs = task.get('inputs', {})
+            for key, value in inputs.items():
+                # Append input arguments to the command list
+                container_script_path += f" --{key}={value}"
+
         for n in range(iterations):
             if verbose:
                 print(f"  - Iteration {n + 1}/{iterations}...", end='\r')

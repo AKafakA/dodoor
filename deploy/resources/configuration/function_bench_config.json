@@ -175,6 +175,31 @@
                     "estimatedDuration": 1000
                 }
             }
+        },
+        {
+            "taskTypeId": "busy_box",
+            "taskExecPath": "deploy/python/function_bench/busy_box.py",
+            "inputs": {
+                "timeout": 10
+            },
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
         }
     ]
 }
