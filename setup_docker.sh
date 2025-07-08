@@ -1,2 +1,2 @@
 sudo apt-get install docker.io
-docker pull wd312/dodoor-function-bench:latest
+sudo docker build -t wd312/dodoor-function-bench .
