@@ -129,10 +129,9 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 docker_image,
                 'python3', container_script_path
             ]
-
             try:
                 # Start the container and capture its ID
-                container_id = subprocess.check_output(docker_command).decode('utf-8').strip()
+                container_id = subprocess.check_output(docker_command, stderr=subprocess.PIPE).decode('utf-8').strip()
                 start_time = time.perf_counter()
 
                 # Start the monitor thread
@@ -153,11 +152,13 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 peak_memories_mb.append(monitor_results.get('peak_memory_mb', 0.0))
 
             except subprocess.CalledProcessError as e:
-                print(f"\n  - ERROR during iteration {n + 1} for task '{task_id}'.")
-                # Fetch logs from the failed container for debugging
-                logs = subprocess.check_output(['docker', 'logs', container_id]).decode('utf-8')
-                print(f"  - Docker Error: {logs.strip()}")
-                continue # Skip this failed iteration
+                # CORRECTED ERROR HANDLING:
+                # If the 'docker run' command fails, 'container_id' is never assigned.
+                # The error message is in the exception object 'e' itself.
+                print(f"\n  - ERROR: The 'docker run' command failed to start for task '{task_id}'.")
+                if e.stderr:
+                    print(f"  - Docker Daemon Error: {e.stderr.decode().strip()}")
+                continue  # Skip this failed iteration
         if verbose:
             print(f"  - Completed {iterations} iterations.                ")
 
