@@ -64,7 +64,7 @@ def monitor_container(container_id: str, results: Dict[str, Any]):
 # --- Main Profiling Logic ---
 
 def profile_tasks(config_path: str, instance_id: str, iterations: int, output_path: str,
-                  docker_image: str, docker_cpus: float, docker_memory: str,
+                  docker_image: str, min_docker_cpus: float, min_docker_memory: int,
                   verbose: bool = False):
     """
     Profiles tasks from a config file using Docker and generates a new config with measured data.
@@ -86,10 +86,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
     print(f"Instance ID:         '{instance_id}'")
     print(f"Iterations per task: {iterations}")
     print(f"Docker Image:        {docker_image}")
-    print(f"Docker CPU Limit:    {docker_cpus}")
-    print(f"Docker Memory Limit: {docker_memory}")
     print(f"-----------------------\n")
-
 
     for i, task in enumerate(original_config.get('tasks', [])):
         task_id = task.get('taskTypeId', 'unknown_task')
@@ -114,6 +111,16 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         script_name = os.path.basename(exec_path)
         container_script_path = f"/app/{script_name}"
 
+        instance_info = task.get('instanceInfo', {})
+        if instance_id not in instance_info:
+            print(f"WARNING: Instance ID '{instance_id}' not found in task '{task_id}'. Skipping.")
+            continue
+
+        instance_task_info = instance_info[instance_id]
+        cpu_limit = max(instance_task_info.get('resourceVector', {}).get('cores', min_docker_cpus), min_docker_cpus)
+        memory_limit = max(instance_task_info.get('resourceVector', {}).get('memory', min_docker_memory),
+                           min_docker_memory)
+
         if "inputs" in task:
             inputs = task.get('inputs', {})
             for key, value in inputs.items():
@@ -129,8 +136,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 'docker', 'run',
                 '-d',  # Detached mode to get container ID back
                 '--rm', # Automatically remove the container when it exits
-                '--cpus', str(docker_cpus),
-                '--memory', docker_memory,
+                '--cpus', str(cpu_limit),
+                '--memory', f"{memory_limit}m",
                 '-v', f"{host_dir}:/app", # Mount script directory
                 docker_image,
                 'python3', container_script_path
@@ -221,8 +228,8 @@ if __name__ == "__main__":
 
     # --- Docker-specific Arguments ---
     parser.add_argument('--docker-image', type=str, default="python:3.10-slim", help="Docker image to use for profiling.")
-    parser.add_argument('--docker-cpus', type=float, default=2.0, help="CPU limit for the Docker container.")
-    parser.add_argument('--docker-memory', type=str, default="1000m", help="Memory limit for the Docker container (e.g., '1000m', '2g').")
+    parser.add_argument('--min-docker-cpus', type=float, default=2.0, help="CPU limit for the Docker container.")
+    parser.add_argument('--min-docker-memory', type=int, default=1000, help="Memory limit for Docker container in mb")
 
     args = parser.parse_args()
 
@@ -232,7 +239,7 @@ if __name__ == "__main__":
         iterations=args.iterations,
         output_path=args.output_path,
         docker_image=args.docker_image,
-        docker_cpus=args.docker_cpus,
-        docker_memory=args.docker_memory,
+        min_docker_cpus=args.min_docker_cpus,
+        min_docker_memory=args.min_docker_memory,
         verbose=args.verbose
     )
