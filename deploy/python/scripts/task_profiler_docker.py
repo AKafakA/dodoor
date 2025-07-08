@@ -13,25 +13,14 @@ def monitor_container(container_id: str, results: Dict[str, Any]):
     """
     Monitors a given Docker container for CPU and memory usage.
 
-    This function runs in a separate thread and uses 'docker stats'.
-
-    Args:
-        container_id (str): The ID of the container to monitor.
-        results (Dict[str, Any]): A dictionary to store the peak usage results.
+    This version is corrected to handle short-lived processes by attempting
+    to grab stats immediately before checking if the container has exited.
     """
     results['peak_cpu'] = 0.0
     results['peak_memory_mb'] = 0.0
 
     while True:
-        # Check if the container is still running
-        check_proc = subprocess.run(
-            ['docker', 'ps', '-q', '-f', f"id={container_id}"],
-            capture_output=True, text=True
-        )
-        if not check_proc.stdout.strip():
-            # Container has stopped
-            break
-
+        # 1. Try to get stats FIRST. This is the crucial change.
         try:
             # Get stats without streaming
             proc = subprocess.run(
@@ -55,10 +44,21 @@ def monitor_container(container_id: str, results: Dict[str, Any]):
                     results['peak_memory_mb'] = memory_mb
 
         except (subprocess.CalledProcessError, IndexError):
-            # This can happen if the container stops between the 'ps' check and 'stats' call
+            # This is now expected for very fast containers. It means the container
+            # was gone before we could even run the 'stats' command. We can just exit.
             break
 
-        time.sleep(0.05) # Poll stats at a reasonable rate
+        # 2. NOW, check if the container is still running to decide if we should loop again.
+        check_proc = subprocess.run(
+            ['docker', 'ps', '-q', '-f', f"id={container_id}"],
+            capture_output=True, text=True
+        )
+        if not check_proc.stdout.strip():
+            # It's gone, so we have our last reading. We're done.
+            break
+
+        # 3. Sleep before the next poll.
+        time.sleep(0.05)
 
 
 # --- Main Profiling Logic ---
