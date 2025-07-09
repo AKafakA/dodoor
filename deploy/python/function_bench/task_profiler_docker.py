@@ -141,7 +141,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                     '-d',  # Detached mode to get container ID back
                     '--rm',  # Automatically remove the container when it exits
                     '--cpus', str(cpu_limit),
-                    '--memory', f"{memory_limit * 1.1}m",  # Add 10% buffer to memory limit
+                    '--memory', f"{memory_limit}m",  # Add 10% buffer to memory limit
                     '-v', f"{host_dir}:/app",  # Bind mount the script directory
                     docker_image,
                     'python3', container_script_path,

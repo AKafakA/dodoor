@@ -109,7 +109,7 @@
                 ]
             },
             {
-                "node.type": "c6525-25g",
+                "node.type": "C6525-25g",
                 "system.cores": 16,
                 "system.memory": 131072,
                 "system.disks": 0,
@@ -136,7 +136,7 @@
                 ]
             },
             {
-                "node.type": "c6525-25g",
+                "node.type": "C6620",
                 "system.cores": 28,
                 "system.memory": 131072,
                 "system.disks": 0,

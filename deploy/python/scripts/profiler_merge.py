@@ -10,7 +10,8 @@ def merge_profiler_results(input_files: List[str], output_path: str,
                            host_config_path: str,
                            override_num_slots_per_host: int = 2,
                            cores_threshold: int = 2,
-                           memory_threshold: int = 1024 * 8):
+                           memory_threshold: int = 1024 * 8,
+                           memory_buffer: float = 0.1):
     """
     Merges multiple JSON profiler result files into a single configuration file with CPU cores casting
     """
@@ -22,7 +23,7 @@ def merge_profiler_results(input_files: List[str], output_path: str,
     host_config = json.load(open(host_config_path, 'r'))['nodes']["node.types"]
     node_info = {}
     for node_type in host_config:
-        node_info[node_type['"node.type"']] = {
+        node_info[node_type["node.type"]] = {
             'cores': node_type["system.cores"],
             'memory': node_type['system.memory'],
             'num_slots_per_host': node_type['node_monitor.num_slots']
@@ -65,15 +66,25 @@ def merge_profiler_results(input_files: List[str], output_path: str,
             # Apply resource casting based on the node type and thresholds
             num_slots = override_num_slots_per_host if override_num_slots_per_host >= 0 \
                 else node_info[node_type]['num_slots_per_host']
-            if instance['cores'] < cores_threshold:
-                instance['cores'] = int(math.ceil(instance['cores']))
-            else:
-                instance['cores'] = node_info[node_type]['cores'] // num_slots
+            resource_vector = instance.get('resourceVector', {})
+            casted_cores = []
+            casted_memory = []
+            for uncasted_core, uncasted_memory in zip(
+                resource_vector.get('cores', []),
+                resource_vector.get('memory', [])
+            ):
+                if uncasted_core < cores_threshold:
+                    casted_cores.append(int(math.ceil(uncasted_core)))
+                else:
+                    casted_cores.append(node_info[node_type]['cores'] // num_slots)
 
-            if instance['memory'] < memory_threshold:
-                instance['memory'] = int(math.ceil(instance['memory']))
-            else:
-                instance['memory'] = node_info[node_type]['memory'] // num_slots
+                if uncasted_memory < memory_threshold:
+                    casted_memory.append(int(math.ceil(uncasted_memory) * (1 + memory_buffer)))
+                else:
+                    casted_memory.append(int((node_info[node_type]['memory'] // num_slots) * (1 + memory_buffer)))
+            # Update the resource vector with the casted values
+            resource_vector['cores'] = casted_cores
+            resource_vector['memory'] = casted_memory
 
     final_output = {"tasks": final_task_list}
 
@@ -119,9 +130,16 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        '--memory-buffer',
+        type=float,
+        default=0.1,
+        help="Buffer percentage for memory allocation. Default is 10%."
+    )
+
+    parser.add_argument(
         '--override-num-slots-per-host',
         type=int,
-        default=-1,
+        default=2,
         help="Override the number of slots per host for each node type. Negative value means no override."
     )
 
@@ -153,5 +171,6 @@ if __name__ == "__main__":
             host_config_path=args.host_config_path,
             override_num_slots_per_host=args.override_num_slots_per_host,
             cores_threshold=args.cores_threshold,
-            memory_threshold=args.memory_threshold
+            memory_threshold=args.memory_threshold,
+            memory_buffer=args.memory_buffer
         )
