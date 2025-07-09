@@ -23,6 +23,6 @@ if __name__ == "__main__":
     elif mode == 'medium':
         N = [1024, 2048]
     else:  # mode == 'short'
-        N = [1024]
+        N = [256, 512]
     for n in N:
         latency = matmul(n)
