@@ -85,8 +85,11 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
 
     new_tasks_data = []
 
-    print(f"\nStarting profiling for instance: '{instance_id}'")
-    print(f"Each task will run {iterations} times.")
+    print(f"\n--- Profiling Setup ---")
+    print(f"Instance ID:         '{instance_id}'")
+    print(f"Iterations per task: {iterations}")
+    print(f"Mode:                {mode}")
+    print(f"-----------------------\n")
 
     for i, task in enumerate(original_config.get('tasks', [])):
         task_id = task.get('taskTypeId', 'unknown_task')

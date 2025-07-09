@@ -90,6 +90,9 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
     print(f"Instance ID:         '{instance_id}'")
     print(f"Iterations per task: {iterations}")
     print(f"Docker Image:        {docker_image}")
+    print(f"Minimum Docker CPUs: {min_docker_cpus}")
+    print(f"Minimum Docker Memory: {min_docker_memory} MB")
+    print(f"Mode:                {mode}")
     print(f"-----------------------\n")
 
     for i, task in enumerate(original_config.get('tasks', [])):
