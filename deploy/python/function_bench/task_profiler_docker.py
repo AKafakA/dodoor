@@ -200,8 +200,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
             "instanceInfo": {
                 instance_id: {
                     "resourceVector": {
-                        "cores": round(avg_peak_cpu / 100, 3),
-                        "memory": int(round(avg_peak_memory_mb)),
+                        "cores": cpu_limit,
+                        "memory": memory_limit,
                         "disks": 1
                     },
                     "estimatedDuration": int(round(avg_duration_ms))
