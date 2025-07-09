@@ -193,10 +193,10 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
             memory_limits.append(memory_limit)
             average_durations.append(int(round(avg_duration_ms)))
 
-            print(f"  - Mode: {mode}:")
+            print(f"        Mode: {mode}        ")
             print(f"  - Average Duration: {avg_duration_ms:.2f} ms")
             print(f"  - Average Peak CPU: {avg_peak_cpu:.2f}%")
-            print(f"  - Average Peak Memory: {avg_peak_memory_mb:.2f} MB")
+            print(f"  - Average Peak Memory: {avg_peak_memory_mb:.2f} MB \n")
 
         new_task_entry = {
             "taskTypeId": task_id,

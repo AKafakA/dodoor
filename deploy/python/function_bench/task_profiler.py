@@ -156,10 +156,10 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
             avg_peak_cpu = statistics.mean(peak_cpus)
             avg_peak_memory_mb = statistics.mean(peak_memories_mb)
 
-            print(f"  - Mode: {mode}:")
+            print(f"        Mode: {mode}    ")
             print(f"  - Average Duration: {avg_duration_ms:.2f} ms")
             print(f"  - Average Peak CPU: {avg_peak_cpu:.2f}%")
-            print(f"  - Average Peak Memory: {avg_peak_memory_mb:.2f} MB")
+            print(f"  - Average Peak Memory: {avg_peak_memory_mb:.2f} MB \n")
             avg_peak_cpus.append(round(avg_peak_cpu / 100, 2))
             avg_peak_memories.append(int(round(avg_peak_memory_mb)))
             avg_durations.append(int(round(avg_duration_ms)))
