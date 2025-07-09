@@ -137,7 +137,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 '-d',  # Detached mode to get container ID back
                 '--rm', # Automatically remove the container when it exits
                 '--cpus', str(cpu_limit),
-                '--memory', f"{memory_limit}m",
+                '--memory', f"{memory_limit * 1.1}m", # Add 10% buffer to memory limit
                 '-v', f"{host_dir}:/app", # Mount script directory
                 docker_image,
                 'python3', container_script_path
@@ -222,14 +222,14 @@ if __name__ == "__main__":
     # --- Core Arguments ---
     parser.add_argument('--config-path', type=str, required=True, help="Path to the input JSON configuration file.")
     parser.add_argument('--instance-id', type=str, required=True, help="A unique identifier for the machine instance (e.g., 'm5.large').")
-    parser.add_argument('-n', '--iterations', type=int, default=100, help="Number of times to run each task. Default is 100.")
+    parser.add_argument('-n', '--iterations', type=int, default=1000, help="Number of times to run each task. Default is 100.")
     parser.add_argument('--output-path', type=str, default="profiler_output_docker.json", help="Path to save the generated JSON file.")
     parser.add_argument('--verbose', action='store_true', help="Enable verbose output.")
 
     # --- Docker-specific Arguments ---
-    parser.add_argument('--docker-image', type=str, default="python:3.10-slim", help="Docker image to use for profiling.")
-    parser.add_argument('--min-docker-cpus', type=float, default=2.0, help="CPU limit for the Docker container.")
-    parser.add_argument('--min-docker-memory', type=int, default=1000, help="Memory limit for Docker container in mb")
+    parser.add_argument('--docker-image', type=str, default="wd312/dodoor-function-bench", help="Docker image to use for profiling.")
+    parser.add_argument('--min-docker-cpus', type=float, default=1.0, help="CPU limit for the Docker container.")
+    parser.add_argument('--min-docker-memory', type=int, default=1, help="Memory limit for Docker container in mb")
 
     args = parser.parse_args()
 
