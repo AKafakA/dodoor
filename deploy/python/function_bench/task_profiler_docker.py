@@ -221,14 +221,14 @@ if __name__ == "__main__":
     )
     # --- Core Arguments ---
     parser.add_argument('--config-path', type=str,
-                        default="deploy/resources/configuration/generated_config/merged_profiler_config.json",
+                        default="config/merged_profiler_config.json",
                         help="Path to the input JSON configuration file.")
     parser.add_argument('--instance-id', type=str, required=True,
                         help="A unique identifier for the machine instance (e.g., 'm5.large').")
     parser.add_argument('-n', '--iterations', type=int, default=1000,
                         help="Number of times to run each task. Default is 100.")
     parser.add_argument('-o', '--output-path', type=str,
-                        default="deploy/resources/configuration/generated_config",
+                        default="config",
                         help="Path to save the generated JSON file.")
     parser.add_argument('--verbose', action='store_true', help="Enable verbose output.")
 
@@ -246,7 +246,7 @@ if __name__ == "__main__":
         config_path=args.config_path,
         instance_id=args.instance_id,
         iterations=args.iterations,
-        output_path=args.output_path + f"/profiled_config_{args.instance_id}_with_docker.json",
+        output_path=args.output_path + f"/docker_profiled_config_{args.instance_id}.json",
         docker_image=args.docker_image,
         min_docker_cpus=args.min_docker_cpus,
         min_docker_memory=args.min_docker_memory,
