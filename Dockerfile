@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Copy the subdirectory containing your scripts into the container at /app
 COPY deploy/python/function_bench/* ./
+COPY deploy/resources/data/workload_data ./
 
 # If you have a requirements.txt file, uncomment the following lines
 COPY deploy/python/requirements.txt ./
