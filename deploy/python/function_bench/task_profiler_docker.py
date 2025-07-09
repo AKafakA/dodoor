@@ -105,7 +105,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         task_id = task.get('taskTypeId', 'unknown_task')
         exec_script = task.get('taskExecPath')
         print(f"[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}")
-        for mode in modes:
+        for j in range(len(modes)):
+            mode = modes[j]
             if not exec_script:
                 print(f"Skipping task '{task_id}' due to missing 'taskExecPath'.")
                 continue
@@ -127,8 +128,9 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 continue
 
             instance_task_info = instance_info[instance_id]
-            cpu_limit = max(instance_task_info.get('resourceVector', {}).get('cores', min_docker_cpus), min_docker_cpus)
-            memory_limit = max(instance_task_info.get('resourceVector', {}).get('memory', min_docker_memory),
+            cpu_limit = max(instance_task_info.get('resourceVector', {}).get('cores', min_docker_cpus)[j],
+                            min_docker_cpus)
+            memory_limit = max(instance_task_info.get('resourceVector', {}).get('memory', min_docker_memory)[j],
                                min_docker_memory)
 
             for n in range(iterations):
