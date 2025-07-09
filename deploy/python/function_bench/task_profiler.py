@@ -233,6 +233,6 @@ if __name__ == "__main__":
         config_path=args.config_path,
         instance_id=args.instance_id,
         iterations=args.iterations,
-        output_path=os.path.join(args.output_path, f"unboxed_profiler_config_{args.args.instance_id}.json"),
+        output_path=os.path.join(args.output_path, f"unboxed_profiler_config_{args.instance_id}.json"),
         verbose=args.verbose
     )
