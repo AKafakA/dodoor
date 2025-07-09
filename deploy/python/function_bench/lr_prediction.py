@@ -19,9 +19,9 @@ def cleanup(sentence):
 
 
 if __name__ == "__main__":
-    dataset_path = "deploy/resources/data/workload_data/lr/train_data/reviews100mb.csv"
-    model_file_path = "deploy/resources/data/workload_data/lr/model.pk"
-    input_file = "deploy/resources/data/workload_data/lr/input.txt"
+    dataset_path = "workload_data/lr/train_data/reviews100mb.csv"
+    model_file_path = "workload_data/lr/model.pk"
+    input_file = "workload_data/lr/input.txt"
     with open(input_file, 'r') as f:
         lines = f.readlines()
         inputs = [line.strip() for line in lines if line.strip()]

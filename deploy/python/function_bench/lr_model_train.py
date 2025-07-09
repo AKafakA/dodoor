@@ -21,7 +21,7 @@ if __name__ == "__main__":
     dataset_sizes = [10, 20, 50, 100]
     for dataset_size in dataset_sizes:
         file_name = f"reviews{dataset_size}mb.csv"
-        dataset_path = "deploy/resources/data/workload_data/lr/train_data/" + file_name
+        dataset_path = "workload_data/lr/train_data/" + file_name
         df = pd.read_csv(dataset_path)
         start = time()
         df['train'] = df['Text'].apply(cleanup)

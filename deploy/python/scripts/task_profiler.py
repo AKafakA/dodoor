@@ -86,7 +86,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
     for i, task in enumerate(original_config.get('tasks', [])):
         task_id = task.get('taskTypeId', 'unknown_task')
         exec_path = task.get('taskExecPath')
-        command_list = ["python3", exec_path]
+        command_list = ["cd", "deploy/python/function_bench"]  # Start with an empty command list
+        command_list.extend(["python3", exec_path])
 
         if not exec_path:
             print(f"\nSkipping task '{task_id}' due to missing 'taskExecPath'.")

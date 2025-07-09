@@ -2,7 +2,7 @@
     "tasks": [
         {
             "taskTypeId": "float_operation",
-            "taskExecPath": "deploy/python/function_bench/float_operation.py",
+            "taskExecPath": "float_operation.py",
             "instanceInfo": {
                 "C6525_25g": {
                     "resourceVector": {
@@ -40,7 +40,7 @@
         },
         {
             "taskTypeId": "linpack",
-            "taskExecPath": "deploy/python/function_bench/linpack.py",
+            "taskExecPath": "linpack.py",
             "instanceInfo": {
                 "C6525_25g": {
                     "resourceVector": {
@@ -78,7 +78,7 @@
         },
         {
             "taskTypeId": "matmul",
-            "taskExecPath": "deploy/python/function_bench/matmul.py",
+            "taskExecPath": "matmul.py",
             "instanceInfo": {
                 "C6525_25g": {
                     "resourceVector": {
@@ -116,7 +116,7 @@
         },
         {
             "taskTypeId": "chameleon_rendering",
-            "taskExecPath": "deploy/python/function_bench/chameleon_rendering.py",
+            "taskExecPath": "chameleon_rendering.py",
             "instanceInfo": {
                 "C6525_25g": {
                     "resourceVector": {
@@ -154,7 +154,7 @@
         },
         {
             "taskTypeId": "pyaes_generation",
-            "taskExecPath": "deploy/python/function_bench/pyaes_generation.py",
+            "taskExecPath": "pyaes_generation.py",
             "instanceInfo": {
                 "C6525_25g": {
                     "resourceVector": {
@@ -192,7 +192,7 @@
         },
         {
             "taskTypeId": "lr_train",
-            "taskExecPath": "deploy/python/function_bench/lr_model_train.py",
+            "taskExecPath": "lr_model_train.py",
             "instanceInfo": {
                 "C6525_25g": {
                     "resourceVector": {
@@ -230,7 +230,7 @@
         },
         {
             "taskTypeId": "lr_prediction",
-            "taskExecPath": "deploy/python/function_bench/lr_prediction.py",
+            "taskExecPath": "lr_prediction.py",
             "instanceInfo": {
                 "C6525_25g": {
                     "resourceVector": {
@@ -268,7 +268,7 @@
         },
         {
             "taskTypeId": "rnn_name_generation",
-            "taskExecPath": "deploy/python/function_bench/rnn_name_generation.py",
+            "taskExecPath": "rnn_name_generation.py",
             "instanceInfo": {
                 "C6525_25g": {
                     "resourceVector": {

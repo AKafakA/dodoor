@@ -90,14 +90,14 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
 
     for i, task in enumerate(original_config.get('tasks', [])):
         task_id = task.get('taskTypeId', 'unknown_task')
-        exec_path = task.get('taskExecPath')
+        exec_script = task.get('taskExecPath')
 
-        if not exec_path:
+        if not exec_script:
             print(f"Skipping task '{task_id}' due to missing 'taskExecPath'.")
             continue
 
-        if not os.path.exists(exec_path):
-            print(f"WARNING: Script for task '{task_id}' not found at '{exec_path}'. Skipping.")
+        if not os.path.exists(exec_script):
+            print(f"WARNING: Script for task '{task_id}' not found at '{exec_script}'. Skipping.")
             continue
 
         print(f"[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}")
@@ -107,9 +107,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         peak_memories_mb = []
 
         # Get host directory and script name for bind mounting
-        host_dir = os.path.dirname(os.path.abspath(exec_path))
-        script_name = os.path.basename(exec_path)
-        container_script_path = f"/app/{script_name}"
+        container_script_path = f"/app/{exec_script}"
 
         instance_info = task.get('instanceInfo', {})
         if instance_id not in instance_info:
@@ -138,7 +136,6 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 '--rm', # Automatically remove the container when it exits
                 '--cpus', str(cpu_limit),
                 '--memory', f"{memory_limit * 1.1}m", # Add 10% buffer to memory limit
-                '-v', f"{host_dir}:/app", # Mount script directory
                 docker_image,
                 'python3', container_script_path
             ]
@@ -189,7 +186,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
 
         new_task_entry = {
             "taskTypeId": task_id,
-            "taskExecPath": exec_path,
+            "taskExecPath": exec_script,
             "instanceInfo": {
                 instance_id: {
                     "resourceVector": {

@@ -94,7 +94,7 @@ if __name__ == "__main__":
         "English": ["J", "K", "L", "M", "N", "P", "R", "S", "T"],
     }
 
-    parameter_path = "deploy/resources/data/workload_data/rnn/params.pkl"
+    parameter_path = "workload_data/rnn/params.pkl"
     with open(parameter_path, 'rb') as pkl:
         params = pickle.load(pkl)
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
             # Check if models are available
             # Download model from S3 if model is not already present
-            model_path = "deploy/resources/data/workload_data/rnn/model.pth"
+            model_path = "workload_data/rnn/model.pth"
 
             rnn_model = RNN(n_letters, 128, n_letters, all_categories, n_categories, all_letters, n_letters)
             rnn_model.load_state_dict(torch.load(model_path))

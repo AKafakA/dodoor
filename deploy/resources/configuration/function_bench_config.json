@@ -2,7 +2,7 @@
     "tasks": [
         {
             "taskTypeId": "float_operation",
-            "taskExecPath": "deploy/python/function_bench/float_operation.py",
+            "taskExecPath": "float_operation.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -24,7 +24,7 @@
         },
         {
             "taskTypeId": "linpack",
-            "taskExecPath": "deploy/python/function_bench/linpack.py",
+            "taskExecPath": "linpack.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -46,7 +46,7 @@
         },
         {
             "taskTypeId": "matmul",
-            "taskExecPath": "deploy/python/function_bench/matmul.py",
+            "taskExecPath": "matmul.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -68,7 +68,7 @@
         },
         {
             "taskTypeId": "chameleon_rendering",
-            "taskExecPath": "deploy/python/function_bench/chameleon_rendering.py",
+            "taskExecPath": "chameleon_rendering.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -90,7 +90,7 @@
         },
         {
             "taskTypeId": "pyaes_generation",
-            "taskExecPath": "deploy/python/function_bench/pyaes_generation.py",
+            "taskExecPath": "pyaes_generation.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -112,7 +112,7 @@
         },
         {
             "taskTypeId": "lr_train",
-            "taskExecPath": "deploy/python/function_bench/lr_model_train.py",
+            "taskExecPath": "lr_model_train.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -134,7 +134,7 @@
         },
         {
             "taskTypeId": "lr_prediction",
-            "taskExecPath": "deploy/python/function_bench/lr_prediction.py",
+            "taskExecPath": "lr_prediction.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
@@ -156,7 +156,7 @@
         },
         {
             "taskTypeId": "rnn_name_generation",
-            "taskExecPath": "deploy/python/function_bench/rnn_name_generation.py",
+            "taskExecPath": "rnn_name_generation.py",
             "instanceInfo": {
                 "m400": {
                     "resourceVector": {
