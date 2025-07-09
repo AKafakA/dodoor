@@ -85,11 +85,11 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
 
     for i, task in enumerate(original_config.get('tasks', [])):
         task_id = task.get('taskTypeId', 'unknown_task')
-        exec_path = task.get('taskExecPath')
+        exec_script = task.get('taskExecPath')
         command_list = ["cd", "deploy/python/function_bench"]  # Start with an empty command list
-        command_list.extend(["python3", exec_path])
+        command_list.extend(["python3", exec_script])
 
-        if not exec_path:
+        if not exec_script:
             print(f"\nSkipping task '{task_id}' due to missing 'taskExecPath'.")
             continue
 
@@ -99,8 +99,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 command_list.append(f"--{key}={value}")
 
         # Check if the python script exists before trying to run it
-        if not os.path.exists(exec_path):
-            print(f"\nWARNING: Script for task '{task_id}' not found at '{exec_path}'. Skipping.")
+        if not os.path.exists(f"deploy/python/function_bench{exec_script}"):
+            print(f"\nWARNING: Script for task '{task_id}' not found at '{exec_script}'. Skipping.")
             continue
 
         print(f"\n[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}")
@@ -161,7 +161,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         # Build the new JSON structure for this task
         new_task_entry = {
             "taskTypeId": task_id,
-            "taskExecPath": exec_path,
+            "taskExecPath": exec_script,
             "instanceInfo": {
                 instance_id: {
                     "resourceVector": {
