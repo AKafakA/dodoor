@@ -1,24 +1,32 @@
 import argparse
 import json
+import math
 import os
 import glob
 from typing import List, Dict, Any
 
-def merge_profiler_results(input_files: List[str], output_path: str):
+
+def merge_profiler_results(input_files: List[str], output_path: str,
+                           host_config_path: str,
+                           override_num_slots_per_host: int = 2,
+                           cores_threshold: int = 2,
+                           memory_threshold: int = 1024 * 8):
     """
-    Merges multiple profiler result JSON files into a single file.
-
-    The script combines the 'instanceInfo' from tasks with the same
-    'taskTypeId' across all input files.
-
-    Args:
-        input_files (List[str]): A list of paths to the input JSON files.
-        output_path (str): The path to save the merged JSON output file.
+    Merges multiple JSON profiler result files into a single configuration file with CPU cores casting
     """
     # Use a dictionary with taskTypeId as the key for efficient merging
     merged_tasks: Dict[str, Any] = {}
 
     print(f"Reading {len(input_files)} input files...")
+
+    host_config = json.load(open(host_config_path, 'r'))['nodes']["node.types"]
+    node_info = {}
+    for node_type in host_config:
+        node_info[node_type['"node.type"']] = {
+            'cores': node_type["system.cores"],
+            'memory': node_type['system.memory'],
+            'num_slots_per_host': node_type['node_monitor.num_slots']
+        }
 
     for file_path in input_files:
         try:
@@ -51,6 +59,22 @@ def merge_profiler_results(input_files: List[str], output_path: str):
 
     # Convert the dictionary of tasks back into a list for the final JSON structure
     final_task_list = list(merged_tasks.values())
+    for task in final_task_list:
+        instances_info = task.get('instanceInfo')
+        for node_type, instance in instances_info.items():
+            # Apply resource casting based on the node type and thresholds
+            num_slots = override_num_slots_per_host if override_num_slots_per_host >= 0 \
+                else node_info[node_type]['num_slots_per_host']
+            if instance['cores'] < cores_threshold:
+                instance['cores'] = int(math.ceil(instance['cores']))
+            else:
+                instance['cores'] = node_info[node_type]['cores'] // num_slots
+
+            if instance['memory'] < memory_threshold:
+                instance['memory'] = int(math.ceil(instance['memory']))
+            else:
+                instance['memory'] = node_info[node_type]['memory'] // num_slots
+
     final_output = {"tasks": final_task_list}
 
     # Write the final merged file
@@ -75,6 +99,33 @@ if __name__ == "__main__":
         help="Path to the directory containing the JSON profiler results to merge."
     )
     parser.add_argument(
+        '--host-config-path',
+        type=str,
+        default="deploy/resources/configuration/generated_config/host_config.json",
+    )
+
+    parser.add_argument(
+        '--cores-threshold',
+        type=int,
+        default=2,
+        help="Threshold for the number of cores when apply the host cores / num_slots_per_host "
+    )
+
+    parser.add_argument(
+        '--memory-threshold',
+        type=int,
+        default=1024 * 8, # 8 GB
+        help="Threshold for the memory in MB when apply the host cores / num_slots_per_host "
+    )
+
+    parser.add_argument(
+        '--override-num-slots-per-host',
+        type=int,
+        default=-1,
+        help="Override the number of slots per host for each node type. Negative value means no override."
+    )
+
+    parser.add_argument(
         '--output-path',
         type=str,
         default="deploy/resources/configuration/generated_config/merged_profiler_config.json",
@@ -98,5 +149,9 @@ if __name__ == "__main__":
     else:
         merge_profiler_results(
             input_files=json_files,
-            output_path=args.output_path
+            output_path=args.output_path,
+            host_config_path=args.host_config_path,
+            override_num_slots_per_host=args.override_num_slots_per_host,
+            cores_threshold=args.cores_threshold,
+            memory_threshold=args.memory_threshold
         )
