@@ -197,7 +197,7 @@ if __name__ == "__main__":
         '--config-path',
         type=str,
         default="config/function_bench_config_template.json",
-        help="Path to the input JSON configuration file."
+        help="Path to the template JSON configuration file."
     )
     parser.add_argument(
         '--instance-id',
@@ -247,7 +247,7 @@ if __name__ == "__main__":
         config_path=args.config_path,
         instance_id=args.instance_id,
         iterations=args.iterations,
-        output_path=os.path.join(args.output_path, f"unboxed_profiler_config_{args.instance_id}.json"),
+        output_path=os.path.join(args.output_path, f"unboxed_profiler_config_{args.instance_id}_{args.mode}.json"),
         verbose=args.verbose,
         mode=args.mode
     )

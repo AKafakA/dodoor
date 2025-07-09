@@ -229,7 +229,7 @@ if __name__ == "__main__":
     )
     # --- Core Arguments ---
     parser.add_argument('--config-path', type=str,
-                        default="config/merged_profiler_config.json",
+                        default="config",
                         help="Path to the input JSON configuration file.")
     parser.add_argument('--instance-id', type=str, required=True,
                         help="A unique identifier for the machine instance (e.g., 'm5.large').")
@@ -259,10 +259,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     profile_tasks(
-        config_path=args.config_path,
+        config_path=f"{args.config_path}/merged_profiler_config_{args.mode}.json",
         instance_id=args.instance_id,
         iterations=args.iterations,
-        output_path=args.output_path + f"/docker_profiled_config_{args.instance_id}.json",
+        output_path=args.output_path + f"/docker_profiled_config_{args.instance_id}_{args.mode}.json",
         docker_image=args.docker_image,
         min_docker_cpus=args.min_docker_cpus,
         min_docker_memory=args.min_docker_memory,
