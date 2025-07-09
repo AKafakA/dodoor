@@ -107,6 +107,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         peak_memories_mb = []
 
         # Get host directory and script name for bind mounting
+        host_dir = "$HOME/dodoor/deploy/python/function_bench"
         container_script_path = f"/app/{exec_script}"
 
         instance_info = task.get('instanceInfo', {})
@@ -136,6 +137,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 '--rm', # Automatically remove the container when it exits
                 '--cpus', str(cpu_limit),
                 '--memory', f"{memory_limit * 1.1}m", # Add 10% buffer to memory limit
+                '-v', f"{host_dir}:/app",  # Bind mount the script directory
                 docker_image,
                 'python3', container_script_path
             ]
