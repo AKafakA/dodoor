@@ -220,10 +220,15 @@ if __name__ == "__main__":
         formatter_class=argparse.RawTextHelpFormatter
     )
     # --- Core Arguments ---
-    parser.add_argument('--config-path', type=str, required=True, help="Path to the input JSON configuration file.")
-    parser.add_argument('--instance-id', type=str, required=True, help="A unique identifier for the machine instance (e.g., 'm5.large').")
-    parser.add_argument('-n', '--iterations', type=int, default=1000, help="Number of times to run each task. Default is 100.")
-    parser.add_argument('--output-path', type=str, default="profiler_output_docker.json", help="Path to save the generated JSON file.")
+    parser.add_argument('--config-path', type=str,
+                        default="resources/configuration/gen/merged_profiler_config.json",
+                        help="Path to the input JSON configuration file.")
+    parser.add_argument('--instance-id', type=str, required=True,
+                        help="A unique identifier for the machine instance (e.g., 'm5.large').")
+    parser.add_argument('-n', '--iterations', type=int, default=1000,
+                        help="Number of times to run each task. Default is 100.")
+    parser.add_argument('--output-path', type=str, default="profiler_output_docker.json",
+                        help="Path to save the generated JSON file.")
     parser.add_argument('--verbose', action='store_true', help="Enable verbose output.")
 
     # --- Docker-specific Arguments ---

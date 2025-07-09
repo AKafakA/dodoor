@@ -77,7 +77,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--output-path',
         type=str,
-        default="deploy/resources/configuration/gen/merged_profiler_config.json",
+        default="deploy/resources/configuration/generated_config/merged_profiler_config.json",
         help="Path to save the final merged JSON file. Default is 'merged_profiler_config.json'."
     )
 
