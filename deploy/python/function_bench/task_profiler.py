@@ -9,6 +9,7 @@ import threading
 import statistics
 import os
 from typing import List, Dict, Any
+
 home = Path.home()
 
 os.chdir(str(home) + "/dodoor/deploy/python/function_bench")
@@ -96,16 +97,15 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         avg_peak_cpus = []
         avg_peak_memories = []
         avg_durations = []
-        for mode in modes:
-            task_id = task.get('taskTypeId', 'unknown_task')
-            exec_script = task.get('taskExecPath')
-            command_list = ["python3", exec_script, mode]
+        task_id = task.get('taskTypeId', 'unknown_task')
+        exec_script = task.get('taskExecPath')
+        print(f"\n[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}'")
 
+        for mode in modes:
+            command_list = ["python3", exec_script, mode]
             if not exec_script:
                 print(f"\nSkipping task '{task_id}' due to missing 'taskExecPath'.")
                 continue
-
-            print(f"\n[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id} for mode '{mode}'")
 
             durations_ms = []
             peak_cpus = []
@@ -156,7 +156,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
             avg_peak_cpu = statistics.mean(peak_cpus)
             avg_peak_memory_mb = statistics.mean(peak_memories_mb)
 
-            print(f"  - Average Duration: {avg_duration_ms:.2f} ms for mode '{mode}'")
+            print(f"  - Mode: {mode}:")
+            print(f"  - Average Duration: {avg_duration_ms:.2f} ms")
             print(f"  - Average Peak CPU: {avg_peak_cpu:.2f}%")
             print(f"  - Average Peak Memory: {avg_peak_memory_mb:.2f} MB")
             avg_peak_cpus.append(round(avg_peak_cpu / 100, 2))

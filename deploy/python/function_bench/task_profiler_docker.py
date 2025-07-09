@@ -102,19 +102,16 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         average_durations = []
         cpu_limits = []
         memory_limits = []
+        task_id = task.get('taskTypeId', 'unknown_task')
+        exec_script = task.get('taskExecPath')
+        print(f"[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}")
         for mode in modes:
-            task_id = task.get('taskTypeId', 'unknown_task')
-            exec_script = task.get('taskExecPath')
-
             if not exec_script:
                 print(f"Skipping task '{task_id}' due to missing 'taskExecPath'.")
                 continue
-
             if not os.path.exists(exec_script):
                 print(f"WARNING: Script for task '{task_id}' not found at '{exec_script}'. Skipping.")
                 continue
-
-            print(f"[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}")
 
             durations_ms = []
             peak_cpus = []
@@ -196,7 +193,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
             memory_limits.append(memory_limit)
             average_durations.append(int(round(avg_duration_ms)))
 
-            print(f"  - Average Duration: {avg_duration_ms:.2f} ms for mode '{mode}'")
+            print(f"  - Mode: {mode}:")
+            print(f"  - Average Duration: {avg_duration_ms:.2f} ms")
             print(f"  - Average Peak CPU: {avg_peak_cpu:.2f}%")
             print(f"  - Average Peak Memory: {avg_peak_memory_mb:.2f} MB")
 
