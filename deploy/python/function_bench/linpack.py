@@ -37,7 +37,7 @@ if __name__ == "__main__":
     if mode == 'long':
         N = 4096
     elif mode == 'medium':
-        N = 1024
+        N = 2048
     elif mode == 'short':
         N = 256
     else:

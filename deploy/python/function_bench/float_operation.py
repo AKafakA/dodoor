@@ -12,7 +12,6 @@ if __name__ == "__main__":
         N = 100000
     else:
         raise ValueError("Invalid mode. Use 'long' or 'short'.")
-    N = 10000000
     for i in range(0, N):
         sin_i = math.sin(i)
         cos_i = math.cos(i)

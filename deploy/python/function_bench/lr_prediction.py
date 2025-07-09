@@ -20,8 +20,6 @@ def cleanup(sentence):
 
 
 if __name__ == "__main__":
-    dataset_path = "workload_data/lr/train_data/reviews100mb.csv"
-    model_file_path = "workload_data/lr/model.pk"
     input_file = "workload_data/lr/input.txt"
     with open(input_file, 'r') as f:
         lines = f.readlines()
@@ -30,8 +28,15 @@ if __name__ == "__main__":
     mode = sys.argv[1]
     if mode not in ['long', 'short', 'medium']:
         raise ValueError("Invalid mode. Use 'long' or 'short'.")
-    if mode == 'medium' or mode == 'short':
-        inputs = [random.choice(inputs)]
+    if mode == 'long':
+        dataset_path = "workload_data/lr/train_data/reviews100mb.csv"
+        model_file_path = "workload_data/lr/model_large.pk"
+    elif mode == 'medium':
+        dataset_path = "workload_data/lr/train_data/reviews50mb.csv"
+        model_file_path = "workload_data/lr/model_medium.pk"
+    else:  # mode == 'short'
+        dataset_path = "workload_data/lr/train_data/reviews10mb.csv"
+        model_file_path = "workload_data/lr/model_small.pk"
     df = pd.read_csv(dataset_path)
     df['train'] = df['Text'].apply(cleanup)
     tfidf_vect = TfidfVectorizer(min_df=100).fit(df['train'])
