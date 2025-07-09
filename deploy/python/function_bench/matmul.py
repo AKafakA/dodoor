@@ -14,6 +14,13 @@ def matmul(n):
     return latency
 
 if __name__ == "__main__":
-    N = [1024, 2048, 4096, 8192]  # Adjust N as needed for testing
+    import sys
+    mode = sys.argv[1]
+    if mode not in ['long', 'short']:
+        raise ValueError("Invalid mode. Use 'long' or 'short'.")
+    if mode == 'long':
+        N = [1024, 2048, 4096, 8192]  # Adjust N as needed for testing
+    else:  # mode == 'short'
+        N = [1024, 2048]
     for n in N:
         latency = matmul(n)

@@ -1,7 +1,15 @@
 import math
+import sys
 
 
 if __name__ == "__main__":
+    mode = sys.argv[1]
+    if mode == 'long':
+        N = 10000000
+    elif mode == 'short':
+        N = 1000000
+    else:
+        raise ValueError("Invalid mode. Use 'long' or 'short'.")
     N = 10000000
     for i in range(0, N):
         sin_i = math.sin(i)

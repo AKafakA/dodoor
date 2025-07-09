@@ -1,4 +1,5 @@
 import random
+import sys
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -25,6 +26,12 @@ if __name__ == "__main__":
     with open(input_file, 'r') as f:
         lines = f.readlines()
         inputs = [line.strip() for line in lines if line.strip()]
+
+    mode = sys.argv[1]
+    if mode not in ['long', 'short']:
+        raise ValueError("Invalid mode. Use 'long' or 'short'.")
+    if mode == 'short':
+        inputs = [random.choice(inputs)]
     df = pd.read_csv(dataset_path)
     df['train'] = df['Text'].apply(cleanup)
     tfidf_vect = TfidfVectorizer(min_df=100).fit(df['train'])

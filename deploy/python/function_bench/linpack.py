@@ -32,5 +32,12 @@ def linpack(N):
 
 
 if __name__ == "__main__":
-    N = 4096  # Adjust N as needed for testing
+    import sys
+    mode = sys.argv[1]
+    if mode == 'long':
+        N = 4096
+    elif mode == 'short':
+        N = 1024
+    else:
+        raise ValueError("Invalid mode. Use 'long' or 'short'.")
     result = linpack(N)

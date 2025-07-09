@@ -1,4 +1,5 @@
 import random
+import sys
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -18,7 +19,13 @@ def cleanup(sentence):
 
 
 if __name__ == "__main__":
-    dataset_sizes = [10, 20, 50, 100]
+    mode = sys.argv[1]
+    if mode not in ['long', 'short']:
+        raise ValueError("Invalid mode. Use 'long' or 'short'.")
+    if mode == 'long':
+        dataset_sizes = [10, 20, 50, 100]
+    else:  # mode == 'short'
+        dataset_sizes = [50]
     for dataset_size in dataset_sizes:
         file_name = f"reviews{dataset_size}mb.csv"
         dataset_path = "workload_data/lr/train_data/" + file_name

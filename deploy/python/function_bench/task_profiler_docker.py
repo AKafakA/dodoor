@@ -69,7 +69,7 @@ def monitor_container(container_id: str, results: Dict[str, Any]):
 
 def profile_tasks(config_path: str, instance_id: str, iterations: int, output_path: str,
                   docker_image: str, min_docker_cpus: float, min_docker_memory: int,
-                  verbose: bool = False):
+                  verbose: bool = False, mode: str = 'long'):
     """
     Profiles tasks from a config file using Docker and generates a new config with measured data.
     """
@@ -143,7 +143,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 '--memory', f"{memory_limit * 1.1}m", # Add 10% buffer to memory limit
                 '-v', f"{host_dir}:/app",  # Bind mount the script directory
                 docker_image,
-                'python3', container_script_path
+                'python3', container_script_path,
+                mode  # Pass the mode as an argument to the script
             ]
             try:
                 # Start the container and capture its ID
@@ -236,6 +237,13 @@ if __name__ == "__main__":
                         help="Path to save the generated JSON file.")
     parser.add_argument('--verbose', action='store_true', help="Enable verbose output.")
 
+    parser.add_argument('--mode', type=str, choices=['long', 'short'], default='long',
+                        help="Mode of operation: 'long' for long task profiling with tens of seconds, "
+                             "'short' for short_task "
+                             "with ms-level latency "
+                             "Default is 'long'."
+                        )
+
     # --- Docker-specific Arguments ---
     parser.add_argument('--docker-image', type=str, default="wd312/dodoor-function-bench",
                         help="Docker image to use for profiling. Please checking setup_docker.sh for more information.")
@@ -243,6 +251,7 @@ if __name__ == "__main__":
                         help="CPU limit for the Docker container.")
     parser.add_argument('--min-docker-memory', type=int, default=1,
                         help="Memory limit for Docker container in mb")
+
 
     args = parser.parse_args()
 
@@ -254,5 +263,6 @@ if __name__ == "__main__":
         docker_image=args.docker_image,
         min_docker_cpus=args.min_docker_cpus,
         min_docker_memory=args.min_docker_memory,
-        verbose=args.verbose
+        verbose=args.verbose,
+        mode=args.mode
     )

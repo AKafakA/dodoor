@@ -1,3 +1,5 @@
+import sys
+
 import six
 from chameleon import PageTemplate
 import random
@@ -16,8 +18,15 @@ tal:content="python: d" />
 
 
 if __name__ == "__main__":
-    num_of_rows = [1024, 2048]  # Adjust as needed for testing
-    num_of_cols = [1024, 2048, 4096]
+    mode = sys.argv[1]
+    if mode == 'long':
+        num_of_rows = [1024, 2048]
+        num_of_cols = [1024, 2048, 4096]
+    elif mode == 'short':
+        num_of_rows = [1024]
+        num_of_cols = [1024]
+    else:
+        raise ValueError("Invalid mode. Use 'long' or 'short'.")
     KEY = b'\xa1\xf6%\x8c\x87}_\xcd\x89dHE8\xbf\xc9,'
     for rows in num_of_rows:
         for cols in num_of_cols:

@@ -94,6 +94,14 @@ if __name__ == "__main__":
         "English": ["J", "K", "L", "M", "N", "P", "R", "S", "T"],
     }
 
+    import sys
+    mode = sys.argv[1]
+    if mode not in ['long', 'short']:
+        raise ValueError("Invalid mode. Use 'long' or 'short'.")
+    if mode == 'short':
+        sampled_languages = ["Chinese", "English"]
+        start_letter_maps = {k: v[:3] for k, v in start_letter_maps.items()}
+
     parameter_path = "workload_data/rnn/params.pkl"
     with open(parameter_path, 'rb') as pkl:
         params = pickle.load(pkl)

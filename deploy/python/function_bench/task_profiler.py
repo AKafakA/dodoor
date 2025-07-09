@@ -61,7 +61,7 @@ def monitor_process(process: subprocess.Popen, results: Dict[str, Any]):
 # --- Main Profiling Logic ---
 
 def profile_tasks(config_path: str, instance_id: str, iterations: int, output_path: str,
-                  verbose: bool = False):
+                  verbose: bool = False, mode: str = 'long'):
     """
     Profiles tasks from a config file and generates a new config with measured data.
 
@@ -91,16 +91,12 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
     for i, task in enumerate(original_config.get('tasks', [])):
         task_id = task.get('taskTypeId', 'unknown_task')
         exec_script = task.get('taskExecPath')
-        command_list = ["python3", exec_script]
+        command_list = ["python3", exec_script, mode]
 
         if not exec_script:
             print(f"\nSkipping task '{task_id}' due to missing 'taskExecPath'.")
             continue
 
-        if "inputs" in task:
-            inputs = task.get('inputs', {})
-            for key, value in inputs.items():
-                command_list.append(f"--{key}={value}")
 
         print(f"\n[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}")
 
@@ -225,6 +221,16 @@ if __name__ == "__main__":
         help="Enable verbose output for detailed profiling information."
     )
 
+    parser.add_argument(
+        '--mode',
+        type=str,
+        choices=['long', 'short'],
+        default='long',
+        help="Mode of operation: 'long' for long task profiling with tens of seconds, 'short' for short_task "
+             "with ms-level latency "
+             "Default is 'long'."
+    )
+
     args = parser.parse_args()
 
     # Ensure psutil is installed
@@ -239,5 +245,6 @@ if __name__ == "__main__":
         instance_id=args.instance_id,
         iterations=args.iterations,
         output_path=os.path.join(args.output_path, f"unboxed_profiler_config_{args.instance_id}.json"),
-        verbose=args.verbose
+        verbose=args.verbose,
+        mode=args.mode
     )
