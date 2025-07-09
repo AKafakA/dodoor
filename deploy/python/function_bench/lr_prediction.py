@@ -28,9 +28,9 @@ if __name__ == "__main__":
         inputs = [line.strip() for line in lines if line.strip()]
 
     mode = sys.argv[1]
-    if mode not in ['long', 'short']:
+    if mode not in ['long', 'short', 'medium']:
         raise ValueError("Invalid mode. Use 'long' or 'short'.")
-    if mode == 'short':
+    if mode == 'medium' or mode == 'short':
         inputs = [random.choice(inputs)]
     df = pd.read_csv(dataset_path)
     df['train'] = df['Text'].apply(cleanup)

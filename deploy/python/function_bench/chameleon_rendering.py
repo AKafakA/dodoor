@@ -22,9 +22,12 @@ if __name__ == "__main__":
     if mode == 'long':
         num_of_rows = [1024, 2048]
         num_of_cols = [1024, 2048, 4096]
-    elif mode == 'short':
+    elif mode == 'medium':
         num_of_rows = [1024]
         num_of_cols = [1024]
+    elif mode == 'short':
+        num_of_rows = [256]
+        num_of_cols = [256]
     else:
         raise ValueError("Invalid mode. Use 'long' or 'short'.")
     KEY = b'\xa1\xf6%\x8c\x87}_\xcd\x89dHE8\xbf\xc9,'

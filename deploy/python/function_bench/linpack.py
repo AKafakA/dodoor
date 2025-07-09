@@ -36,8 +36,10 @@ if __name__ == "__main__":
     mode = sys.argv[1]
     if mode == 'long':
         N = 4096
-    elif mode == 'short':
+    elif mode == 'medium':
         N = 1024
+    elif mode == 'short':
+        N = 256
     else:
         raise ValueError("Invalid mode. Use 'long' or 'short'.")
     result = linpack(N)

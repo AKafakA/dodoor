@@ -61,7 +61,7 @@ def monitor_process(process: subprocess.Popen, results: Dict[str, Any]):
 # --- Main Profiling Logic ---
 
 def profile_tasks(config_path: str, instance_id: str, iterations: int, output_path: str,
-                  verbose: bool = False, mode: str = 'long'):
+                  verbose: bool = False, modes=None):
     """
     Profiles tasks from a config file and generates a new config with measured data.
 
@@ -72,6 +72,8 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         iterations (int): Number of times to run each task.
         output_path (str): Path to save the new JSON output file.
     """
+    if modes is None:
+        modes = ['short', 'medium', 'long']
     print(f"Loading configuration from: {config_path}")
     try:
         with open(config_path, 'r') as f:
@@ -88,73 +90,78 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
     print(f"\n--- Profiling Setup ---")
     print(f"Instance ID:         '{instance_id}'")
     print(f"Iterations per task: {iterations}")
-    print(f"Mode:                {mode}")
     print(f"-----------------------\n")
 
     for i, task in enumerate(original_config.get('tasks', [])):
-        task_id = task.get('taskTypeId', 'unknown_task')
-        exec_script = task.get('taskExecPath')
-        command_list = ["python3", exec_script, mode]
+        avg_peak_cpus = []
+        avg_peak_memories = []
+        avg_durations = []
+        for mode in modes:
+            task_id = task.get('taskTypeId', 'unknown_task')
+            exec_script = task.get('taskExecPath')
+            command_list = ["python3", exec_script, mode]
 
-        if not exec_script:
-            print(f"\nSkipping task '{task_id}' due to missing 'taskExecPath'.")
-            continue
+            if not exec_script:
+                print(f"\nSkipping task '{task_id}' due to missing 'taskExecPath'.")
+                continue
 
+            print(f"\n[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id} for mode '{mode}'")
 
-        print(f"\n[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}")
+            durations_ms = []
+            peak_cpus = []
+            peak_memories_mb = []
 
-        durations_ms = []
-        peak_cpus = []
-        peak_memories_mb = []
+            for n in range(iterations):
+                if verbose:
+                    print(f"  - Iteration {n + 1}/{iterations}...", end='\r')
 
-        for n in range(iterations):
+                start_time = time.perf_counter()
+
+                # Use Popen to run the script as a non-blocking child process
+                process = subprocess.Popen(
+                    command_list,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+
+                # Start the monitor thread
+                monitor_results = {}
+                monitor_thread = threading.Thread(target=monitor_process, args=(process, monitor_results))
+                monitor_thread.start()
+
+                # Wait for the process and the monitor to complete
+                stdout, stderr = process.communicate()
+                monitor_thread.join()
+
+                end_time = time.perf_counter()
+
+                if process.returncode != 0:
+                    print(f"\n  - ERROR during iteration {n + 1} for task '{task_id}'.")
+                    print(f"  - Stderr: {stderr.decode().strip()}")
+                    continue  # Skip this failed iteration
+
+                # Collect results for this iteration
+                durations_ms.append((end_time - start_time) * 1000)
+                peak_cpus.append(monitor_results.get('peak_cpu', 0.0))
+                peak_memories_mb.append(monitor_results.get('peak_memory_mb', 0.0))
             if verbose:
-                print(f"  - Iteration {n + 1}/{iterations}...", end='\r')
+                print(f"  - Completed {iterations} iterations.                ")
 
-            start_time = time.perf_counter()
+            # Calculate averages if we have successful runs
+            if not durations_ms:
+                print(f"  - No successful runs for task '{task_id}'. Cannot generate data.")
+                continue
 
-            # Use Popen to run the script as a non-blocking child process
-            process = subprocess.Popen(
-                command_list,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            avg_duration_ms = statistics.mean(durations_ms)
+            avg_peak_cpu = statistics.mean(peak_cpus)
+            avg_peak_memory_mb = statistics.mean(peak_memories_mb)
 
-            # Start the monitor thread
-            monitor_results = {}
-            monitor_thread = threading.Thread(target=monitor_process, args=(process, monitor_results))
-            monitor_thread.start()
-
-            # Wait for the process and the monitor to complete
-            stdout, stderr = process.communicate()
-            monitor_thread.join()
-
-            end_time = time.perf_counter()
-
-            if process.returncode != 0:
-                print(f"\n  - ERROR during iteration {n + 1} for task '{task_id}'.")
-                print(f"  - Stderr: {stderr.decode().strip()}")
-                continue  # Skip this failed iteration
-
-            # Collect results for this iteration
-            durations_ms.append((end_time - start_time) * 1000)
-            peak_cpus.append(monitor_results.get('peak_cpu', 0.0))
-            peak_memories_mb.append(monitor_results.get('peak_memory_mb', 0.0))
-        if verbose:
-            print(f"  - Completed {iterations} iterations.                ")
-
-        # Calculate averages if we have successful runs
-        if not durations_ms:
-            print(f"  - No successful runs for task '{task_id}'. Cannot generate data.")
-            continue
-
-        avg_duration_ms = statistics.mean(durations_ms)
-        avg_peak_cpu = statistics.mean(peak_cpus)
-        avg_peak_memory_mb = statistics.mean(peak_memories_mb)
-
-        print(f"  - Average Duration: {avg_duration_ms:.2f} ms")
-        print(f"  - Average Peak CPU: {avg_peak_cpu:.2f}%")
-        print(f"  - Average Peak Memory: {avg_peak_memory_mb:.2f} MB")
+            print(f"  - Average Duration: {avg_duration_ms:.2f} ms for mode '{mode}'")
+            print(f"  - Average Peak CPU: {avg_peak_cpu:.2f}%")
+            print(f"  - Average Peak Memory: {avg_peak_memory_mb:.2f} MB")
+            avg_peak_cpus.append(round(avg_peak_cpu / 100, 2))
+            avg_peak_memories.append(int(round(avg_peak_memory_mb)))
+            avg_durations.append(int(round(avg_duration_ms)))
 
         # Build the new JSON structure for this task
         new_task_entry = {
@@ -164,11 +171,11 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
                 instance_id: {
                     "resourceVector": {
                         # Convert CPU % to a core count (e.g., 150% -> 1.5 cores)
-                        "cores": round(avg_peak_cpu / 100, 2),
-                        "memory": int(round(avg_peak_memory_mb)),  # In MB
-                        "disks": 1  # As specified, a constant
+                        "cores": avg_peak_cpus,
+                        "memory": avg_peak_memories,  # In MB
+                        "disks": [1] * len(modes)
                     },
-                    "estimatedDuration": int(round(avg_duration_ms))  # In Milliseconds
+                    "estimatedDuration": avg_durations  # In Milliseconds
                 }
             }
         }
@@ -225,13 +232,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        '--mode',
+        '--modes',
         type=str,
-        choices=['long', 'short'],
-        default='long',
-        help="Mode of operation: 'long' for long task profiling with tens of seconds, 'short' for short_task "
-             "with ms-level latency "
-             "Default is 'long'."
+        nargs='+',
+        default=['short', 'medium', 'long'],
+        help="Modes to run the tasks with expected latency range. "
     )
 
     args = parser.parse_args()
@@ -247,7 +252,7 @@ if __name__ == "__main__":
         config_path=args.config_path,
         instance_id=args.instance_id,
         iterations=args.iterations,
-        output_path=os.path.join(args.output_path, f"unboxed_profiler_config_{args.instance_id}_{args.mode}.json"),
+        output_path=os.path.join(args.output_path, f"unboxed_profiler_config_{args.instance_id}.json"),
         verbose=args.verbose,
-        mode=args.mode
+        modes=args.modes
     )

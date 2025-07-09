@@ -96,11 +96,14 @@ if __name__ == "__main__":
 
     import sys
     mode = sys.argv[1]
-    if mode not in ['long', 'short']:
+    if mode not in ['long', 'short', 'medium']:
         raise ValueError("Invalid mode. Use 'long' or 'short'.")
-    if mode == 'short':
+    if mode == 'medium':
         sampled_languages = ["Chinese", "English"]
         start_letter_maps = {k: v[:3] for k, v in start_letter_maps.items()}
+    elif mode == 'short':
+        sampled_languages = ["English"]
+        start_letter_maps = {k: v[:1] for k, v in start_letter_maps.items()}
 
     parameter_path = "workload_data/rnn/params.pkl"
     with open(parameter_path, 'rb') as pkl:
