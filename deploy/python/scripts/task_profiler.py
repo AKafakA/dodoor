@@ -98,11 +98,6 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
             for key, value in inputs.items():
                 command_list.append(f"--{key}={value}")
 
-        # Check if the python script exists before trying to run it
-        if not os.path.exists(f"deploy/python/function_bench{exec_script}"):
-            print(f"\nWARNING: Script for task '{task_id}' not found at '{exec_script}'. Skipping.")
-            continue
-
         print(f"\n[{i + 1}/{len(original_config['tasks'])}] Profiling Task: {task_id}")
 
         durations_ms = []
