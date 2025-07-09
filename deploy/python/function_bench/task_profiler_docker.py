@@ -7,8 +7,10 @@ import threading
 import statistics
 import os
 from typing import List, Dict, Any
+from pathlib import Path
+home = Path.home()
 
-os.chdir("$HOME/dodoor/deploy/python/function_bench")
+os.chdir(str(home) + "/dodoor/deploy/python/function_bench")
 
 # --- Helper Function to Monitor a Docker Container ---
 def monitor_container(container_id: str, results: Dict[str, Any]):

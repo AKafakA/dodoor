@@ -2,12 +2,16 @@ import argparse
 import json
 import subprocess
 import time
+from pathlib import Path
+
 import psutil
 import threading
 import statistics
 import os
 from typing import List, Dict, Any
-os.chdir("$HOME/dodoor/deploy/python/function_bench")
+home = Path.home()
+
+os.chdir(str(home) + "/dodoor/deploy/python/function_bench")
 
 
 # --- Helper Function to Monitor a Process (Corrected) ---
