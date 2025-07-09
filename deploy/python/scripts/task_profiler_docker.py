@@ -216,25 +216,30 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Profile Python scripts inside Docker containers and generate a new config with measured performance data.",
+        description="Profile Python scripts inside Docker containers and generate a config "
+                    "with measured performance data.",
         formatter_class=argparse.RawTextHelpFormatter
     )
     # --- Core Arguments ---
     parser.add_argument('--config-path', type=str,
-                        default="resources/configuration/gen/merged_profiler_config.json",
+                        default="resources/configuration/generated_config/merged_profiler_config.json",
                         help="Path to the input JSON configuration file.")
     parser.add_argument('--instance-id', type=str, required=True,
                         help="A unique identifier for the machine instance (e.g., 'm5.large').")
     parser.add_argument('-n', '--iterations', type=int, default=1000,
                         help="Number of times to run each task. Default is 100.")
-    parser.add_argument('--output-path', type=str, default="profiler_output_docker.json",
+    parser.add_argument('-o', '--output-path', type=str,
+                        default="resources/configuration/generated_config",
                         help="Path to save the generated JSON file.")
     parser.add_argument('--verbose', action='store_true', help="Enable verbose output.")
 
     # --- Docker-specific Arguments ---
-    parser.add_argument('--docker-image', type=str, default="wd312/dodoor-function-bench", help="Docker image to use for profiling.")
-    parser.add_argument('--min-docker-cpus', type=float, default=1.0, help="CPU limit for the Docker container.")
-    parser.add_argument('--min-docker-memory', type=int, default=1, help="Memory limit for Docker container in mb")
+    parser.add_argument('--docker-image', type=str, default="wd312/dodoor-function-bench",
+                        help="Docker image to use for profiling. Please checking setup_docker.sh for more information.")
+    parser.add_argument('--min-docker-cpus', type=float, default=1.0,
+                        help="CPU limit for the Docker container.")
+    parser.add_argument('--min-docker-memory', type=int, default=1,
+                        help="Memory limit for Docker container in mb")
 
     args = parser.parse_args()
 
@@ -242,7 +247,7 @@ if __name__ == "__main__":
         config_path=args.config_path,
         instance_id=args.instance_id,
         iterations=args.iterations,
-        output_path=args.output_path,
+        output_path=args.output_path + f"/profiled_config_{args.instance_id}_with_docker.json",
         docker_image=args.docker_image,
         min_docker_cpus=args.min_docker_cpus,
         min_docker_memory=args.min_docker_memory,
