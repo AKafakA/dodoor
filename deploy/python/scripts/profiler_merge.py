@@ -71,13 +71,13 @@ if __name__ == "__main__":
     parser.add_argument(
         '--input-dir',
         type=str,
-        required=True,
+        default="deploy/resources/configuration/profiled_task_config",
         help="Path to the directory containing the JSON profiler results to merge."
     )
     parser.add_argument(
         '--output-path',
         type=str,
-        default="merged_profiler_config.json",
+        default="deploy/resources/configuration/gen/merged_profiler_config.json",
         help="Path to save the final merged JSON file. Default is 'merged_profiler_config.json'."
     )
 
