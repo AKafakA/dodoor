@@ -7,6 +7,7 @@ import threading
 import statistics
 import os
 from typing import List, Dict, Any
+os.chdir("$HOME/dodoor/deploy/python/function_bench")
 
 
 # --- Helper Function to Monitor a Process (Corrected) ---

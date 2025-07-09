@@ -8,6 +8,8 @@ import statistics
 import os
 from typing import List, Dict, Any
 
+os.chdir("$HOME/dodoor/deploy/python/function_bench")
+
 # --- Helper Function to Monitor a Docker Container ---
 def monitor_container(container_id: str, results: Dict[str, Any]):
     """
@@ -107,7 +109,7 @@ def profile_tasks(config_path: str, instance_id: str, iterations: int, output_pa
         peak_memories_mb = []
 
         # Get host directory and script name for bind mounting
-        host_dir = "$HOME/dodoor/deploy/python/function_bench"
+        host_dir = os.getcwd()
         container_script_path = f"/app/{exec_script}"
 
         instance_info = task.get('instanceInfo', {})
