@@ -1,0 +1,244 @@
+{
+    "tasks": [
+        {
+            "taskTypeId": "float_operation",
+            "taskExecPath": "float_operation.py",
+            "instanceInfo": {
+                "C6525-25g": {
+                    "resourceVector": {
+                        "cores": [
+                            0.99,
+                            1.33,
+                            1.48
+                        ],
+                        "memory": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        62,
+                        434,
+                        4129
+                    ]
+                }
+            }
+        },
+        {
+            "taskTypeId": "linpack",
+            "taskExecPath": "linpack.py",
+            "instanceInfo": {
+                "C6525-25g": {
+                    "resourceVector": {
+                        "cores": [
+                            33.17,
+                            32.64,
+                            32.2
+                        ],
+                        "memory": [
+                            27,
+                            100,
+                            296
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        121,
+                        610,
+                        3638
+                    ]
+                }
+            }
+        },
+        {
+            "taskTypeId": "matmul",
+            "taskExecPath": "matmul.py",
+            "instanceInfo": {
+                "C6525-25g": {
+                    "resourceVector": {
+                        "cores": [
+                            32.64,
+                            35.42,
+                            38.08
+                        ],
+                        "memory": [
+                            38,
+                            143,
+                            1610
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        122,
+                        284,
+                        4155
+                    ]
+                }
+            }
+        },
+        {
+            "taskTypeId": "chameleon_rendering",
+            "taskExecPath": "chameleon_rendering.py",
+            "instanceInfo": {
+                "C6525-25g": {
+                    "resourceVector": {
+                        "cores": [
+                            1.37,
+                            1.49,
+                            1.54
+                        ],
+                        "memory": [
+                            35,
+                            271,
+                            2073
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        420,
+                        4171,
+                        84380
+                    ]
+                }
+            }
+        },
+        {
+            "taskTypeId": "pyaes_generation",
+            "taskExecPath": "pyaes_generation.py",
+            "instanceInfo": {
+                "C6525-25g": {
+                    "resourceVector": {
+                        "cores": [
+                            1.0,
+                            1.11,
+                            1.48
+                        ],
+                        "memory": [
+                            9,
+                            9,
+                            10
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        62,
+                        224,
+                        9454
+                    ]
+                }
+            }
+        },
+        {
+            "taskTypeId": "lr_train",
+            "taskExecPath": "lr_model_train.py",
+            "instanceInfo": {
+                "C6525-25g": {
+                    "resourceVector": {
+                        "cores": [
+                            33.38,
+                            38.27,
+                            38.31
+                        ],
+                        "memory": [
+                            193,
+                            378,
+                            708
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        3936,
+                        40929,
+                        125914
+                    ]
+                }
+            }
+        },
+        {
+            "taskTypeId": "lr_prediction",
+            "taskExecPath": "lr_prediction.py",
+            "instanceInfo": {
+                "C6525-25g": {
+                    "resourceVector": {
+                        "cores": [
+                            33.01,
+                            33.78,
+                            33.46
+                        ],
+                        "memory": [
+                            191,
+                            373,
+                            595
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        2409,
+                        7762,
+                        14488
+                    ]
+                }
+            }
+        },
+        {
+            "taskTypeId": "rnn_name_generation",
+            "taskExecPath": "rnn_name_generation.py",
+            "instanceInfo": {
+                "C6525-25g": {
+                    "resourceVector": {
+                        "cores": [
+                            33.73,
+                            33.08,
+                            33.29
+                        ],
+                        "memory": [
+                            426,
+                            425,
+                            426
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        1672,
+                        1720,
+                        1832
+                    ]
+                }
+            }
+        }
+    ]
+}
