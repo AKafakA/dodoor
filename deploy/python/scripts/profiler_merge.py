@@ -11,7 +11,8 @@ def merge_profiler_results(input_files: List[str], output_path: str,
                            override_num_slots_per_host: int = 2,
                            cores_threshold: int = 2,
                            memory_threshold: int = 1024 * 8,
-                           memory_buffer: float = 0.1):
+                           memory_buffer: float = 0.1,
+                           simple_merge: bool = False):
     """
     Merges multiple JSON profiler result files into a single configuration file with CPU cores casting
     """
@@ -60,31 +61,35 @@ def merge_profiler_results(input_files: List[str], output_path: str,
 
     # Convert the dictionary of tasks back into a list for the final JSON structure
     final_task_list = list(merged_tasks.values())
-    for task in final_task_list:
-        instances_info = task.get('instanceInfo')
-        for node_type, instance in instances_info.items():
-            # Apply resource casting based on the node type and thresholds
-            num_slots = override_num_slots_per_host if override_num_slots_per_host >= 0 \
-                else node_info[node_type]['num_slots_per_host']
-            resource_vector = instance.get('resourceVector', {})
-            casted_cores = []
-            casted_memory = []
-            for uncasted_core, uncasted_memory in zip(
-                resource_vector.get('cores', []),
-                resource_vector.get('memory', [])
-            ):
-                if uncasted_core < cores_threshold:
-                    casted_cores.append(int(math.ceil(uncasted_core)))
-                else:
-                    casted_cores.append(node_info[node_type]['cores'] // num_slots)
+    if simple_merge:
+        print("Performing simple merge, only keeping the first instance of each task.")
+    else:
+        final_task_list = list(merged_tasks.values())
+        for task in final_task_list:
+            instances_info = task.get('instanceInfo')
+            for node_type, instance in instances_info.items():
+                # Apply resource casting based on the node type and thresholds
+                num_slots = override_num_slots_per_host if override_num_slots_per_host >= 0 \
+                    else node_info[node_type]['num_slots_per_host']
+                resource_vector = instance.get('resourceVector', {})
+                casted_cores = []
+                casted_memory = []
+                for uncasted_core, uncasted_memory in zip(
+                    resource_vector.get('cores', []),
+                    resource_vector.get('memory', [])
+                ):
+                    if uncasted_core < cores_threshold:
+                        casted_cores.append(int(math.ceil(uncasted_core)))
+                    else:
+                        casted_cores.append(node_info[node_type]['cores'] // num_slots)
 
-                if uncasted_memory < memory_threshold:
-                    casted_memory.append(int(math.ceil(uncasted_memory) * (1 + memory_buffer)))
-                else:
-                    casted_memory.append(int((node_info[node_type]['memory'] // num_slots) * (1 + memory_buffer)))
-            # Update the resource vector with the casted values
-            resource_vector['cores'] = casted_cores
-            resource_vector['memory'] = casted_memory
+                    if uncasted_memory < memory_threshold:
+                        casted_memory.append(int(math.ceil(uncasted_memory) * (1 + memory_buffer)))
+                    else:
+                        casted_memory.append(int((node_info[node_type]['memory'] // num_slots) * (1 + memory_buffer)))
+                # Update the resource vector with the casted values
+                resource_vector['cores'] = casted_cores
+                resource_vector['memory'] = casted_memory
 
     final_output = {"tasks": final_task_list}
 
@@ -150,6 +155,12 @@ if __name__ == "__main__":
         help="Path to save the final merged JSON file. Default is 'merged_profiler_config.json'."
     )
 
+    parser.add_argument(
+        '--simple-merge',
+        action='store_true',
+        help="Perform a simple merge, keeping only the first instance of each task."
+    )
+
     args = parser.parse_args()
 
     # Check if the provided path is a valid directory
@@ -172,5 +183,6 @@ if __name__ == "__main__":
             override_num_slots_per_host=args.override_num_slots_per_host,
             cores_threshold=args.cores_threshold,
             memory_threshold=args.memory_threshold,
-            memory_buffer=args.memory_buffer
+            memory_buffer=args.memory_buffer,
+            simple_merge=True
         )
