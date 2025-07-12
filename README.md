@@ -1,88 +1,90 @@
-# Dodoor: Efficient Randomized Decentralized Scheduling
+# Dodoor: A Research Prototype for Heterogeneous Task Scheduling
 
-Dodoor is a decentralized scheduling framework for large-scale data centers, designed to efficiently schedule heterogeneous tasks with diverse resource requirements. It is built upon the principles of randomized, distributed scheduling, but with a key innovation: it uses **cached server load information** for making scheduling decisions, eliminating the overhead of real-time probing.
-
-This approach is based on theoretical research on the weighted balls-into-bins model with time-delayed information. Dodoor introduces a novel load scoring mechanism that captures the anti-affinity between tasks and servers, going beyond simple pending task counts to achieve better resource balancing.
-
-This repository contains the prototype implementation of Dodoor, along with a testing framework to evaluate its performance against other common decentralized schedulers.
-
-## Key Features
-
-- **High-Performance Scheduling:** Reduces scheduling latency by ~30% and messaging overhead by ~55% compared to standard power-of-two schedulers.
-- **Cached Load Balancing:** Eliminates the need for expensive real-time server probing by using a centralized data store that pushes batched updates to schedulers.
-- **Heterogeneous Task & Host Support:** Natively handles tasks with multi-dimensional resource requirements (e.g., CPU, Memory) and supports clusters with heterogeneous server capacities.
-- **Advanced Load Scoring:** Utilizes a sophisticated load score that considers both resource alignment and task duration, leading to better server affinity and resource utilization.
-- **Resilient and Scalable:** The decentralized architecture with a centralized data store ensures high availability and simplifies cluster scaling.
-- **Extensible Framework:** Can be extended with new scheduling algorithms and integrated into hierarchical scheduling architectures.
+Dodoor is a research prototype for investigating scheduling algorithms for heterogeneous tasks on heterogeneous clusters. It is designed to be a flexible and extensible platform for experimenting with different scheduling policies.
 
 ## Architecture
 
-The Dodoor framework consists of three main components:
+The system is composed of the following main components:
 
-1.  **Schedulers:** Lightweight, distributed services responsible for making scheduling decisions. They receive task requests and assign them to the most suitable server based on their locally cached view of the cluster load.
-2.  **Servers (Workers):** Execute the assigned tasks. They manage a local queue of pending tasks and report their load status back to the Data Store Service upon task completion.
-3.  **Data Store Service:** A logically centralized service that aggregates load information from all servers and schedulers. It periodically pushes a global, updated view of server loads to all registered schedulers in batches.
+*   **Scheduler**: The central component responsible for making scheduling decisions. It receives job submissions from clients and assigns tasks to worker nodes based on the selected scheduling policy.
+*   **Data Store**: A service that maintains the state of the cluster, including information about the available nodes and their resources.
+*   **Worker Nodes**: The nodes that execute the tasks. Each worker node runs a `NodeMonitorService` to report its status and a `NodeEnqueueService` to receive tasks from the scheduler.
+*   **Client**: A client that submits jobs to the scheduler.
 
-This architecture is designed to minimize communication overhead at the critical path of scheduling, as schedulers do not need to probe servers directly.
+The communication between these components is done using [Apache Thrift](https://thrift.apache.org/), a software framework for scalable cross-language services development.
 
-![Dodoor Framework](paper/images/dodoor_framework.png)
+### Scheduling Policies
+
+Dodoor supports the following scheduling policies:
+
+*   **Power of Two**: A simple randomized scheduling policy where the scheduler probes two randomly selected nodes and sends the task to the one with the shorter queue.
+*   **Cached Power of Two**: A variation of the power of two policy where the scheduler uses a cached view of the node states to make scheduling decisions. This avoids the overhead of probing the nodes in real-time.
+*   **Late Binding (Sparrow)**: A scheduling policy where the scheduler sends the task to a randomly selected node, and the node itself decides whether to accept the task or forward it to another node.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Java (11 or higher)
-- Apache Maven
-- Python 3
-- Apache Thrift
+*   [Java 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+*   [Apache Maven](https://maven.apache.org/)
+*   [Apache Thrift](https://thrift.apache.org/download)
 
-### Build
+### Building the Project
 
-To build the Dodoor services, run the following command from the root directory:
+To build the project, run the following command from the root directory:
 
 ```bash
-mvn clean install
+./rebuild.sh
 ```
 
-This will compile the Thrift-defined services and package the Java components.
+This will generate the Thrift code, compile the Java source code, and create a JAR file in the `target` directory.
 
-### Configuration
+### Running the System
 
-The core configuration for the cluster, hosts, and schedulers can be found in `deploy/resources/configuration/`.
+The system can be run in a distributed environment with a scheduler, a data store, and multiple worker nodes. The configuration for these components can be found in the `deploy/resources/configuration` directory.
 
-- **Host Configuration:** `generated_config/host_config.json` defines the resource capacities (CPU, memory) of each server in the cluster.
-- **Scheduler Configuration:** `example_dodoor_configuration.conf` contains settings for the schedulers, such as the batch size (`b`), the trade-off parameter (`alpha`), and the `(1+beta)` process parameter.
+#### 1. Start the Data Store
 
-### Running an Experiment
-
-The `deploy/script/` directory contains scripts to run experiments. The `single_exp.sh` script is a good starting point.
-
-Before running, you may need to configure the host addresses in `deploy/resources/host_addresses/`.
-
-The experiment workflow is as follows:
-1.  **Generate Data:** Use scripts in `deploy/python/data/generator/` to create a workload trace. The prototype can use traces from Azure or synthetically generated data.
-2.  **Start Services:** Launch the Data Store Service, the Scheduler services, and the Server (worker) services.
-3.  **Submit Tasks:** A client submits tasks from the generated trace to the schedulers.
-4.  **Collect Results:** Metrics are collected during the experiment and can be analyzed using the scripts in `deploy/python/analysis/`.
-
-## Project Structure
-
-```
-.
-├── deploy/             # Deployment scripts, configurations, and Python tools
-│   ├── python/         # Python scripts for data generation, analysis, and function benchmarks
-│   └── resources/      # Configuration files, data traces, and logs
-├── paper/              # Research paper draft
-├── src/                # Java source code for the scheduler, server, and data store
-│   ├── main/
-│   │   ├── java/       # Core Java implementation
-│   │   └── gen-java/   # Java code generated by Thrift
-│   └── test/
-├── target/             # Compiled Java classes and packages
-├── Thrift/             # Thrift API definitions for communication
-└── pom.xml             # Maven project configuration
+```bash
+java -cp target/dodoor-1.0-SNAPSHOT.jar edu.cam.dodoor.datastore.DataStore --config deploy/resources/configuration/example_dodoor_configuration.conf
 ```
 
-## Citing Dodoor
+#### 2. Start the Scheduler
 
-If you use Dodoor in your research, please consider citing the accompanying paper. (Details to be added upon publication).
+```bash
+java -cp target/dodoor-1.0-SNAPSHOT.jar edu.cam.dodoor.scheduler.Scheduler --config deploy/resources/configuration/example_dodoor_configuration.conf
+```
+
+#### 3. Start the Worker Nodes
+
+```bash
+java -cp target/dodoor-1.0-SNAPSHOT.jar edu.cam.dodoor.node.NodeMonitor --config deploy/resources/configuration/example_dodoor_configuration.conf
+```
+
+### Running Experiments
+
+The `deploy/python` directory contains scripts for running experiments and analyzing the results. The `deploy/python/data/generator` directory contains scripts for generating synthetic workloads. The `deploy/python/function_bench` directory contains a set of real-world computation tasks that can be used for evaluation.
+
+The `single_exp.sh` script in the `deploy/script` directory can be used to run a single experiment.
+
+```bash
+./deploy/script/single_exp.sh
+```
+
+## User Guide
+
+### Submitting a Job
+
+A job can be submitted to the scheduler using the `SchedulerService` Thrift API. A job is a collection of tasks, where each task is defined by its resource requirements, duration, and type.
+
+### Monitoring the System
+
+The `DataStoreService` can be used to monitor the state of the cluster. It provides methods for retrieving the list of nodes and their current resource utilization.
+
+### Extending the System
+
+Dodoor is designed to be extensible. New scheduling policies can be added by implementing the `Scheduler` interface. New task types can be added by extending the `Task` class.
+
+## Paper Draft
+
+A draft of a paper describing the system and some preliminary experimental results can be found in the `paper_draft_latex` directory. The paper was rejected from ATC'23, but it provides a good overview of the project.
