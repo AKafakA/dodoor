@@ -4,21 +4,101 @@
             "taskTypeId": "float_operation",
             "taskExecPath": "float_operation.py",
             "instanceInfo": {
-                "m400": {
+                "C6525-25g": {
                     "resourceVector": {
-                        "cores": 1,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            1,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        219,
+                        592,
+                        4278
+                    ]
+                },
+                "C6620": {
+                    "resourceVector": {
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        275,
+                        522,
+                        2365
+                    ]
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        349,
+                        939,
+                        5699
+                    ]
+                },
+                "xl170": {
+                    "resourceVector": {
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        239,
+                        602,
+                        4210
+                    ]
                 }
             }
         },
@@ -26,21 +106,101 @@
             "taskTypeId": "linpack",
             "taskExecPath": "linpack.py",
             "instanceInfo": {
-                "m400": {
+                "C6525-25g": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "memory": [
+                            29,
+                            110,
+                            325
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        372,
+                        863,
+                        3891
+                    ]
+                },
+                "C6620": {
+                    "resourceVector": {
+                        "cores": [
+                            14,
+                            14,
+                            14
+                        ],
+                        "memory": [
+                            34,
+                            112,
+                            330
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        504,
+                        719,
+                        1575
+                    ]
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            4,
+                            4,
+                            4
+                        ],
+                        "memory": [
+                            35,
+                            110,
+                            325
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        595,
+                        1052,
+                        3096
+                    ]
+                },
+                "xl170": {
+                    "resourceVector": {
+                        "cores": [
+                            5,
+                            5,
+                            5
+                        ],
+                        "memory": [
+                            31,
+                            110,
+                            325
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        431,
+                        715,
+                        2219
+                    ]
                 }
             }
         },
@@ -48,21 +208,101 @@
             "taskTypeId": "matmul",
             "taskExecPath": "matmul.py",
             "instanceInfo": {
-                "m400": {
+                "C6525-25g": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "memory": [
+                            41,
+                            157,
+                            1771
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        456,
+                        733,
+                        12090
+                    ]
+                },
+                "C6620": {
+                    "resourceVector": {
+                        "cores": [
+                            14,
+                            14,
+                            14
+                        ],
+                        "memory": [
+                            38,
+                            154,
+                            1776
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        547,
+                        1499,
+                        10412
+                    ]
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            4,
+                            4,
+                            4
+                        ],
+                        "memory": [
+                            39,
+                            160,
+                            1756
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        699,
+                        1933,
+                        70223
+                    ]
+                },
+                "xl170": {
+                    "resourceVector": {
+                        "cores": [
+                            5,
+                            5,
+                            5
+                        ],
+                        "memory": [
+                            37,
+                            160,
+                            1761
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        473,
+                        1032,
+                        20977
+                    ]
                 }
             }
         },
@@ -70,21 +310,101 @@
             "taskTypeId": "chameleon_rendering",
             "taskExecPath": "chameleon_rendering.py",
             "instanceInfo": {
-                "m400": {
+                "C6525-25g": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            38,
+                            298,
+                            2280
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        585,
+                        4535,
+                        88836
+                    ]
+                },
+                "C6620": {
+                    "resourceVector": {
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            37,
+                            292,
+                            2275
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        569,
+                        3009,
+                        55188
+                    ]
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            38,
+                            298,
+                            2279
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        966,
+                        6281,
+                        118949
+                    ]
+                },
+                "xl170": {
+                    "resourceVector": {
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            38,
+                            295,
+                            2277
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        612,
+                        4653,
+                        90564
+                    ]
                 }
             }
         },
@@ -92,21 +412,101 @@
             "taskTypeId": "pyaes_generation",
             "taskExecPath": "pyaes_generation.py",
             "instanceInfo": {
-                "m400": {
+                "C6525-25g": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            1,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            9,
+                            9,
+                            11
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        222,
+                        406,
+                        11015
+                    ]
+                },
+                "C6620": {
+                    "resourceVector": {
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            11,
+                            11,
+                            11
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        288,
+                        437,
+                        6316
+                    ]
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            2,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            11,
+                            11,
+                            11
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        362,
+                        667,
+                        14287
+                    ]
+                },
+                "xl170": {
+                    "resourceVector": {
+                        "cores": [
+                            1,
+                            2,
+                            2
+                        ],
+                        "memory": [
+                            11,
+                            11,
+                            11
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        251,
+                        423,
+                        10716
+                    ]
                 }
             }
         },
@@ -114,21 +514,101 @@
             "taskTypeId": "lr_train",
             "taskExecPath": "lr_model_train.py",
             "instanceInfo": {
-                "m400": {
+                "C6525-25g": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "memory": [
+                            212,
+                            415,
+                            778
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        4744,
+                        55654,
+                        197185
+                    ]
+                },
+                "C6620": {
+                    "resourceVector": {
+                        "cores": [
+                            14,
+                            14,
+                            14
+                        ],
+                        "memory": [
+                            213,
+                            416,
+                            775
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        3532,
+                        92510,
+                        279635
+                    ]
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            4,
+                            4,
+                            4
+                        ],
+                        "memory": [
+                            212,
+                            420,
+                            779
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        16201,
+                        98489,
+                        326038
+                    ]
+                },
+                "xl170": {
+                    "resourceVector": {
+                        "cores": [
+                            5,
+                            5,
+                            5
+                        ],
+                        "memory": [
+                            212,
+                            418,
+                            776
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        7852,
+                        85422,
+                        256097
+                    ]
                 }
             }
         },
@@ -136,21 +616,101 @@
             "taskTypeId": "lr_prediction",
             "taskExecPath": "lr_prediction.py",
             "instanceInfo": {
-                "m400": {
+                "C6525-25g": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "memory": [
+                            210,
+                            410,
+                            654
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        2937,
+                        8525,
+                        15592
+                    ]
+                },
+                "C6620": {
+                    "resourceVector": {
+                        "cores": [
+                            14,
+                            14,
+                            14
+                        ],
+                        "memory": [
+                            209,
+                            411,
+                            652
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        2462,
+                        6174,
+                        10853
+                    ]
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            4,
+                            4,
+                            4
+                        ],
+                        "memory": [
+                            210,
+                            411,
+                            655
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        4341,
+                        11888,
+                        21487
+                    ]
+                },
+                "xl170": {
+                    "resourceVector": {
+                        "cores": [
+                            5,
+                            5,
+                            5
+                        ],
+                        "memory": [
+                            210,
+                            408,
+                            653
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        3144,
+                        8951,
+                        16361
+                    ]
                 }
             }
         },
@@ -158,21 +718,101 @@
             "taskTypeId": "rnn_name_generation",
             "taskExecPath": "rnn_name_generation.py",
             "instanceInfo": {
-                "m400": {
+                "C6525-25g": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            8,
+                            8,
+                            8
+                        ],
+                        "memory": [
+                            468,
+                            467,
+                            468
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        2084,
+                        2146,
+                        2245
+                    ]
+                },
+                "C6620": {
+                    "resourceVector": {
+                        "cores": [
+                            14,
+                            14,
+                            14
+                        ],
+                        "memory": [
+                            470,
+                            467,
+                            470
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        1738,
+                        1748,
+                        1822
+                    ]
                 },
                 "m510": {
                     "resourceVector": {
-                        "cores": 1.0,
-                        "memory": 1024,
-                        "disks": 0
+                        "cores": [
+                            4,
+                            4,
+                            4
+                        ],
+                        "memory": [
+                            468,
+                            469,
+                            468
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
                     },
-                    "estimatedDuration": 1000
+                    "estimatedDuration": [
+                        3132,
+                        3304,
+                        4001
+                    ]
+                },
+                "xl170": {
+                    "resourceVector": {
+                        "cores": [
+                            5,
+                            5,
+                            5
+                        ],
+                        "memory": [
+                            467,
+                            468,
+                            467
+                        ],
+                        "disks": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "estimatedDuration": [
+                        2068,
+                        2172,
+                        2434
+                    ]
                 }
             }
         }

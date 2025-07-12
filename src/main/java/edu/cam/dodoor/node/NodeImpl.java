@@ -16,11 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.commons.math.distribution.BetaDistribution;
 
 public class NodeImpl implements Node {
     private final static Logger LOG = LoggerFactory.getLogger(NodeImpl.class);
@@ -44,6 +45,9 @@ public class NodeImpl implements Node {
     private String _nodeType;
 
     public Map<String, String> _taskTypeToScriptPath;
+    public Map<String, List<Integer>> _taskCPURequirements;
+    public Map<String, List<Integer>> _taskMemoryRequirements;
+
     public double _hostLoad;
 
     private double generateBetaRandom(double avgClusterLoad, double k) {
@@ -66,7 +70,7 @@ public class NodeImpl implements Node {
                 staticConfig.getDouble(DodoorConf.AVERAGE_CLUSTER_LOAD, DodoorConf.DEFAULT_AVERAGE_CLUSTER_LOAD);
         double betaK =
                 staticConfig.getDouble(DodoorConf.CLUSTER_LOAD_GENERATION_K, DodoorConf.DEFAULT_CLUSTER_LOAD_GENERATION_K);
-        double _hostLoad = generateBetaRandom(avgClusterLoad, betaK);
+        _hostLoad = generateBetaRandom(avgClusterLoad, betaK);
         int numSlots = Math.max((int) Math.floor(nodeTypeConfig.getInt(DodoorConf.NUM_SLOTS) * (1 - _hostLoad)), 1);
         double loadedCores = Math.max(Resources.getSystemCoresCapacity(nodeTypeConfig) * (1 - _hostLoad), 1);
         int loadedMemoryMb = (int)Math.max(Resources.getMemoryMbCapacity(nodeTypeConfig) * (1 - _hostLoad), 1);
@@ -85,16 +89,31 @@ public class NodeImpl implements Node {
 
         JSONArray taskTypes = taskTypeConfig.getJSONArray("tasks");
         _taskTypeToScriptPath = new HashMap<>();
+        _taskCPURequirements = new HashMap<>();
+        _taskMemoryRequirements = new HashMap<>();
 
         for (int i = 0; i < taskTypes.length(); i++) {
             JSONObject taskTypeJson = taskTypes.getJSONObject(i);
             String taskType = taskTypeJson.getString("taskTypeId");
             String taskScriptPath = taskTypeJson.getString("taskExecPath");
             _taskTypeToScriptPath.put(taskType, taskScriptPath);
+            JSONObject instanceInfo = taskTypeJson.getJSONObject("instanceInfo");
+            JSONObject currentInstanceInfo = instanceInfo.getJSONObject(_nodeType);
+            JSONObject resources = currentInstanceInfo.getJSONObject("resourceVector");
+            List<Integer> cpuRequirements = new ArrayList<>();
+            for (Object cpu : resources.getJSONArray("cores")) {
+                cpuRequirements.add((Integer) cpu);
+            }
+            _taskCPURequirements.put(taskType, cpuRequirements);
+            List<Integer> memoryRequirements = new ArrayList<>();
+            for (Object memory : resources.getJSONArray("memory")) {
+                memoryRequirements.add((Integer) memory);
+            }
+            _taskMemoryRequirements.put(taskType, memoryRequirements);
         }
 
         taskLauncherService.initialize(staticConfig, numSlots, nodeThrift, nodeTypeConfig,
-                _taskTypeToScriptPath);
+                _taskTypeToScriptPath, _taskCPURequirements, _taskMemoryRequirements);
 
         if (staticConfig.getBoolean(DodoorConf.TRACKING_ENABLED, DodoorConf.DEFAULT_TRACKING_ENABLED)) {
             int trackingInterval = staticConfig.getInt(DodoorConf.TRACKING_INTERVAL_IN_SECONDS,

@@ -5,15 +5,9 @@ import edu.cam.dodoor.node.TaskMapsPerNodeType;
 import edu.cam.dodoor.scheduler.SchedulerServiceMetrics;
 import edu.cam.dodoor.thrift.*;
 import edu.cam.dodoor.utils.Network;
-import edu.cam.dodoor.utils.Resources;
-import edu.cam.dodoor.utils.SchedulerUtils;
-import edu.cam.dodoor.utils.ThriftClientPool;
 import org.apache.commons.configuration.Configuration;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class TaskPlacer {
@@ -104,7 +98,8 @@ public abstract class TaskPlacer {
                 taskSpec.durationInMs,
                 Network.socketAddressToThrift(nodeAddress),
                 System.currentTimeMillis(),
-                taskSpec.taskType
+                taskSpec.taskType,
+                taskSpec.taskMode
         ), nodeAddress);
     }
 }

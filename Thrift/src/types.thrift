@@ -42,6 +42,7 @@ struct TFullTaskId {
   2: TResourceVector resourceRequest;
   3: i64 durationInMs;
   4: string taskType = "simulate";
+  5: string taskMode = "long"; // The mode of the task, e.g. "long", "short", "medium"
 }
 
 struct TUserGroupInfo {
@@ -60,6 +61,7 @@ struct TTaskSpec {
   4: TResourceVector resourceRequest;
   5: i64 durationInMs;
   6: string taskType = "simulate";
+  7: string taskMode = "long"; // The mode of the task, e.g. "long", "short", "medium"
 }
 
 struct TSchedulingRequest {
@@ -93,4 +95,5 @@ struct TEnqueueTaskReservationRequest {
   6: THostPort nodeEnqueueAddress;
   7: i64 enqueueTime;
   8: string taskType = "simulate"; // The type of the task, e.g. "simulate", "train", "inference"
+  9: string taskMode = "long"; // The mode of the task, e.g. "long", "short", "medium"
 }

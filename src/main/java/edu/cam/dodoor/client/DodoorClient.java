@@ -65,7 +65,7 @@ public class DodoorClient {
     }
 
     public void submitTask(String taskId, int cores, long memory, long disks, long durationInMs,
-                           String taskType)
+                           String taskType, String mode)
             throws TException {
         List<TTaskSpec> tasks = new ArrayList<>();
         TResourceVector resources = new TResourceVector(cores, memory, disks);
@@ -74,7 +74,8 @@ public class DodoorClient {
                 java.nio.ByteBuffer.wrap("".getBytes()),
                 resources,
                 durationInMs,
-                taskType);
+                taskType,
+                mode);
         tasks.add(task);
         submitJob(tasks);
     }

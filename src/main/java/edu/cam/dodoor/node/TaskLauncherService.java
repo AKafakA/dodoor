@@ -1,5 +1,6 @@
 package edu.cam.dodoor.node;
 
+import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.TResourceVector;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
@@ -12,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -23,6 +25,10 @@ public class TaskLauncherService {
     private NodeServiceMetrics _nodeServiceMetrics;
     private ThreadPoolExecutor _executor;
     private Map<String, String> _taskScriptPaths = new HashMap<>();
+    private String _dockerImageName;
+    private Map<String, List<Integer>> _taskCPURequirements;
+    private Map<String, List<Integer>> _taskMemoryRequirements;
+    private String _rootDir;
 
     /** A runnable that spins in a loop asking for tasks to launch and launching them. */
     private class TaskLaunchRunnable implements Runnable {
@@ -81,18 +87,29 @@ public class TaskLauncherService {
                 command = generateStressCommand(cpu, memory, disks, durationInSec);
             } else {
                 String scriptPath = _taskScriptPaths.get(taskType);
+                String mode = task._mode;
+                int modeIndex = TaskMode.getIndexFromName(mode);
+                if (modeIndex < 0) {
+                    LOG.error("Invalid task mode: {}", mode);
+                    throw new IOException("Invalid task mode: " + mode);
+                }
+                int cpuCores = _taskCPURequirements.get(taskType).get(modeIndex);
+                long memory = _taskMemoryRequirements.get(taskType).get(modeIndex);
                 if (scriptPath == null) {
                     LOG.error("No script path found for task type {}", taskType);
                     throw new IOException("No script path found for task type " + taskType);
                 }
-                command = generatePythonCommand(scriptPath);
+                command = generatePythonCommand(scriptPath, _dockerImageName, cpuCores, memory,
+                        _rootDir, mode);
             }
             return rt.exec(command);
         }
     }
 
     public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift,
-                           JSONObject nodeTypeConfig, Map<String, String> taskScriptPaths) {
+                           JSONObject nodeTypeConfig, Map<String, String> taskScriptPaths,
+                           Map<String, List<Integer>> taskCPURequirements,
+                           Map<String, List<Integer>> taskMemoryRequirements) {
         /* The number of threads used by the service. */
         int numSlots = numSlot;
         if (numSlots <= 0) {
@@ -104,6 +121,10 @@ public class TaskLauncherService {
         _nodeServiceMetrics = nodeThrift.getNodeServiceMetrics();
         _executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numSlots);
         _taskScriptPaths = taskScriptPaths;
+        _taskCPURequirements = taskCPURequirements;
+        _taskMemoryRequirements = taskMemoryRequirements;
+        _dockerImageName = conf.getString(DodoorConf.DOCKER_IMAGE_NAME, DodoorConf.DEFAULT_DOCKER_IMAGE_NAME);
+        _rootDir = conf.getString(DodoorConf.ROOT_DIR, DodoorConf.DEFAULT_ROOT_DIR);
         LOG.debug("Initializing task launcher service with {} slots", numSlots);
     }
 
@@ -128,7 +149,7 @@ public class TaskLauncherService {
         return _executor.getQueue().size();
     }
 
-    private String generateStressCommand(double cores, long memory, long disks, long durationInSec) {
+    private static String generateStressCommand(double cores, long memory, long disks, long durationInSec) {
         if (Math.floor(cores) == cores) {
             int intCores = (int) cores;
             if (disks <= 0 && memory <= 0) {
@@ -162,8 +183,11 @@ public class TaskLauncherService {
         }
     }
 
-    private String generatePythonCommand(String pythonScriptPath) {
-        // Assuming the Python script is in the same directory as the Java class
-        return String.format("cd ~/dodoor && python3 %s", pythonScriptPath);
+    private static String generatePythonCommand(String pythonScriptPath, String dockerImageName,
+                                                int cpuCores, long memory, String hostDir, String taskMode) {
+        String command = String.format("docker run -d --rm --cpus %d --memory %dm -v %s:/app %s python3 %s %s",
+                cpuCores, memory, hostDir, dockerImageName, pythonScriptPath, taskMode);
+        LOG.debug("Generated command: {}", command);
+        return command;
     }
 }

@@ -31,6 +31,12 @@ public class DodoorConf {
     public final static String NODE_TYPE_LIST_KEY = "node.types";
     public final static String NODE_TYPE = "node.type";
 
+    public final static String DOCKER_IMAGE_NAME = "docker.image_name";
+    public final static String DEFAULT_DOCKER_IMAGE_NAME = "wd312/dodoor-function-bench";
+
+    public final static String ROOT_DIR = "dodoor.root.dir";
+    public final static String DEFAULT_ROOT_DIR = "~/dodoor/deploy/python/function_bench";
+
 
 
     /**

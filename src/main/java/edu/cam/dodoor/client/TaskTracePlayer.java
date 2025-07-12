@@ -42,11 +42,12 @@ public class TaskTracePlayer {
         final long _globalStartTime;
         private final boolean _addTimelineDelay;
         private final String _taskType;
+        private final String _mode;
 
         public TaskLaunchRunnable(String taskId, int cores, long memory,
                                   long disks, long durationInMs, long startTime,
                                   DodoorClient client, long globalStartTime, boolean addTimelineDelay,
-                                  String taskType) {
+                                  String taskType, String mode) {
             _taskId = taskId;
             _cores = cores;
             _memory = memory;
@@ -57,6 +58,7 @@ public class TaskTracePlayer {
             _globalStartTime = globalStartTime;
             _addTimelineDelay = addTimelineDelay;
             _taskType = taskType;
+            _mode = mode;
         }
 
         @Override
@@ -71,7 +73,7 @@ public class TaskTracePlayer {
                 }
             }
             try {
-                _client.submitTask(_taskId, _cores, _memory, _disks, _durationInMs, _taskType);
+                _client.submitTask(_taskId, _cores, _memory, _disks, _durationInMs, _taskType, _mode);
             } catch (TException e) {
                 LOG.error("Scheduling request failed!", e);
             }
@@ -162,8 +164,9 @@ public class TaskTracePlayer {
                 startTime += waitTime;
             }
             String taskType = parts[6];
+            String mode = parts.length > 7 ? parts[7] : "long";
             TaskLaunchRunnable task = new TaskLaunchRunnable(taskId, cores, memory, disks, durationInMs,
-                    startTime, client, globalStartTime, addDelay, taskType);
+                    startTime, client, globalStartTime, addDelay, taskType, mode);
             Thread t = new Thread(task);
             t.start();
         }
