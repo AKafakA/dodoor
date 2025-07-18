@@ -25,7 +25,7 @@ public class DodoorConf {
 
     public final static String SCHEDULER_SERVICE_NAME = "scheduler";
     public final static String DATA_STORE_SERVICE_NAME = "datastore";
-    public final static String NODE_SERVICE_NAME = "node";
+    public final static String NODE_SERVICE_NAME = "nodes";
     public final static String SERVICE_HOST_LIST_KEY = "hosts";
     public final static String SERVICE_PORT_LIST_KEY = "ports";
     public final static String NODE_TYPE_LIST_KEY = "node.types";
