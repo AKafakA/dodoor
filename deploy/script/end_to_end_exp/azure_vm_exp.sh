@@ -8,17 +8,20 @@ BATCH_SIZES="100"
 CPU_WEIGHTS="1.0"
 DURATION_WEIGHTS="1.0"
 AVG_CLUSTER_LOADS="0 0.5 0.8 0.9"
-SCHEDULERS="sparrow powerOfTwo powerOfTwoDuration prequal random dodoor cachedPowerOfTwo"
+#SCHEDULERS="sparrow powerOfTwo powerOfTwoDuration prequal random dodoor cachedPowerOfTwo"
+SCHEDULERS="random"
 
 # Dataset is constant and not iterated over.
-DATA_PATH="resources/data/trace_data/azure_data_cloudlab_1m"
+DATA_PATH="resources/data/azure_data"
 BRANCH_NAME="main"
-REBUILD="true"
+REBUILD="false"
 STATIC_CONFIG_PATH="$HOME/dodoor/config.conf"
 HOST_CONFIG_PATH="$HOME/dodoor/resources/host_addresses/cloud_lab/host_config.json"
 TASK_CONFIG_PATH="$HOME/dodoor/resources/configuration/generated_config/merged_profiler_config.json"
 LOG_DIR_PREFIX="azure"
 NUM_REQUESTS=1000
+CODE_UPDATE="true"
+RUN_EXPERIMENT="false"
 
 
 # --- Experiment Execution ---
@@ -36,10 +39,12 @@ for scheduler in $SCHEDULERS; do
             echo "🚀 RUNNING EXP:"
             echo "  SCHEDULER=($scheduler) LOAD=($load) BETA=($beta)"
             echo "  BATCH=($batch) CPU_W=($cpu_w) DURATION_W=($duration_w)"
+            echo "  DATA_PATH=($DATA_PATH) BRANCH_NAME=($BRANCH_NAME)"
+            echo "  REBUILD=($REBUILD) LOG_DIR_PREFIX=($LOG_DIR_PREFIX) RUN_EXPERIMENT=($RUN_EXPERIMENT)"
             echo "----------------------------------------------------------------------"
             # Execute the experiment script with the current combination of parameters.
             # Argument order matches your original script: $l $m $n $o $k $j $DATA_PATH $i
-            sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$load" "$DATA_PATH" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$LOG_DIR_PREFIX" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS"
+            sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$load" "$DATA_PATH" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$LOG_DIR_PREFIX" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS" "$CODE_UPDATE" "$RUN_EXPERIMENT"
           done
         done
       done

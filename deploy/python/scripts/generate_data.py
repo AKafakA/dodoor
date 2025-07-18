@@ -39,10 +39,10 @@ def generate_azure_data(azure_data_path,
                                               target_qps=target_qps,
                                               distribution_type=distribution_type,
                                               burstiness=burstiness)
-    data_10m = azure_data_generator.generate(num_records, 0, max_duration,
+    data = azure_data_generator.generate(num_records, 0, max_duration,
                                              [0, 14],
                                              max_cores=max_cores, max_memory=max_memory, max_disk=0)
-    azure_data_generator.write_data_target_output(data_10m, azure_output_path)
+    azure_data_generator.write_data_target_output(data, azure_output_path)
 
 
 def generate_function_bench_trace(config_address,

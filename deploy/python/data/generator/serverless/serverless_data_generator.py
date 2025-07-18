@@ -106,7 +106,8 @@ class ServerlessDataGenerator(DataGenerator, ABC):
                     "disk": 0,
                     "duration": int(delay * 1000),  # Assuming delay is in seconds
                     "startTime": int(start_time_ms),
-                    "taskType": "simulated"
+                    "taskType": "simulated",
+                    "mode": "small"  # Serverless data does not have mode to control the task load, so we set to small.
                 })
                 task_id += 1
                 cpu_cores_list.append(float(cpu_cores))

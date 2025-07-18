@@ -82,7 +82,8 @@ class AzureDataGenerator(DataGenerator, ABC):
                     "disk": int(disk),
                     "duration": int(duration),
                     "startTime": int(start_time),
-                    "taskType": "simulated"
+                    "taskType": "simulated",
+                    "mode": "medium"  # Azure data does not have mode to control the task load, so we set to medium.
                 })
                 cpu_cores_list.append(int(cores))
                 memory_list.append(int(memory))

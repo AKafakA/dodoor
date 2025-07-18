@@ -16,16 +16,26 @@ HOST_CONFIG_PATH=${12}
 TASK_CONFIG_PATH=${13}
 
 NUM_REQUESTS=${14}
+CODE_UPDATE=${15}
+RUN_EXPERIMENT=${16}
+
+if [ "$CODE_UPDATE" = "true" ]; then
+  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "cd dodoor && git checkout $BRANCH_NAME && git reset --hard HEAD~10 && git pull"
+fi
 
 if [ "$REBUILD" = "true" ]; then
-  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i "sudo chmod -R 777 /users/asdwb/dodoor && git config --global --add safe.directory /users/asdwb/dodoor && cd dodoor && git add -u . && git stash && git checkout ${BRANCH_NAME} && git pull && sh rebuild.sh"
+  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i "sh rebuild.sh"
 else
   echo "Skipping rebuild step."
 fi
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
-sh deploy/script/test_cloudlab.sh $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $AVG_CLUSTER_LOAD $HOST_CONFIG_PATH $TASK_CONFIG_PATH $STATIC_CONFIG_PATH $NUM_REQUESTS
+sh deploy/script/test_cloudlab.sh $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $AVG_CLUSTER_LOAD $HOST_CONFIG_PATH $TASK_CONFIG_PATH $STATIC_CONFIG_PATH $NUM_REQUESTS $RUN_EXPERIMENT
 
-
-export PYTHONPATH=~/Code/scheduling/dodoor
-python3 deploy/python/scripts/collect_logs.py $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DURATION_WEIGHT $AVG_CLUSTER_LOAD $LOG_DIR_PREFIX
+if [ "$RUN_EXPERIMENT" = "true" ]; then
+  echo "Experiment run completed. Collecting logs..."
+  export PYTHONPATH=~/Code/scheduling/dodoor
+  python3 deploy/python/scripts/collect_logs.py $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DURATION_WEIGHT $AVG_CLUSTER_LOAD $LOG_DIR_PREFIX
+else
+  echo "Skipping log collection as RUN_EXPERIMENT is set to false."
+fi

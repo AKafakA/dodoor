@@ -22,7 +22,8 @@ class FunctionBenchGenerator(DataGenerator, ABC):
     def __init__(self, config_address, target_cluster_qps,
                  task_distribution=None,
                  distribution_type="gamma",
-                 burstiness=1.0):
+                 burstiness=1.0,
+                 mode_distribution=None):
         super().__init__()
         self._config_address = config_address
         config = json.load(open(config_address, 'r'))
@@ -30,6 +31,7 @@ class FunctionBenchGenerator(DataGenerator, ABC):
         assert self._task_list, "Task list is empty in the configuration file."
         self._target_qps = target_cluster_qps
         self._task_distribution = task_distribution if task_distribution else {}
+        self._mode_distribution = mode_distribution if mode_distribution else {}
         self._distribution_bucket = []
 
         self._distribution_type = distribution_type
@@ -63,6 +65,12 @@ class FunctionBenchGenerator(DataGenerator, ABC):
             else:
                 task_type_index = random.randint(0, len(self._task_list) - 1)
 
+            if self._mode_distribution:
+                mode = np.random.choice(list(self._mode_distribution.keys()),
+                                        p=list(self._mode_distribution.values()))
+            else:
+                mode = np.random.choice(["small", "medium", "long"])
+
             task_waiting_time = get_wait_time(self._target_qps,
                                               self._distribution_type,
                                               self._burstiness) * 1000
@@ -71,10 +79,10 @@ class FunctionBenchGenerator(DataGenerator, ABC):
             instance_info = task_type.get(TableKeys.INSTANCE_INFO_ID, {})
             first_instance = next(iter(instance_info.values()))
             resource_vector = first_instance.get(TableKeys.RESOURCE_VECTOR, {})
-            cores = resource_vector.get(TableKeys.CORES)
-            memory = resource_vector.get(TableKeys.MEMORY)
-            disk = resource_vector.get(TableKeys.DISKS, 0)
-            duration = first_instance.get(TableKeys.DURATION)
+            cores = resource_vector.get(TableKeys.CORES)[0]
+            memory = resource_vector.get(TableKeys.MEMORY)[0]
+            disk = resource_vector.get(TableKeys.DISKS, 0)[0]
+            duration = first_instance.get(TableKeys.DURATION)[0]
 
             generated_tasks.append({
                 "taskId": task_id,
@@ -84,6 +92,7 @@ class FunctionBenchGenerator(DataGenerator, ABC):
                 "duration": int(duration),
                 "startTime": start_time,
                 "taskType": task_type[TableKeys.TASK_TYPE_ID],
+                "mode": mode
             })
             task_id += 1
             cpu_cores_list.append(float(cores))
