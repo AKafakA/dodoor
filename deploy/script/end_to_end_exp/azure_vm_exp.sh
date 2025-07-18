@@ -16,7 +16,7 @@ BRANCH_NAME="main"
 REBUILD="true"
 STATIC_CONFIG_PATH="$HOME/dodoor/config.conf"
 HOST_CONFIG_PATH="$HOME/dodoor/resources/host_addresses/cloud_lab/host_config.json"
-TASK_CONFIG_PATH="$HOME/dodoor/resources/configuration/function_bench_config.json"
+TASK_CONFIG_PATH="$HOME/dodoor/resources/configuration/generated_config/merged_profiler_config.json"
 LOG_DIR_PREFIX="azure"
 NUM_REQUESTS=1000
 
