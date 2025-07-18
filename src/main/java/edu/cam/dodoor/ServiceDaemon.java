@@ -84,8 +84,8 @@ public class ServiceDaemon {
         if (isNode) {
             // current nmPort and nePort are only supported to be one in each node
             JSONObject nodeConfig = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME);
-            int nmPorts = nodeConfig.getInt(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
-            int nePorts = nodeConfig.getInt(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
+            int nmPorts = nodeConfig.getJSONArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS).getInt(0);
+            int nePorts = nodeConfig.getJSONArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS).getInt(0);
             new NodeThrift().initialize(config, nmPorts, nePorts, hostConfig, taskConfig);
         }
 
