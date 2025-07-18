@@ -38,7 +38,7 @@
         "hosts": []
       },
       {
-        "node.type": "c6525-25g",
+        "node.type": "c6620",
         "system.cores": 28,
         "system.memory": 131072,
         "system.disks": 0,

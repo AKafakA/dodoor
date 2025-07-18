@@ -158,7 +158,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--simple-merge',
         action='store_true',
-        help="Perform a simple merge, keeping only the first instance of each task."
+        help="Perform a simple merge, just override the estimatedDuration for each task on each hosts"
     )
 
     args = parser.parse_args()
