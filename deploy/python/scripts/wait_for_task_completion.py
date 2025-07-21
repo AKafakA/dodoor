@@ -9,6 +9,7 @@ as finished, checking for the completion marker every minute.
 import argparse
 import time
 from pathlib import Path
+import sys
 
 def main():
     """Main function to parse arguments and monitor the log file."""

@@ -20,8 +20,8 @@ HOST_CONFIG_PATH="~/cloud_lab/host_config.json"
 TASK_CONFIG_PATH="~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json"
 LOG_DIR_PREFIX="azure"
 NUM_REQUESTS=1000
-CODE_UPDATE="true"
-RUN_EXPERIMENT="false"
+CODE_UPDATE="false"
+RUN_EXPERIMENT="true"
 
 
 # --- Experiment Execution ---
