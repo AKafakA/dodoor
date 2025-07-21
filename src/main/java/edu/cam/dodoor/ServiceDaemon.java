@@ -94,9 +94,9 @@ public class ServiceDaemon {
             JSONArray dataStorePortsArray = hostConfig.getJSONObject(DodoorConf.DATA_STORE_SERVICE_NAME)
                     .getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);
             for (int i = 0; i < dataStorePortsArray.length(); i++) {
-                String dataStorePort = dataStorePortsArray.getString(i);
+                int dataStorePort = dataStorePortsArray.getInt(i);
                 DataStoreThrift dataStore = new DataStoreThrift();
-                dataStore.initialize(config, Integer.parseInt(dataStorePort), logKicked, hostConfig);
+                dataStore.initialize(config, dataStorePort, logKicked, hostConfig);
                 logKicked = true;
             }
         }
@@ -106,9 +106,9 @@ public class ServiceDaemon {
                     .getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);
             boolean logKicked = false;
             for (int i = 0; i < schedulerPorts.length(); i++) {
-                String schedulerPort = schedulerPorts.getString(i);
+                int schedulerPort = schedulerPorts.getInt(i);
                 SchedulerThrift scheduler = new SchedulerThrift();
-                scheduler.initialize(config, Integer.parseInt(schedulerPort), logKicked, hostConfig,
+                scheduler.initialize(config, schedulerPort, logKicked, hostConfig,
                         taskConfig);
                 logKicked = true;
             }
