@@ -151,7 +151,7 @@ public class TaskTracePlayer {
         for (String line : allLines) {
             String[] parts = line.split(",");
             String taskId = parts[0];
-            float cores = Integer.parseInt(parts[1]);
+            float cores = Float.parseFloat(parts[1]);
             long memory = Long.parseLong(parts[2]);
             long disks = replayWithDisk? Long.parseLong(parts[3]):0;
             long durationInMs = Long.parseLong(parts[4]);
