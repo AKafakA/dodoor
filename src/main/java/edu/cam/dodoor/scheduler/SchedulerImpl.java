@@ -95,13 +95,13 @@ public class SchedulerImpl implements Scheduler{
         JSONArray nodeMonitorPorts = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME)
                 .getJSONArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
         for (int i = 0; i < nodeMonitorPorts.length(); i++) {
-            nmPorts.add(nodeMonitorPorts.getString(i));
+            nmPorts.add(Integer.toString(nodeMonitorPorts.getInt(i)));
         }
         List<String> nePorts = new ArrayList<>();
         JSONArray nodeEnqueuePorts = hostConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME)
                 .getJSONArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
         for (int i = 0; i < nodeEnqueuePorts.length(); i++) {
-            nePorts.add(nodeEnqueuePorts.getString(i));
+            nePorts.add(Integer.toString(nodeEnqueuePorts.getInt(i)));
         }
 
         if (nmPorts.size() != nePorts.size()) {
