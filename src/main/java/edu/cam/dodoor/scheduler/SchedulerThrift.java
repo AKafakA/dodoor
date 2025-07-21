@@ -10,20 +10,14 @@ import edu.cam.dodoor.utils.Network;
 import edu.cam.dodoor.utils.SchedulerUtils;
 import edu.cam.dodoor.utils.TServers;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.logging.Log;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.PatternLayout;
 import org.apache.thrift.TException;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
