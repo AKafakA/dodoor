@@ -18,6 +18,7 @@ TASK_CONFIG_PATH=${13}
 NUM_REQUESTS=${14}
 CODE_UPDATE=${15}
 RUN_EXPERIMENT=${16}
+EXPERIMENT_TIMEOUT_IN_MIN=${17}
 
 if [ "$CODE_UPDATE" = "true" ]; then
   parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "cd dodoor && git checkout $BRANCH_NAME && git reset --hard HEAD~10 && git pull"
@@ -30,7 +31,7 @@ else
 fi
 
 #parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
-sh deploy/script/test_cloudlab.sh $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $AVG_CLUSTER_LOAD $HOST_CONFIG_PATH $TASK_CONFIG_PATH $STATIC_CONFIG_PATH $NUM_REQUESTS $RUN_EXPERIMENT
+sh deploy/script/test_cloudlab.sh $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $AVG_CLUSTER_LOAD $HOST_CONFIG_PATH $TASK_CONFIG_PATH $STATIC_CONFIG_PATH $NUM_REQUESTS $RUN_EXPERIMENT $EXPERIMENT_TIMEOUT_IN_MIN
 
 if [ "$RUN_EXPERIMENT" = "true" ]; then
   echo "Experiment run completed. Collecting logs..."

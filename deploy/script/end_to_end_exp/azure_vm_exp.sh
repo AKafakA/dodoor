@@ -19,9 +19,10 @@ STATIC_CONFIG_PATH="~/dodoor/config.conf"
 HOST_CONFIG_PATH="~/cloud_lab/host_config.json"
 TASK_CONFIG_PATH="~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json"
 LOG_DIR_PREFIX="azure"
-NUM_REQUESTS=1000
-CODE_UPDATE="false"
+NUM_REQUESTS=100
+CODE_UPDATE="true"
 RUN_EXPERIMENT="true"
+EXPERIMENT_TIMEOUT_IN_MIN=10
 
 
 # --- Experiment Execution ---
@@ -44,7 +45,7 @@ for scheduler in $SCHEDULERS; do
             echo "----------------------------------------------------------------------"
             # Execute the experiment script with the current combination of parameters.
             # Argument order matches your original script: $l $m $n $o $k $j $DATA_PATH $i
-            sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$load" "$DATA_PATH" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$LOG_DIR_PREFIX" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS" "$CODE_UPDATE" "$RUN_EXPERIMENT"
+            sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$load" "$DATA_PATH" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$LOG_DIR_PREFIX" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS" "$CODE_UPDATE" "$RUN_EXPERIMENT" "$EXPERIMENT_TIMEOUT_IN_MIN"
           done
         done
       done

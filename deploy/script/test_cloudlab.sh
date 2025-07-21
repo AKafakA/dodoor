@@ -15,6 +15,7 @@ TASK_CONFIG_PATH=$9
 STATIC_CONFIG_PATH=${10}
 NUM_REQUESTS=${11}
 RUN_EXPERIMENT=${12}
+EXPERIMENT_TIMEOUT_IN_MIN=${13}
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f dodoor"
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f stress"
@@ -29,7 +30,7 @@ if [ "$RUN_EXPERIMENT" = "true" ]; then
   sleep 20
   parallel-ssh -t 0 -h deploy/resources/host_addresses/cloud_lab/test_scheduler -i "nohup java -cp dodoor/target/dodoor-1.0-SNAPSHOT.jar edu.cam.dodoor.client.TaskTracePlayer -c ${STATIC_CONFIG_PATH} -hc ${HOST_CONFIG_PATH} -f dodoor/$DATA_PATH 1>${SCHEDULER_TYPE}_replay.out 2>${SCHEDULER_TYPE}_replay.err &"
   # Wait for the tasks to complete
-  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_scheduler -i "cd dodoor && export PYTHONPATH=. && python3 deploy/python/scripts/wait_for_task_completion.py --log scheduler_metrics.log --num_requests ${NUM_REQUESTS} --timeout 1"
+  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_scheduler -i "cd dodoor && export PYTHONPATH=. && python3 deploy/python/scripts/wait_for_task_completion.py --log scheduler_metrics.log --num_requests ${NUM_REQUESTS} --timeout ${EXPERIMENT_TIMEOUT_IN_MIN}"
 #  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f dodoor"
 #  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f stress"
 fi
