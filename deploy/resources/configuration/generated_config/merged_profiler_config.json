@@ -616,7 +616,7 @@
             "taskTypeId": "lr_prediction",
             "taskExecPath": "lr_prediction.py",
             "instanceInfo": {
-                "C6525-25g": {
+                "c6525-25g": {
                     "resourceVector": {
                         "cores": [
                             8,
