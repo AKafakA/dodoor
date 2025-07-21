@@ -64,7 +64,7 @@ public class DodoorClient {
         _schedulerAddresses = Arrays.asList(schedulerAddresses);
     }
 
-    public void submitTask(String taskId, int cores, long memory, long disks, long durationInMs,
+    public void submitTask(String taskId, float cores, long memory, long disks, long durationInMs,
                            String taskType, String mode)
             throws TException {
         List<TTaskSpec> tasks = new ArrayList<>();

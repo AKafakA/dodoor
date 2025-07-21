@@ -33,7 +33,7 @@ public class TaskTracePlayer {
     private static class TaskLaunchRunnable implements Runnable {
         //        private int requestId;
         private final String _taskId;
-        private final int _cores;
+        private final float _cores;
         private final long _memory;
         private final long _disks;
         private final long _durationInMs;
@@ -44,7 +44,7 @@ public class TaskTracePlayer {
         private final String _taskType;
         private final String _mode;
 
-        public TaskLaunchRunnable(String taskId, int cores, long memory,
+        public TaskLaunchRunnable(String taskId, float cores, long memory,
                                   long disks, long durationInMs, long startTime,
                                   DodoorClient client, long globalStartTime, boolean addTimelineDelay,
                                   String taskType, String mode) {
@@ -151,7 +151,7 @@ public class TaskTracePlayer {
         for (String line : allLines) {
             String[] parts = line.split(",");
             String taskId = parts[0];
-            int cores = Integer.parseInt(parts[1]);
+            float cores = Integer.parseInt(parts[1]);
             long memory = Long.parseLong(parts[2]);
             long disks = replayWithDisk? Long.parseLong(parts[3]):0;
             long durationInMs = Long.parseLong(parts[4]);
