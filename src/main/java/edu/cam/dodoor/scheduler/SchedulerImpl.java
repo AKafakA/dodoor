@@ -220,6 +220,7 @@ public class SchedulerImpl implements Scheduler{
 
     @Override
     public void submitJob(TSchedulingRequest request) throws TException {
+        LOG.debug("Received job submission request: {}", request.requestId);
         long start = System.currentTimeMillis();
         int numTasksBefore = _counter.get();
         if (request.tasks.isEmpty()) {
@@ -231,6 +232,7 @@ public class SchedulerImpl implements Scheduler{
         }
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = new HashMap<>();
         for (int i = 0; i < _roundOfReservations; i++) {
+            LOG.debug("Round {} of task reservations for request {}", i + 1, request.requestId);
             Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> placedTasks = handleJobSubmission(request, start);
             for (InetSocketAddress nodeEnqueueAddress : placedTasks.keySet()) {
                 if (!mapOfNodesToPlacedTasks.containsKey(nodeEnqueueAddress)) {
@@ -377,7 +379,7 @@ public class SchedulerImpl implements Scheduler{
     @Override
     public Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> handleJobSubmission(TSchedulingRequest request,
                                                                                             long startTime) throws TException {
-        LOG.debug(Logging.functionCall(request));
+        LOG.info("Handling job submission for request: {}", request.requestId);
         Map<InetSocketAddress, List<TEnqueueTaskReservationRequest>> mapOfNodesToPlacedTasks = Maps.newHashMap();
         long start = System.currentTimeMillis();
         Map<TEnqueueTaskReservationRequest, InetSocketAddress> enqueueTaskReservationRequests

@@ -111,6 +111,7 @@ public class DodoorClient {
         try {
             InetSocketAddress schedulerAddr = _schedulerAddresses.get(_nextRequestId.getAndIncrement() % _schedulerAddresses.size());
             SchedulerService.AsyncClient client = _clientPool.borrowClient(schedulerAddr);
+            LOG.debug("Submitting job to scheduler: " + schedulerAddr + ", requestId: " + request.requestId);
             client.submitJob(request, new JobSubmissionCallback(schedulerAddr, request, client));
         } catch (InterruptedException e) {
             LOG.fatal(e);
