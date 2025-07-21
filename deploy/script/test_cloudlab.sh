@@ -19,6 +19,7 @@ EXPERIMENT_TIMEOUT_IN_MIN=${13}
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f dodoor"
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f stress"
+parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f docker"
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i  "cd dodoor && sudo python3 deploy/python/scripts/config_generator.py --replay_with_delay True --batch-size $BATCH_SIZE --beta $BETA --scheduler-type $SCHEDULER_TYPE --scheduler-num-tasks-update $SCHEDULER_NUM_TASKS_UPDATE --network_interface $NETWORK_INTERFACE --cpu_weight $CPU_WEIGHT --duration_weight $DURATION_WEIGHT --cluster_avg_load $AVG_CLUSTER_LOAD"
 
@@ -33,4 +34,5 @@ if [ "$RUN_EXPERIMENT" = "true" ]; then
   parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_scheduler -i -t 0 "cd dodoor && export PYTHONPATH=. && python3 deploy/python/scripts/wait_for_task_completion.py --log ~/${SCHEDULER_TYPE}_scheduler_metrics.log --num_requests ${NUM_REQUESTS} --timeout ${EXPERIMENT_TIMEOUT_IN_MIN}"
   parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f dodoor"
   parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f stress"
+  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "pkill -f docker"
 fi
