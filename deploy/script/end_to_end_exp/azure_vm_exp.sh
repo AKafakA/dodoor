@@ -12,7 +12,7 @@ AVG_CLUSTER_LOADS="0"
 SCHEDULERS="random"
 
 # Dataset is constant and not iterated over.
-DATA_PATH="resources/data/azure_data"
+DATA_PATH="deploy/resources/data/azure_data"
 BRANCH_NAME="main"
 REBUILD="false"
 STATIC_CONFIG_PATH="~/dodoor/config.conf"
