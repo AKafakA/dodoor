@@ -80,6 +80,8 @@ public class SchedulerImpl implements Scheduler{
                            SchedulerServiceMetrics schedulerServiceMetrics,
                            JSONObject hostConfig,
                            JSONObject taskTypeConfig) throws IOException {
+
+        LOG.info("Scheduler with port {} initialized with strategy: {}", localAddress.port, _schedulingStrategy);
         _nodeLoadChanges = Maps.newConcurrentMap();
         _schedulerServiceMetrics = schedulerServiceMetrics;
         _address = localAddress;
@@ -192,8 +194,6 @@ public class SchedulerImpl implements Scheduler{
             _taskEnqueueTime = null;
             _taskConfirmedTime = null;
         }
-        LOG.info("Scheduler with port {} initialized with strategy: {}",
-                localAddress.port, _schedulingStrategy);
     }
 
     @Override
