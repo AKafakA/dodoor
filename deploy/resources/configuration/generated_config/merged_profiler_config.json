@@ -4,7 +4,7 @@
             "taskTypeId": "float_operation",
             "taskExecPath": "float_operation.py",
             "instanceInfo": {
-                "C6525-25g": {
+                "c6525-25g": {
                     "resourceVector": {
                         "cores": [
                             1,
@@ -28,7 +28,7 @@
                         4278
                     ]
                 },
-                "C6620": {
+                "c6620": {
                     "resourceVector": {
                         "cores": [
                             2,
@@ -106,7 +106,7 @@
             "taskTypeId": "linpack",
             "taskExecPath": "linpack.py",
             "instanceInfo": {
-                "C6525-25g": {
+                "c6525-25g": {
                     "resourceVector": {
                         "cores": [
                             8,
@@ -130,7 +130,7 @@
                         3891
                     ]
                 },
-                "C6620": {
+                "c6620": {
                     "resourceVector": {
                         "cores": [
                             14,
@@ -208,7 +208,7 @@
             "taskTypeId": "matmul",
             "taskExecPath": "matmul.py",
             "instanceInfo": {
-                "C6525-25g": {
+                "c6525-25g": {
                     "resourceVector": {
                         "cores": [
                             8,
@@ -232,7 +232,7 @@
                         12090
                     ]
                 },
-                "C6620": {
+                "c6620": {
                     "resourceVector": {
                         "cores": [
                             14,
@@ -310,7 +310,7 @@
             "taskTypeId": "chameleon_rendering",
             "taskExecPath": "chameleon_rendering.py",
             "instanceInfo": {
-                "C6525-25g": {
+                "c6525-25g": {
                     "resourceVector": {
                         "cores": [
                             2,
@@ -334,7 +334,7 @@
                         88836
                     ]
                 },
-                "C6620": {
+                "c6620": {
                     "resourceVector": {
                         "cores": [
                             2,
@@ -412,7 +412,7 @@
             "taskTypeId": "pyaes_generation",
             "taskExecPath": "pyaes_generation.py",
             "instanceInfo": {
-                "C6525-25g": {
+                "c6525-25g": {
                     "resourceVector": {
                         "cores": [
                             1,
@@ -436,7 +436,7 @@
                         11015
                     ]
                 },
-                "C6620": {
+                "c6620": {
                     "resourceVector": {
                         "cores": [
                             2,
@@ -514,7 +514,7 @@
             "taskTypeId": "lr_train",
             "taskExecPath": "lr_model_train.py",
             "instanceInfo": {
-                "C6525-25g": {
+                "c6525-25g": {
                     "resourceVector": {
                         "cores": [
                             8,
@@ -538,7 +538,7 @@
                         197185
                     ]
                 },
-                "C6620": {
+                "c6620": {
                     "resourceVector": {
                         "cores": [
                             14,
@@ -640,7 +640,7 @@
                         15592
                     ]
                 },
-                "C6620": {
+                "c6620": {
                     "resourceVector": {
                         "cores": [
                             14,
