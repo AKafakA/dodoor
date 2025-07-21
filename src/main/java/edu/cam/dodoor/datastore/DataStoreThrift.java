@@ -66,10 +66,10 @@ public class DataStoreThrift implements DataStoreService.Iface {
         JSONArray nmPortsArray = nodeConfig.getJSONArray(DodoorConf.NODE_MONITOR_THRIFT_PORTS);
         JSONArray nePortsArray = nodeConfig.getJSONArray(DodoorConf.NODE_ENQUEUE_THRIFT_PORTS);
         for (int i = 0; i < nmPortsArray.length(); i++) {
-            nmPorts.add(nmPortsArray.getString(i));
+            nmPorts.add(Integer.toString(nmPortsArray.getInt(i)));
         }
         for (int i = 0; i < nePortsArray.length(); i++) {
-            nePorts.add(nePortsArray.getString(i));
+            nePorts.add(Integer.toString(nePortsArray.getInt(i)));
         }
         if (nmPorts.size() != nePorts.size()) {
             throw new IllegalArgumentException(DodoorConf.NODE_MONITOR_THRIFT_PORTS + " and " +
