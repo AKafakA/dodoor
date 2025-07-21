@@ -192,6 +192,8 @@ public class SchedulerImpl implements Scheduler{
             _taskEnqueueTime = null;
             _taskConfirmedTime = null;
         }
+        LOG.info("Scheduler with port {} initialized with strategy: {}",
+                localAddress.port, _schedulingStrategy);
     }
 
     @Override
@@ -220,7 +222,7 @@ public class SchedulerImpl implements Scheduler{
 
     @Override
     public void submitJob(TSchedulingRequest request) throws TException {
-        LOG.debug("Received job submission request: {}", request.requestId);
+        LOG.info("Received job submission request: {}", request.requestId);
         long start = System.currentTimeMillis();
         int numTasksBefore = _counter.get();
         if (request.tasks.isEmpty()) {
