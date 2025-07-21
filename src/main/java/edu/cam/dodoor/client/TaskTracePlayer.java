@@ -112,7 +112,7 @@ public class TaskTracePlayer {
             JSONArray schedulerPortsJson = schedulerConfig.getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);
             schedulerPorts = new String[schedulerPortsJson.length()];
             for (int i = 0; i < schedulerPortsJson.length(); i++) {
-                schedulerPorts[i] = schedulerPortsJson.getString(i);
+                schedulerPorts[i] = Integer.toString(schedulerPortsJson.getInt(i));
             }
         } else {
             schedulerPorts = new String[]{Integer.toString(DodoorConf.DEFAULT_SCHEDULER_THRIFT_PORT)};
