@@ -75,9 +75,6 @@ public class NodeImpl implements Node {
         double loadedCores = Math.max(Resources.getSystemCoresCapacity(nodeTypeConfig) * (1 - _hostLoad), 1);
         int loadedMemoryMb = (int)Math.max(Resources.getMemoryMbCapacity(nodeTypeConfig) * (1 - _hostLoad), 1);
         int loadedDiskGb = (int)Math.max(Resources.getSystemDiskGbCapacity(nodeTypeConfig) * (1 - _hostLoad), 0);
-        LOG.info("Node {} initialized with {} slots, loaded cores: {}, loaded memory: {}, loaded disk: {} " +
-                        "with generated host load: {}",
-                nodeThrift.getNodeIp(), numSlots, loadedCores, loadedMemoryMb, loadedDiskGb, _hostLoad);
         _nodeResources = new NodeResources(loadedCores, loadedMemoryMb, loadedDiskGb);
 
         _nodeType = nodeTypeConfig.getString(DodoorConf.NODE_TYPE);
