@@ -76,7 +76,7 @@ public abstract class TaskPlacer {
                     cpuWeight, memWeight, diskWeight, totalDurationWeight, taskNodeStateMap);
             case DodoorConf.RANDOM_SCHEDULER, DodoorConf.SPARROW_SCHEDULER
                     -> new CachedTaskPlacer(-1.0, PackingStrategy.NONE, resourceCapacityMap, taskNodeStateMap);
-            case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta,  resourceCapacityMap, rifQuantile,
+            case DodoorConf.PREQUAL -> new PrequalTaskPlacer(beta, resourceCapacityMap, rifQuantile,
                     probeInfo, probePoolSize, delta, probeRate, probeDelete, probeAgeBudget, taskNodeStateMap);
             case DodoorConf.POWER_OF_TWO_DURATION_SCHEDULER -> new RunTimeProbeTaskPlacer(beta,
                     PackingStrategy.DURATION, resourceCapacityMap, nodeMonitorClients, schedulerMetrics, taskNodeStateMap);

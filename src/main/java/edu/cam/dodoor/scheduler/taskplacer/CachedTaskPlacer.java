@@ -58,6 +58,9 @@ public class CachedTaskPlacer extends TaskPlacer{
                 } else if (_packingStrategy == PackingStrategy.DURATION) {
                     score1 = loadMaps.get(nodeAddresses.get(firstIndex)).totalDurations;
                     score2 = loadMaps.get(nodeAddresses.get(secondIndex)).totalDurations;
+                } else if (_packingStrategy == PackingStrategy.NONE) {
+                    score1 = 0;
+                    score2 = 0;
                 } else {
                     throw new IllegalArgumentException("Unknown packing strategy");
                 }
