@@ -16,10 +16,9 @@ public class TaskMapsPerNodeType {
     public Map<String, Long> _taskDurations;
 
     public static Map<String, TaskMapsPerNodeType> createTaskMapsPerNodeTypeMap(JSONObject taskTypeConfig,
-                                                                                JSONObject hostTypeConfig) {
+                                                                                JSONObject nodeConfig) {
         Map<String, TaskMapsPerNodeType> taskMapsPerNodeTypeMap = new HashMap<>();
         Set<String> nodeTypeIds = new HashSet<>();
-        JSONObject nodeConfig = hostTypeConfig.getJSONObject(DodoorConf.NODE_SERVICE_NAME);
         for (int i = 0; i < nodeConfig.length(); i++) {
             JSONArray nodeTypes = nodeConfig.getJSONArray(DodoorConf.NODE_TYPE_LIST_KEY);
             for (int j = 0; j < nodeTypes.length(); j++) {
