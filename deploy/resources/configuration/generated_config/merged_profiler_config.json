@@ -718,7 +718,7 @@
             "taskTypeId": "rnn_name_generation",
             "taskExecPath": "rnn_name_generation.py",
             "instanceInfo": {
-                "C6525-25g": {
+                "c6525-25g": {
                     "resourceVector": {
                         "cores": [
                             8,
@@ -742,7 +742,7 @@
                         2245
                     ]
                 },
-                "C6620": {
+                "c6620": {
                     "resourceVector": {
                         "cores": [
                             14,
