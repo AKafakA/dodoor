@@ -62,13 +62,13 @@ def generate_function_bench_trace(config_address,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--target_qps", type=int, default=1000,
+    parser.add_argument("--target_qps", type=int, default=10,
                         help="Target QPS for the Function Bench trace")
     parser.add_argument("--distribution_type", type=str, default="gamma",
                         help="Distribution type for the Function Bench trace")
     parser.add_argument("--burstiness", type=float, default=1.0,
                         help="Burstiness factor for the Function Bench trace")
-    parser.add_argument("--num_records", type=int, default=1000,
+    parser.add_argument("--num_records", type=int, default=100,
                         help="Number of records to generate")
     parser.add_argument("--generated_dataset", nargs='+',
                         default=["azure", "function_bench", "serverless"], )
