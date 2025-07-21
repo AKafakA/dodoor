@@ -48,6 +48,7 @@ def main():
 
     print(f"🔍 Monitoring log file: {args.log} at {time.strftime('%H:%M:%S')}")
     start_time = time.time()
+    timeout_seconds = args.timeout * 60  # Convert minutes to seconds
     while True:
         try:
             # Open and read the log file to find the target line.
