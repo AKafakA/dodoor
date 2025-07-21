@@ -138,11 +138,13 @@ public class TaskTracePlayer {
                 DodoorConf.DEFAULT_TASK_REPLAY_TIME_SCALE);
 
         double externalQPS = -1;
+        PoissonDistributionImpl poissonDistribution;
         if (options.has("q")) {
             externalQPS = (double) options.valueOf("q");
+            poissonDistribution = new PoissonDistributionImpl(externalQPS);
+        } else {
+            poissonDistribution = new PoissonDistributionImpl(0.1);
         }
-
-        PoissonDistributionImpl poissonDistribution = new PoissonDistributionImpl(externalQPS);
 
         long startTime = 0;
         // Assume the trace file is (taskId, cores, memory, disks, durationInMs, startTime, taskType)
