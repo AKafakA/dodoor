@@ -24,7 +24,7 @@ if [ "$CODE_UPDATE" = "true" ]; then
 fi
 
 if [ "$REBUILD" = "true" ]; then
-  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i "sh rebuild.sh"
+  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host -i "cd dodoor && sh rebuild.sh"
 else
   echo "Skipping rebuild step."
 fi

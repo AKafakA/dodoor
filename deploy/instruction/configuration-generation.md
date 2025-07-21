@@ -1,5 +1,5 @@
 
-## Host Configuration Generation
+  
 
 This process generates the necessary host and IP configuration files based on your hardware setup.
 
