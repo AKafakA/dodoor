@@ -135,9 +135,9 @@ public class SchedulerImpl implements Scheduler{
         }
         List<String> dataStorePorts = new ArrayList<>();
         JSONArray dataStoreThriftPorts = hostConfig.getJSONObject(DodoorConf.DATA_STORE_SERVICE_NAME)
-                .getJSONArray(DodoorConf.DATA_STORE_THRIFT_PORTS);
+                .getJSONArray(DodoorConf.SERVICE_PORT_LIST_KEY);
         for (int i = 0; i < dataStoreThriftPorts.length(); i++) {
-            dataStorePorts.add(dataStoreThriftPorts.getString(i));
+            dataStorePorts.add(Integer.toString(dataStoreThriftPorts.getInt(i)));
         }
         boolean isBatchScheduler = SchedulerUtils.isCachedEnabled(staticConfig.getString(DodoorConf.SCHEDULER_TYPE, DodoorConf.DODOOR_SCHEDULER));
         if (isBatchScheduler) {
