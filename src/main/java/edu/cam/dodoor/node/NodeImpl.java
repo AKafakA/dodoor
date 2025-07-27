@@ -112,10 +112,9 @@ public class NodeImpl implements Node {
             for (Object cpu : resources.getJSONArray("cores")) {
                 if (cpu instanceof Integer) {
                     cpuRequirements.add(((Integer) cpu).doubleValue());
-                } else if (cpu instanceof Double) {
-                    cpuRequirements.add((Double) cpu);
                 } else {
-                    throw new IllegalArgumentException("Invalid CPU requirement type: " + cpu.getClass());
+                    cpuRequirements.add((Double) cpu);
+                }
             }
             _taskCPURequirements.put(taskType, cpuRequirements);
             List<Integer> memoryRequirements = new ArrayList<>();
