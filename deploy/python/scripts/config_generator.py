@@ -74,6 +74,8 @@ def parse_args():
                         help="The beta value used to scale the load ratio of the tasks in the trace")
     parser.add_option("--docker_image_name", default="wd312/dodoor-function-bench",
                         help="The docker image name to be used for the tasks in the trace")
+    parser.add_option("--user_name_test_host", default="asdwb",
+                        help="The user name to be used for the test host, used to set the correct permissions for.")
     return parser.parse_args()
 
 
@@ -132,6 +134,8 @@ def main():
     file.write("cluster.average.load = {} \n".format(options.cluster_avg_load))
     file.write("host.load.beta.k = {} \n".format(options.host_load_beta_k))
     file.write("docker.image.name = {} \n".format(options.docker_image_name))
+    file.write("dodoor.root.dir = {} \n"
+               .format(f"/users/{options.user_name_test_host}/dodoor/deploy/python/function_bench"))
 
     file.close()
 

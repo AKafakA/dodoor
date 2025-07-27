@@ -3,6 +3,7 @@ All of the testing scripts has been well packed in the `deploy/python/scripts/` 
 After generate the host configuration and hostname list by following configuration-generation.md
 To set up the testing cluster, just run the following command:
 ```bash
+# Update the username at top to set permission of docker
 cd dodoor && sh deploy/script/setup.sh
 ```
 
