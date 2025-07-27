@@ -35,7 +35,7 @@ public class DodoorConf {
     public final static String DEFAULT_DOCKER_IMAGE_NAME = "wd312/dodoor-function-bench";
 
     public final static String ROOT_DIR = "dodoor.root.dir";
-    public final static String DEFAULT_ROOT_DIR = "~/dodoor/deploy/python/function_bench";
+    public final static String DEFAULT_ROOT_DIR = "/users/asdwb/dodoor/deploy/python/function_bench";
 
 
 
