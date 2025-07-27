@@ -26,7 +26,7 @@ public class TaskLauncherService {
     private ThreadPoolExecutor _executor;
     private Map<String, String> _taskScriptPaths = new HashMap<>();
     private String _dockerImageName;
-    private Map<String, List<Integer>> _taskCPURequirements;
+    private Map<String, List<Double>> _taskCPURequirements;
     private Map<String, List<Integer>> _taskMemoryRequirements;
     private String _rootDir;
 
@@ -93,7 +93,7 @@ public class TaskLauncherService {
                     LOG.error("Invalid task mode: {}", mode);
                     throw new IOException("Invalid task mode: " + mode);
                 }
-                int cpuCores = _taskCPURequirements.get(taskType).get(modeIndex);
+                double cpuCores = _taskCPURequirements.get(taskType).get(modeIndex);
                 long memory = _taskMemoryRequirements.get(taskType).get(modeIndex);
                 if (scriptPath == null) {
                     LOG.error("No script path found for task type {}", taskType);
@@ -108,7 +108,7 @@ public class TaskLauncherService {
 
     public void initialize(Configuration conf, int numSlot, NodeThrift nodeThrift,
                            JSONObject nodeTypeConfig, Map<String, String> taskScriptPaths,
-                           Map<String, List<Integer>> taskCPURequirements,
+                           Map<String, List<Double>> taskCPURequirements,
                            Map<String, List<Integer>> taskMemoryRequirements) {
         /* The number of threads used by the service. */
         int numSlots = numSlot;
@@ -184,10 +184,9 @@ public class TaskLauncherService {
     }
 
     private static String generatePythonCommand(String pythonScriptPath, String dockerImageName,
-                                                int cpuCores, long memory, String hostDir, String taskMode) {
-        String command = String.format("docker run -d --rm --cpus %d --memory %dm -v %s:/app %s python3 %s %s",
+                                                double cpuCores, long memory, String hostDir, String taskMode) {
+        String command = String.format("docker run -d --rm --cpus %f --memory %dm -v %s:/app %s python3 %s %s",
                 cpuCores, memory, hostDir, dockerImageName, pythonScriptPath, taskMode);
-        LOG.debug("Generated command: {}", command);
         return command;
     }
 }

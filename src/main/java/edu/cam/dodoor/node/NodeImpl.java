@@ -45,8 +45,9 @@ public class NodeImpl implements Node {
     private String _nodeType;
 
     public Map<String, String> _taskTypeToScriptPath;
-    public Map<String, List<Integer>> _taskCPURequirements;
+    public Map<String, List<Double>> _taskCPURequirements;
     public Map<String, List<Integer>> _taskMemoryRequirements;
+    public Map<String, List<Integer>> _taskDurationEstimates;
 
     public double _hostLoad;
 
@@ -88,6 +89,7 @@ public class NodeImpl implements Node {
         _taskTypeToScriptPath = new HashMap<>();
         _taskCPURequirements = new HashMap<>();
         _taskMemoryRequirements = new HashMap<>();
+        _taskDurationEstimates = new HashMap<>();
 
         for (int i = 0; i < taskTypes.length(); i++) {
             JSONObject taskTypeJson = taskTypes.getJSONObject(i);
@@ -96,10 +98,15 @@ public class NodeImpl implements Node {
             _taskTypeToScriptPath.put(taskType, taskScriptPath);
             JSONObject instanceInfo = taskTypeJson.getJSONObject("instanceInfo");
             JSONObject currentInstanceInfo = instanceInfo.getJSONObject(_nodeType);
+            List<Integer> durationEstimates = new ArrayList<>();
+            for (Object duration : currentInstanceInfo.getJSONArray("estimatedDuration")) {
+                durationEstimates.add((Integer) duration);
+            }
+            _taskDurationEstimates.put(taskType, durationEstimates);
             JSONObject resources = currentInstanceInfo.getJSONObject("resourceVector");
-            List<Integer> cpuRequirements = new ArrayList<>();
+            List<Double> cpuRequirements = new ArrayList<>();
             for (Object cpu : resources.getJSONArray("cores")) {
-                cpuRequirements.add((Integer) cpu);
+                cpuRequirements.add((Double) cpu);
             }
             _taskCPURequirements.put(taskType, cpuRequirements);
             List<Integer> memoryRequirements = new ArrayList<>();
@@ -159,17 +166,35 @@ public class NodeImpl implements Node {
                 _nodeThrift.getNodeIp(), _nodeType);
     }
 
+    private void overrideEnqueueRequestBasedOnTaskType(
+            TEnqueueTaskReservationRequest request) throws TException {
+        if (request.taskType.equals(TaskTypeID.SIMULATED.toString())) {
+            // For simulated tasks, no need to override the request
+            return;
+        } else if (_taskTypeToScriptPath.containsKey(request.taskType)) {
+            request.resourceRequested.cores =
+                    _taskCPURequirements.get(request.taskType).get(TaskMode.getIndexFromName(request.taskMode));
+            request.resourceRequested.memory =
+                    _taskMemoryRequirements.get(request.taskType).get(TaskMode.getIndexFromName(request.taskMode));
+            request.resourceRequested.disks = 0; // docker tasks do not require disk space
+            request.durationInMs = _taskDurationEstimates.get(request.taskType)
+                    .get(TaskMode.getIndexFromName(request.taskMode));
+        } else {
+            throw new TException("Unknown task type: " + request.taskType);
+        }
+    }
+
     @Override
     public boolean enqueueTaskReservation(TEnqueueTaskReservationRequest request) throws TException {
         LOG.debug(Logging.functionCall(request));
         LOG.info(Logging.auditEventString("node_monitor_enqueue_task_reservation", request.taskId));
+        overrideEnqueueRequestBasedOnTaskType(request);
         _taskSourceSchedulerAddress.put(request.taskId, Network.thriftToSocket(request.schedulerAddress));
         _taskReceivedTime.put(request.taskId, System.currentTimeMillis());
         _taskScheduler.submitTaskReservation(request);
         _requestedCores.getAndAdd(request.resourceRequested.cores);
         _requestedMemory.getAndAdd(request.resourceRequested.memory);
         _requestedDisk.getAndAdd(request.resourceRequested.disks);
-
         _waitingOrRunningTasksCounter.getAndAdd(1);
         _totalDurations.getAndAdd(request.durationInMs);
         return true;

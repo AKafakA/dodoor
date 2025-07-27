@@ -5,3 +5,9 @@ To set up the testing cluster, just run the following command:
 ```bash
 cd dodoor && sh deploy/script/setup.sh
 ```
+
+And then run the scripts like 
+```bash
+sh deploy/script/end_to_end_exp/azure_vm_exp.sh
+```
+Different experiment script will be provided for different dataset and have tunable parameters list at head of the script.
