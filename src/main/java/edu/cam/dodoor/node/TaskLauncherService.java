@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class TaskLauncherService {
     private final static Logger LOG = LoggerFactory.getLogger(TaskLauncherService.class);
@@ -64,9 +65,11 @@ public class TaskLauncherService {
                 _nodeServiceMetrics.taskFinished();
                 BufferedReader stdError = new BufferedReader(new
                         InputStreamReader(process.getErrorStream()));
-                if (!stdError.readLine().isEmpty()) {
+                List<String> errorLines = stdError.lines().collect(Collectors.toList());
+                if (!errorLines.isEmpty()) {
+                    // 3. If there are errors, join and log them.
                     LOG.error("Task {} failed to execute with error {} or unterminated", task._taskId,
-                            String.join(", ", stdError.lines().toList()));
+                            String.join(", ", errorLines));
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -186,7 +189,7 @@ public class TaskLauncherService {
 
     private static String generatePythonCommand(String pythonScriptPath, String dockerImageName,
                                                 double cpuCores, long memory, String hostDir, String taskMode) {
-        String command = String.format("sudo docker run -d --rm --cpus %d --memory %dm -v %s:/app %s python3 %s %s",
+        String command = String.format("docker run -d --rm --cpus %d --memory %dm -v %s:/app %s python3 %s %s",
                 (int)cpuCores, memory, hostDir, dockerImageName, pythonScriptPath, taskMode);
         return command;
     }
