@@ -185,8 +185,9 @@ public class TaskLauncherService {
 
     private static String generatePythonCommand(String pythonScriptPath, String dockerImageName,
                                                 double cpuCores, long memory, String hostDir, String taskMode) {
-        String command = String.format("docker run -d --rm --cpus %f --memory %dm -v %s:/app %s python3 %s %s",
-                cpuCores, memory, hostDir, dockerImageName, pythonScriptPath, taskMode);
+        String command = String.format("docker run -d --rm --cpus %d --memory %dm -v %s:/app %s python3 %s %s",
+                (int)cpuCores, memory, hostDir, dockerImageName, pythonScriptPath, taskMode);
+        LOG.debug("Generated command for task: {}", command);
         return command;
     }
 }
