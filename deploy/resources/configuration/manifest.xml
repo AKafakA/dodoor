@@ -1,12 +1,12 @@
 <rspec xmlns="http://www.geni.net/resources/rspec/3" xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" xmlns:tour="http://www.protogeni.net/resources/rspec/ext/apt-tour/1" xmlns:jacks="http://www.protogeni.net/resources/rspec/ext/jacks/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.geni.net/resources/rspec/3    http://www.geni.net/resources/rspec/3/request.xsd" type="request">
-  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node1" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+hp079" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146560">
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node1" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+er004" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155700">
     <sliver_type name="raw-pc"/>
-    <hardware_type name="xl170"/>
-    <interface client_id="node1:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+hp079:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146567" mac_address="9cdc715b2271">
+    <hardware_type name="c6620"/>
+    <interface client_id="node1:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+er004:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155703" mac_address="303ea71d2641">
       <ip address="10.10.1.1" type="ipv4" netmask="255.255.255.0"/>
     </interface>
     <services>
-      <login authentication="ssh-keys" hostname="hp079.utah.cloudlab.us" port="22" username="asdwb"/>
+      <login authentication="ssh-keys" hostname="er004.utah.cloudlab.us" port="22" username="asdwb"/>
       <emulab:console server="boss.utah.cloudlab.us"/>
       <emulab:recovery available="true"/>
       <emulab:powercycle available="true"/>
@@ -14,17 +14,17 @@
       <execute shell="/bin/sh" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout bf74e92991a7bcd597f8d7a8f7c41294f04b3340 &amp;&amp; git branch -ft test_dodoor_with_small_nodes origin/test_dodoor_with_small_nodes &amp;&amp; git checkout -B test_dodoor_with_small_nodes HEAD &amp;&amp; git submodule update --init --recursive &amp;&amp; ( [ ! -f /local/repository/test-common.py ] || sed -i'' -e 's/2.25.305821105408246119474742976030998643995/2.25.305821105.408246119.47474297.603099864.3995/g' /local/repository/test-common.py ) &amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'" tag="portal-repository"/>
       <execute shell="sh" command="sudo ./local/repository/setup.sh 4"/>
     </services>
-    <emulab:vnode name="hp079" hardware_type="xl170"/>
-    <host name="node1.asdwb-263405.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.218.118"/>
+    <emulab:vnode name="er004" hardware_type="c6620"/>
+    <host name="node1.asdwb-264218.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.220.4"/>
   </node>
-  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node2" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+ms1126" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146562">
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node2" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+ms1006" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155699">
     <sliver_type name="raw-pc"/>
     <hardware_type name="m510"/>
-    <interface client_id="node2:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+ms1126:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146568" mac_address="1458d058dfb3">
+    <interface client_id="node2:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+ms1006:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155704" mac_address="1458d0589f63">
       <ip address="10.10.1.2" type="ipv4" netmask="255.255.255.0"/>
     </interface>
     <services>
-      <login authentication="ssh-keys" hostname="ms1126.utah.cloudlab.us" port="22" username="asdwb"/>
+      <login authentication="ssh-keys" hostname="ms1006.utah.cloudlab.us" port="22" username="asdwb"/>
       <emulab:console server="boss.utah.cloudlab.us"/>
       <emulab:recovery available="true"/>
       <emulab:powercycle available="true"/>
@@ -32,17 +32,17 @@
       <execute shell="/bin/sh" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout bf74e92991a7bcd597f8d7a8f7c41294f04b3340 &amp;&amp; git branch -ft test_dodoor_with_small_nodes origin/test_dodoor_with_small_nodes &amp;&amp; git checkout -B test_dodoor_with_small_nodes HEAD &amp;&amp; git submodule update --init --recursive &amp;&amp; ( [ ! -f /local/repository/test-common.py ] || sed -i'' -e 's/2.25.305821105408246119474742976030998643995/2.25.305821105.408246119.47474297.603099864.3995/g' /local/repository/test-common.py ) &amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'" tag="portal-repository"/>
       <execute shell="sh" command="sudo ./local/repository/setup.sh 4"/>
     </services>
-    <emulab:vnode name="ms1126" hardware_type="m510"/>
-    <host name="node2.asdwb-263405.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.217.186"/>
+    <emulab:vnode name="ms1006" hardware_type="m510"/>
+    <host name="node2.asdwb-264218.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.217.121"/>
   </node>
-  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node3" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+er056" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146561">
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node3" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+amd192" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155698">
     <sliver_type name="raw-pc"/>
-    <hardware_type name="c6620"/>
-    <interface client_id="node3:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+er056:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146569" mac_address="303ea71d226d">
+    <hardware_type name="c6525-25g"/>
+    <interface client_id="node3:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+amd192:eth2" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155705" mac_address="0c42a1dd5ea0">
       <ip address="10.10.1.3" type="ipv4" netmask="255.255.255.0"/>
     </interface>
     <services>
-      <login authentication="ssh-keys" hostname="er056.utah.cloudlab.us" port="22" username="asdwb"/>
+      <login authentication="ssh-keys" hostname="amd192.utah.cloudlab.us" port="22" username="asdwb"/>
       <emulab:console server="boss.utah.cloudlab.us"/>
       <emulab:recovery available="true"/>
       <emulab:powercycle available="true"/>
@@ -50,17 +50,17 @@
       <execute shell="/bin/sh" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout bf74e92991a7bcd597f8d7a8f7c41294f04b3340 &amp;&amp; git branch -ft test_dodoor_with_small_nodes origin/test_dodoor_with_small_nodes &amp;&amp; git checkout -B test_dodoor_with_small_nodes HEAD &amp;&amp; git submodule update --init --recursive &amp;&amp; ( [ ! -f /local/repository/test-common.py ] || sed -i'' -e 's/2.25.305821105408246119474742976030998643995/2.25.305821105.408246119.47474297.603099864.3995/g' /local/repository/test-common.py ) &amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'" tag="portal-repository"/>
       <execute shell="sh" command="sudo ./local/repository/setup.sh 4"/>
     </services>
-    <emulab:vnode name="er056" hardware_type="c6620"/>
-    <host name="node3.asdwb-263405.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.220.56"/>
+    <emulab:vnode name="amd192" hardware_type="c6525-25g"/>
+    <host name="node3.asdwb-264218.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.219.103"/>
   </node>
-  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node4" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+amd184" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146564">
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node4" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+hp047" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155697">
     <sliver_type name="raw-pc"/>
-    <hardware_type name="c6525-25g"/>
-    <interface client_id="node4:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+amd184:eth2" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146570" mac_address="0c42a1dd5c14">
+    <hardware_type name="xl170"/>
+    <interface client_id="node4:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+hp047:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155706" mac_address="9cdc715e2f61">
       <ip address="10.10.1.4" type="ipv4" netmask="255.255.255.0"/>
     </interface>
     <services>
-      <login authentication="ssh-keys" hostname="amd184.utah.cloudlab.us" port="22" username="asdwb"/>
+      <login authentication="ssh-keys" hostname="hp047.utah.cloudlab.us" port="22" username="asdwb"/>
       <emulab:console server="boss.utah.cloudlab.us"/>
       <emulab:recovery available="true"/>
       <emulab:powercycle available="true"/>
@@ -68,17 +68,17 @@
       <execute shell="/bin/sh" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout bf74e92991a7bcd597f8d7a8f7c41294f04b3340 &amp;&amp; git branch -ft test_dodoor_with_small_nodes origin/test_dodoor_with_small_nodes &amp;&amp; git checkout -B test_dodoor_with_small_nodes HEAD &amp;&amp; git submodule update --init --recursive &amp;&amp; ( [ ! -f /local/repository/test-common.py ] || sed -i'' -e 's/2.25.305821105408246119474742976030998643995/2.25.305821105.408246119.47474297.603099864.3995/g' /local/repository/test-common.py ) &amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'" tag="portal-repository"/>
       <execute shell="sh" command="sudo ./local/repository/setup.sh 4"/>
     </services>
-    <emulab:vnode name="amd184" hardware_type="c6525-25g"/>
-    <host name="node4.asdwb-263405.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.219.95"/>
+    <emulab:vnode name="hp047" hardware_type="xl170"/>
+    <host name="node4.asdwb-264218.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.218.86"/>
   </node>
-  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node0" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+amd022" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146563">
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node0" exclusive="true" component_manager_id="urn:publicid:IDN+utah.cloudlab.us+authority+cm" component_id="urn:publicid:IDN+utah.cloudlab.us+node+amd010" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155696">
     <sliver_type name="raw-pc"/>
     <hardware_type name="d6515"/>
-    <interface client_id="node0:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+amd022:eth4" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146571" mac_address="1c34da41d00c">
+    <interface client_id="node0:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+amd010:eth4" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155707" mac_address="1c34da41d294">
       <ip address="10.10.1.5" type="ipv4" netmask="255.255.255.0"/>
     </interface>
     <services>
-      <login authentication="ssh-keys" hostname="amd022.utah.cloudlab.us" port="22" username="asdwb"/>
+      <login authentication="ssh-keys" hostname="amd010.utah.cloudlab.us" port="22" username="asdwb"/>
       <emulab:console server="boss.utah.cloudlab.us"/>
       <emulab:recovery available="true"/>
       <emulab:powercycle available="true"/>
@@ -86,17 +86,17 @@
       <execute shell="/bin/sh" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout bf74e92991a7bcd597f8d7a8f7c41294f04b3340 &amp;&amp; git branch -ft test_dodoor_with_small_nodes origin/test_dodoor_with_small_nodes &amp;&amp; git checkout -B test_dodoor_with_small_nodes HEAD &amp;&amp; git submodule update --init --recursive &amp;&amp; ( [ ! -f /local/repository/test-common.py ] || sed -i'' -e 's/2.25.305821105408246119474742976030998643995/2.25.305821105.408246119.47474297.603099864.3995/g' /local/repository/test-common.py ) &amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'" tag="portal-repository"/>
       <execute shell="sh" command="sudo ./local/repository/setup.sh 4"/>
     </services>
-    <emulab:vnode name="amd022" hardware_type="d6515"/>
-    <host name="node0.asdwb-263405.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.219.5"/>
+    <emulab:vnode name="amd010" hardware_type="d6515"/>
+    <host name="node0.asdwb-264218.hyperion-PG0.utah.cloudlab.us" ipv4="128.110.218.249"/>
   </node>
-  <link client_id="link-1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146566" vlantag="319">
-    <interface_ref client_id="node1:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+hp079:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146567"/>
-    <interface_ref client_id="node2:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+ms1126:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146568"/>
-    <interface_ref client_id="node3:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+er056:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146569"/>
-    <interface_ref client_id="node4:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+amd184:eth2" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146570"/>
-    <interface_ref client_id="node0:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+amd022:eth4" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2146571"/>
+  <link client_id="link-1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155702" vlantag="319">
+    <interface_ref client_id="node1:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+er004:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155703"/>
+    <interface_ref client_id="node2:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+ms1006:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155704"/>
+    <interface_ref client_id="node3:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+amd192:eth2" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155705"/>
+    <interface_ref client_id="node4:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+hp047:eth1" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155706"/>
+    <interface_ref client_id="node0:if0" component_id="urn:publicid:IDN+utah.cloudlab.us+interface+amd010:eth4" sliver_id="urn:publicid:IDN+utah.cloudlab.us+sliver+2155707"/>
     <component_manager name="urn:publicid:IDN+utah.cloudlab.us+authority+cm"/>
-    <emulab:switchpath>ms-amdexpt2:cl-exptcore ms-chassis11-switchb:ms-agg0 ms-mellanox0:cl-exptcore cl4-expt1:cl-exptcore ms-amdexpt7:cl-exptcore ms-agg0:cl-exptcore ms-mellanox0:ms-mellanox2</emulab:switchpath>
+    <emulab:switchpath>cl4-expt1:cl-exptcore ms-mellanox0:ms-mellanox2 ms-mellanox0:cl-exptcore ms-amdexpt2:cl-exptcore ms-amdexpt7:cl-exptcore ms-chassis10-switchb:ms-agg0 ms-agg0:cl-exptcore</emulab:switchpath>
     <property xmlns="http://www.geni.net/resources/rspec/3" source_id="node1:if0" dest_id="node2:if0" capacity="10000000"/>
     <property xmlns="http://www.geni.net/resources/rspec/3" source_id="node1:if0" dest_id="node3:if0" capacity="10000000"/>
     <property xmlns="http://www.geni.net/resources/rspec/3" source_id="node1:if0" dest_id="node4:if0" capacity="10000000"/>
@@ -121,12 +121,12 @@
   <rspec_tour xmlns="http://www.protogeni.net/resources/rspec/ext/apt-tour/1">
     <description type="markdown">This is a trivial example of a gitrepo-based profile; The profile source code and other software, documentation, etc. are stored in in a publicly accessible GIT repository (say, github.com). When you instantiate this profile, the repository is cloned to all of the nodes in your experiment, to `/local/repository`.
 
-This particular profile is a simple example of using a single raw PC. It can be instantiated on any cluster; the node will boot the default operating system, which is typically a recent version of Ubuntu.</description>
+      This particular profile is a simple example of using a single raw PC. It can be instantiated on any cluster; the node will boot the default operating system, which is typically a recent version of Ubuntu.</description>
     <instructions type="markdown">Wait for the profile instance to start, then click on the node in the topology and choose the `shell` menu item.
-</instructions>
+    </instructions>
   </rspec_tour>
   <emulab:repository type="git" url="https://github.com/AKafakA/dodoor-cl-profile" refspec="refs/heads/test_dodoor_with_small_nodes" commit="bf74e92991a7bcd597f8d7a8f7c41294f04b3340" command="/bin/echo 'nameserver 155.98.60.2' | sudo /bin/csh -c '/bin/cat &gt;&gt; /etc/resolv.conf' &amp;&amp; cd /local &amp;&amp; sudo chmod 777 . &amp;&amp; umask 002 &amp;&amp; sudo rm -rf repository &amp;&amp; sudo git config --system --add safe.directory /local/repository &amp;&amp; git clone -n 'https://github.com/AKafakA/dodoor-cl-profile' repository &amp;&amp; cd repository &amp;&amp; git config --add core.sharedRepository group &amp;&amp; git checkout bf74e92991a7bcd597f8d7a8f7c41294f04b3340 &amp;&amp; git branch -ft test_dodoor_with_small_nodes origin/test_dodoor_with_small_nodes &amp;&amp; git checkout -B test_dodoor_with_small_nodes HEAD &amp;&amp; git submodule update --init --recursive &amp;&amp; ( [ ! -f /local/repository/test-common.py ] || sed -i'' -e 's/2.25.305821105408246119474742976030998643995/2.25.305821105.408246119.47474297.603099864.3995/g' /local/repository/test-common.py ) &amp;&amp; sudo chown -R asdwb . &amp;&amp; git remote set-url --push origin 'git@github.com:AKafakA/dodoor-cl-profile'"/>
-  <emulab:portal name="cloudlab" url="https://www.cloudlab.us/status.php?uuid=6cea727a-6340-11f0-bc80-e4434b2381fc" project="Hyperion" experiment="asdwb-263405" sequence="1752778886"/>
+  <emulab:portal name="cloudlab" url="https://www.cloudlab.us/status.php?uuid=caabd180-6a1a-11f0-bc80-e4434b2381fc" project="Hyperion" experiment="asdwb-264218" sequence="1753532381"/>
   <rs:site_info xmlns:rs="http://www.protogeni.net/resources/rspec/ext/site-info/1">
     <rs:location country="US" latitude="40.750714" longitude="-111.893288"/>
   </rs:site_info>
