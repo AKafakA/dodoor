@@ -14,7 +14,7 @@ SCHEDULERS="random"
 # Dataset is constant and not iterated over.
 DATA_PATH="deploy/resources/data/function_bench_trace.csv"
 BRANCH_NAME="main"
-REBUILD="false"
+REBUILD="true"
 STATIC_CONFIG_PATH="~/dodoor/config.conf"
 HOST_CONFIG_PATH="~/cloud_lab/host_config.json"
 TASK_CONFIG_PATH="~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json"
