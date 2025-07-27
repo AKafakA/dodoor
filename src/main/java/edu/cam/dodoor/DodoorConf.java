@@ -20,6 +20,13 @@ public class DodoorConf {
     // Values: "debug", "info", "warn", "error", "fatal"
     public final static String LOG_LEVEL = "log_level";
 
+    // TODO: remove the personal information like image name and root dir
+    public final static String DOCKER_IMAGE_NAME = "docker.image_name";
+    public final static String DEFAULT_DOCKER_IMAGE_NAME = "wd312/dodoor-function-bench";
+
+    public final static String ROOT_DIR = "dodoor.root.dir";
+    public final static String DEFAULT_ROOT_DIR = "/users/asdwb/dodoor/deploy/python/function_bench";
+
     public final static String TASK_REPLAY_TIME_SCALE = "task.replay.time.scale";
     public final static double DEFAULT_TASK_REPLAY_TIME_SCALE = 1.0;
 
@@ -30,12 +37,6 @@ public class DodoorConf {
     public final static String SERVICE_PORT_LIST_KEY = "ports";
     public final static String NODE_TYPE_LIST_KEY = "node.types";
     public final static String NODE_TYPE = "node.type";
-
-    public final static String DOCKER_IMAGE_NAME = "docker.image_name";
-    public final static String DEFAULT_DOCKER_IMAGE_NAME = "wd312/dodoor-function-bench";
-
-    public final static String ROOT_DIR = "dodoor.root.dir";
-    public final static String DEFAULT_ROOT_DIR = "/users/asdwb/dodoor/deploy/python/function_bench";
 
 
 
