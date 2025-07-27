@@ -71,7 +71,11 @@ public class NodeImpl implements Node {
                 staticConfig.getDouble(DodoorConf.AVERAGE_CLUSTER_LOAD, DodoorConf.DEFAULT_AVERAGE_CLUSTER_LOAD);
         double betaK =
                 staticConfig.getDouble(DodoorConf.CLUSTER_LOAD_GENERATION_K, DodoorConf.DEFAULT_CLUSTER_LOAD_GENERATION_K);
-        _hostLoad = generateBetaRandom(avgClusterLoad, betaK);
+        if (avgClusterLoad > 0) {
+            _hostLoad = generateBetaRandom(avgClusterLoad, betaK);
+        } else {
+            _hostLoad = 0.0; // Default to no load if not specified
+        }
         int numSlots = Math.max((int) Math.floor(nodeTypeConfig.getInt(DodoorConf.NUM_SLOTS) * (1 - _hostLoad)), 1);
         double loadedCores = Math.max(Resources.getSystemCoresCapacity(nodeTypeConfig) * (1 - _hostLoad), 1);
         int loadedMemoryMb = (int)Math.max(Resources.getMemoryMbCapacity(nodeTypeConfig) * (1 - _hostLoad), 1);
@@ -172,13 +176,15 @@ public class NodeImpl implements Node {
             // For simulated tasks, no need to override the request
             return;
         } else if (_taskTypeToScriptPath.containsKey(request.taskType)) {
-            request.resourceRequested.cores =
+             double cpuCores =
                     _taskCPURequirements.get(request.taskType).get(TaskMode.getIndexFromName(request.taskMode));
-            request.resourceRequested.memory =
+            int memoryMb =
                     _taskMemoryRequirements.get(request.taskType).get(TaskMode.getIndexFromName(request.taskMode));
-            request.resourceRequested.disks = 0; // docker tasks do not require disk space
-            request.durationInMs = _taskDurationEstimates.get(request.taskType)
-                    .get(TaskMode.getIndexFromName(request.taskMode));
+            int diskGb = 0; // docker tasks do not require disk space
+            int durationInMs =
+                    _taskDurationEstimates.get(request.taskType).get(TaskMode.getIndexFromName(request.taskMode));
+            request.resourceRequested = new TResourceVector(cpuCores, memoryMb, diskGb);
+            request.durationInMs = durationInMs;
         } else {
             throw new TException("Unknown task type: " + request.taskType);
         }
