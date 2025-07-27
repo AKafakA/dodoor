@@ -26,7 +26,7 @@ fi
 
 if [ "$REBUILD" = "true" ]; then
   echo "Rebuilding the project..."
-  parallel-ssh -h -t 0 deploy/resources/host_addresses/cloud_lab/test_host -i "cd dodoor && sh rebuild.sh"
+  parallel-ssh -t 0 -h deploy/resources/host_addresses/cloud_lab/test_host "cd dodoor && sh rebuild.sh"
 else
   echo "Skipping rebuild step."
 fi
