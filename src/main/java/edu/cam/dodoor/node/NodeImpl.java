@@ -189,8 +189,6 @@ public class NodeImpl implements Node {
                     _taskDurationEstimates.get(request.taskType).get(TaskMode.getIndexFromName(request.taskMode));
             request.resourceRequested = new TResourceVector(cpuCores, memoryMb, diskGb);
             request.durationInMs = durationInMs;
-            LOG.debug(String.format("Overriding task reservation request for task %s with resource vector %s, duration %d ms",
-                    request.taskId, request.resourceRequested, request.durationInMs));
         } else {
             throw new TException("Unknown task type: " + request.taskType);
         }
