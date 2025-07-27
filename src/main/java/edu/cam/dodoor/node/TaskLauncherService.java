@@ -65,7 +65,8 @@ public class TaskLauncherService {
                 BufferedReader stdError = new BufferedReader(new
                         InputStreamReader(process.getErrorStream()));
                 if (!stdError.readLine().isEmpty()) {
-                    LOG.error("Task {} failed to execute with error {} or unterminated", task._taskId, stdError.readLine());
+                    LOG.error("Task {} failed to execute with error {} or unterminated", task._taskId,
+                            String.join(", ", stdError.lines().toList()));
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
