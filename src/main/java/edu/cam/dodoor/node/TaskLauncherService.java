@@ -49,7 +49,7 @@ public class TaskLauncherService {
                 long pid = process.pid();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
                 if (task._taskType.equals("simulated")) {
-                    Thread.sleep(task._duration);
+                    Thread.sleep(task._durationInMs);
                     process.destroyForcibly();
                     LOG.debug("Task {} completed", task._taskId);
                 } else {
@@ -86,8 +86,8 @@ public class TaskLauncherService {
                 long memory = task._resourceVector.memory;
                 long disks = task._resourceVector.disks;
                 double cpu = task._resourceVector.cores;
-                long duration = task._duration;
-                long durationInSec = duration / 1000;
+                long durationInMs = task._durationInMs;
+                long durationInSec = durationInMs / 1000;
                 command = generateStressCommand(cpu, memory, disks, durationInSec);
             } else {
                 String scriptPath = _taskScriptPaths.get(taskType);
@@ -153,18 +153,18 @@ public class TaskLauncherService {
         return _executor.getQueue().size();
     }
 
-    private static String generateStressCommand(double cores, long memory, long disks, long durationInSec) {
+    private static String generateStressCommand(double cores, long memory, long disks, double durationInSec) {
         if (Math.floor(cores) == cores) {
             int intCores = (int) cores;
             if (disks <= 0 && memory <= 0) {
-                return String.format("stress -c %d --timeout %d", intCores, durationInSec);
+                return String.format("stress -c %d --timeout %f", intCores, durationInSec);
             } else if (disks <= 0) {
-                return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %d --timeout %d",
+                return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
                         intCores, memory, durationInSec, durationInSec);
             } else if (memory <= 0) {
-                return String.format("stress -c %d --hdd 1 --hdd-bytes %dM --timeout %d", intCores, disks, durationInSec);
+                return String.format("stress -c %d --hdd 1 --hdd-bytes %dM --timeout %f", intCores, disks, durationInSec);
             } else {
-                return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %d -d 1 --hdd-bytes %dM --timeout %d",
+                return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
                         intCores, memory, durationInSec, disks, durationInSec);
             }
         } else {
@@ -172,16 +172,16 @@ public class TaskLauncherService {
             int intCores = (int) Math.ceil(cores);
             double load = cores / intCores; // load is the fraction of the core to be used
             if (disks <= 0 && memory <= 0) {
-                return String.format("stress-ng -c %d -l %f --timeout %d",
+                return String.format("stress-ng -c %d -l %f --timeout %f",
                         intCores, load, durationInSec);
             } else if (disks <= 0) {
-                return String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %d --timeout %d",
+                return String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
                         intCores, load, memory, durationInSec, durationInSec);
             } else if (memory <= 0) {
-                return String.format("stress-ng -c %d -l %f --hdd 1 --hdd-bytes %dM --timeout %d",
+                return String.format("stress-ng -c %d -l %f --hdd 1 --hdd-bytes %dM --timeout %f",
                         intCores, load, disks, durationInSec);
             } else {
-                return String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %d -d 1 --hdd-bytes %dM --timeout %d",
+                return String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
                         intCores, load, memory, durationInSec, disks, durationInSec);
             }
         }

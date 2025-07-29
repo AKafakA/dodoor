@@ -71,6 +71,8 @@ class AzureDataGenerator(DataGenerator, ABC):
                     continue
                 # generate the override start time specify target qps
                 if self.target_qps > 0:
+                    # if given target qps, we need to override the start time with timeline
+                    # else use converted start time into milliseconds
                     wait_time = int(get_wait_time(self.target_qps, self.distribution_type, self.burstiness) * 1000)
                     exp_timeline += wait_time
                     start_time = exp_timeline

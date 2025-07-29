@@ -22,7 +22,10 @@ public class TaskSpec {
     public String _previousTaskId;
 
     public TResourceVector _resourceVector;
-    public long _duration;
+    /**
+     * Duration of the task in milliseconds.
+     */
+    public long _durationInMs;
     public long _enqueuedTime;
     private final TEnqueueTaskReservationRequest _request;
     public String _taskType;
@@ -35,7 +38,7 @@ public class TaskSpec {
         _previousTaskId = "";
 
         _resourceVector = request.resourceRequested;
-        _duration = request.durationInMs;
+        _durationInMs = request.durationInMs;
 
         _enqueuedTime = request.enqueueTime;
         _request = request;
@@ -49,7 +52,7 @@ public class TaskSpec {
         _previousTaskId = "";
 
         _resourceVector = request.resourceRequested;
-        _duration = request.durationInMs;
+        _durationInMs = request.durationInMs;
 
         _enqueuedTime = enqueuedTime;
         _request = request;
@@ -58,7 +61,7 @@ public class TaskSpec {
     }
 
     public TFullTaskId getFullTaskId() {
-        return new TFullTaskId(_taskId, _resourceVector, _duration, _taskType, _mode);
+        return new TFullTaskId(_taskId, _resourceVector, _durationInMs, _taskType, _mode);
     }
 
     public TEnqueueTaskReservationRequest getRequest() {

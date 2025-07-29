@@ -8,6 +8,8 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.ExponentialDistribution;
+import org.apache.commons.math.distribution.ExponentialDistributionImpl;
 import org.apache.commons.math.distribution.PoissonDistributionImpl;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -138,12 +140,13 @@ public class TaskTracePlayer {
                 DodoorConf.DEFAULT_TASK_REPLAY_TIME_SCALE);
 
         double externalQPS = -1;
-        PoissonDistributionImpl poissonDistribution;
+        double meanWaitTimeInSeconds = 1.0 / externalQPS;
+        ExponentialDistributionImpl expDistribution;
         if (options.has("q")) {
             externalQPS = (double) options.valueOf("q");
-            poissonDistribution = new PoissonDistributionImpl(externalQPS);
+            expDistribution = new ExponentialDistributionImpl(meanWaitTimeInSeconds);
         } else {
-            poissonDistribution = new PoissonDistributionImpl(0.1);
+            expDistribution = new ExponentialDistributionImpl(0.01);
         }
 
         long startTime = 0;
@@ -162,7 +165,7 @@ public class TaskTracePlayer {
                 }
             } else {
                 //  follow poisson distribution under qps
-                int waitTime = poissonDistribution.sample();
+                long waitTime = expDistribution.sample() > 0 ? (long) expDistribution.sample() * 1000 : 10;
                 startTime += waitTime;
             }
             String taskType = parts[6];
