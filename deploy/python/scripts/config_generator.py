@@ -145,7 +145,7 @@ def write_ip_port(file, lines, prefix):
     for line in lines:
         tokens = line.strip().split(":")
         if len(tokens) != 2:
-            return
+            retu
         ip = tokens[1]
         socket_addresses += ip + ","
     socket_addresses = socket_addresses[:-1]

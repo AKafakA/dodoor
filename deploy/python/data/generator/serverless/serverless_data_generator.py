@@ -69,6 +69,7 @@ class ServerlessDataGenerator(DataGenerator, ABC):
         generated_tasks = []
         cpu_cores_list = []
         memory_list = []
+        duration_list = []
 
         for minute_offset in range(total_duration_in_minutes):
             current_minute_index = start_minute + minute_offset
@@ -104,7 +105,7 @@ class ServerlessDataGenerator(DataGenerator, ABC):
                     "cores": float(cpu_cores),
                     "memory": int(memory),
                     "disk": 0,
-                    "duration": int(delay * 1000),  # Assuming delay is in seconds
+                    "duration": int(delay),
                     "startTime": int(start_time_ms),
                     "taskType": "simulated",
                     "mode": "small"  # Serverless data does not have mode to control the task load, so we set to small.
@@ -112,6 +113,7 @@ class ServerlessDataGenerator(DataGenerator, ABC):
                 task_id += 1
                 cpu_cores_list.append(float(cpu_cores))
                 memory_list.append(int(memory))
+                duration_list.append(int(delay))
 
                 # Stop if we have generated the required number of records
                 if len(generated_tasks) >= num_records:
@@ -123,6 +125,8 @@ class ServerlessDataGenerator(DataGenerator, ABC):
         if cpu_cores_list:
             avg_cores = sum(cpu_cores_list) / len(cpu_cores_list)
             avg_mem = sum(memory_list) / len(memory_list)
-            print(f"Average cores: {avg_cores:.2f}, Average memory: {avg_mem:.2f}MB")
+            avg_duration = sum(duration_list) / len(duration_list)
+            print(f"Average cores: {avg_cores:.2f}, Average memory: {avg_mem:.2f}MB, "
+                  f"Average Duration: {avg_duration:.2f}ms")
 
         return generated_tasks

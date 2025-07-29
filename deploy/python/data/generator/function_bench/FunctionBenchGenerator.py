@@ -1,3 +1,4 @@
+import math
 import random
 from abc import ABC
 import json
@@ -37,7 +38,7 @@ class FunctionBenchGenerator(DataGenerator, ABC):
         self._distribution_type = distribution_type
         self._burstiness = burstiness
         if task_distribution:
-            assert sum(task_distribution) == 1, \
+            assert math.isclose(sum(task_distribution.values()), 1), \
                 "Task distribution must sum to 1. Provided distribution: {}".format(task_distribution)
             assert len(task_distribution) == len(self._task_list), \
                 "Task distribution length must match the number of tasks in the configuration file."
@@ -47,6 +48,9 @@ class FunctionBenchGenerator(DataGenerator, ABC):
                 task_type_id = self._task_list[i][TableKeys.TASK_TYPE_ID]
                 start_bucket += self._task_distribution.get(task_type_id)
                 self._distribution_bucket.append(start_bucket)
+        if mode_distribution:
+            assert math.isclose(sum(mode_distribution.values()), 1), \
+                "Mode distribution must sum to 1. Provided distribution: {}".format(mode_distribution)
 
     def generate(self, num_records, start_id, max_duration=-1, time_range_in_days=None):
         if time_range_in_days is None:
@@ -56,6 +60,7 @@ class FunctionBenchGenerator(DataGenerator, ABC):
         generated_tasks = []
         cpu_cores_list = []
         memory_list = []
+        duration_list = []
 
         while len(generated_tasks) < num_records:
             if self._task_distribution:
@@ -79,10 +84,11 @@ class FunctionBenchGenerator(DataGenerator, ABC):
             instance_info = task_type.get(TableKeys.INSTANCE_INFO_ID, {})
             first_instance = next(iter(instance_info.values()))
             resource_vector = first_instance.get(TableKeys.RESOURCE_VECTOR, {})
-            cores = resource_vector.get(TableKeys.CORES)[0]
-            memory = resource_vector.get(TableKeys.MEMORY)[0]
-            disk = resource_vector.get(TableKeys.DISKS, 0)[0]
-            duration = first_instance.get(TableKeys.DURATION)[0]
+            mode_index = ["small", "medium", "long"].index(mode)
+            cores = resource_vector.get(TableKeys.CORES)[mode_index]
+            memory = resource_vector.get(TableKeys.MEMORY)[mode_index]
+            disk = resource_vector.get(TableKeys.DISKS)[mode_index]
+            duration = first_instance.get(TableKeys.DURATION)[mode_index]
 
             generated_tasks.append({
                 "taskId": task_id,
@@ -97,6 +103,9 @@ class FunctionBenchGenerator(DataGenerator, ABC):
             task_id += 1
             cpu_cores_list.append(float(cores))
             memory_list.append(int(memory))
-        print("Average cores: {}, Average memory: {}".format(sum(cpu_cores_list) / len(cpu_cores_list),
-                                                             sum(memory_list) / len(memory_list)))
+            duration_list.append(int(duration))  # Convert duration to seconds
+        print("Average cores: {}, Average memory: {}, Average Duration:{}ms ".format(sum(cpu_cores_list) / len(cpu_cores_list),
+                                                             sum(memory_list) / len(memory_list),
+                                                             sum(duration_list) / len(duration_list)))
+
         return generated_tasks

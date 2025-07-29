@@ -19,6 +19,7 @@ def generate_serverless_data(serverless_data_dir,
         burstiness=burstiness,
         num_functions=num_functions,
     )
+    print("Generating serverless data")
     data = serverlessDataGenerator.generate(num_records=num_records, start_id=0)
     serverlessDataGenerator.write_data_target_output(data, serverless_output_path)
 
@@ -29,13 +30,15 @@ def generate_azure_data(azure_data_path,
                         target_qps=-1,
                         distribution_type="gamma",
                         burstiness=1.0,
+                        projected_host_cores=64,
+                        projected_host_memory=512 * 1024,
                         max_cores=8,
                         max_memory=62 * 1024,
                         max_duration=60 * 1000):
-
+    print("Generating Azure data")
     azure_data_generator = AzureDataGenerator(azure_data_path, machine_ids=range(1, 36),
-                                              max_cores=48,
-                                              max_memory=62 * 1024,
+                                              max_cores=projected_host_cores,
+                                              max_memory=projected_host_memory,
                                               target_qps=target_qps,
                                               distribution_type=distribution_type,
                                               burstiness=burstiness)
@@ -51,10 +54,13 @@ def generate_function_bench_trace(config_address,
                                   qps,
                                   distribution_type="gamma",
                                   burstiness=1.0,
-                                  task_distribution=None):
+                                  task_distribution=None,
+                                  mode_distribution=None):
+    print("Generating Function Bench trace")
     generator = FunctionBenchGenerator(config_address=config_address, target_cluster_qps=qps,
                                        task_distribution=task_distribution,
-                                       distribution_type=distribution_type, burstiness=burstiness)
+                                       distribution_type=distribution_type, burstiness=burstiness,
+                                       mode_distribution=mode_distribution)
 
     data = generator.generate(num_records=num_records, start_id=0)
     generator.write_data_target_output(data, output_path)
@@ -68,7 +74,7 @@ if __name__ == "__main__":
                         help="Distribution type for the Function Bench trace")
     parser.add_argument("--burstiness", type=float, default=1.0,
                         help="Burstiness factor for the Function Bench trace")
-    parser.add_argument("--num_records", type=int, default=100,
+    parser.add_argument("--num_records", type=int, default=10000,
                         help="Number of records to generate")
     parser.add_argument("--generated_dataset", nargs='+',
                         default=["azure", "function_bench", "serverless"], )
@@ -78,12 +84,16 @@ if __name__ == "__main__":
     parser.add_argument("--azure_output_path", type=str,
                         default="deploy/resources/data/azure_data",
                         help="Path to save the processed Azure data for replaying")
+    parser.add_argument("--projected_host_cores", type=int, default=64,
+                        help="Projected cores for the Azure trace data, used to convert to real cores")
+    parser.add_argument("--projected_host_memory", type=int, default=512 * 1024,
+                        help="Projected memory for the Azure trace data in MB, used to convert to real memory")
     parser.add_argument("--max_cores", type=int, default=8,
                         help="Maximum number of cores for the generated records for smallest hosts, "
-                             "Used by Azure to convert to real cores")
+                             "Used by Azure as a task filter to avoid unaccommodated tasks")
     parser.add_argument("--max_memory", type=int, default=62 * 1024,
                         help="Maximum memory for the generated records in MB for smallest hosts for "
-                             "Used by Azure to convert to real memory")
+                             "Used by Azure as a task filter to avoid unaccommodated tasks")
     parser.add_argument("--max_duration", type=int, default=1000 * 60 * 1,
                         help="Maximum duration for the generated records in milliseconds for Azure, default is 1 minute")
     parser.add_argument("--function_bench_config", type=str,
@@ -92,6 +102,10 @@ if __name__ == "__main__":
     parser.add_argument("--function_bench_trace_output_path", type=str,
                         default="deploy/resources/data/function_bench_trace.csv",
                         help="Path to save the generated Function Bench trace")
+    parser.add_argument("--function_bench_task_mode_distribution", type=float, nargs='+',
+                        default=[0.6, 0.3, 0.1],
+                        help="Distribution of task modes for Function Bench trace"
+                             "to control the ratio of long/medium/small tasks")
     parser.add_argument("--serverless_data_dir", type=str,
                         default="deploy/resources/data/trace_data/huawei_serverless",
                         help="Directory containing serverless trace data")
@@ -119,13 +133,20 @@ if __name__ == "__main__":
 
     if "function_bench" in args.generated_dataset:
         assert args.function_bench_config is not None, "Function Bench config path must be provided"
+        function_bench_task_mode_distribution = {
+            "small": args.function_bench_task_mode_distribution[0],
+            "medium": args.function_bench_task_mode_distribution[1],
+            "long": args.function_bench_task_mode_distribution[2]
+        }
         generate_function_bench_trace(
             config_address=args.function_bench_config,
             output_path=args.function_bench_trace_output_path,
             num_records=args.num_records,
             qps=args.target_qps,
             distribution_type=args.distribution_type,
-            burstiness=args.burstiness
+            burstiness=args.burstiness,
+            task_distribution=None,  # No task distribution provided
+            mode_distribution=function_bench_task_mode_distribution
         )
 
     if "serverless" in args.generated_dataset:

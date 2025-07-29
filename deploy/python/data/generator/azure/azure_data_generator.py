@@ -12,7 +12,8 @@ class AzureDataGenerator(DataGenerator, ABC):
     def __init__(self, db_path, machine_ids=None,
                  max_cores=28,
                  max_memory=30720,
-                 max_disk=307200, time_interval=24 * 60 * 60 * 1000,
+                 max_disk=307200,
+                 time_interval=24 * 60 * 60 * 1000,
                  target_qps=-1,
                  distribution_type="gamma",
                  burstiness=1.0):
@@ -41,6 +42,7 @@ class AzureDataGenerator(DataGenerator, ABC):
         memory_list = []
         task_ids = {}
         data = []
+        duration_list = []
         exp_timeline = 0
         if time_range_in_days is None:
             time_range_in_days = [0, 0.1]
@@ -57,6 +59,7 @@ class AzureDataGenerator(DataGenerator, ABC):
                 end_time = vm[TableKeys.END_TIME]
                 if not (time_range_in_days[0] <= start_time <= end_time <= time_range_in_days[1]):
                     continue
+                # convert duration from day to milliseconds
                 duration = (vm[TableKeys.END_TIME] - vm[TableKeys.START_TIME]) * self.time_interval
                 if 0 < max_duration < duration:
                     continue
@@ -87,6 +90,7 @@ class AzureDataGenerator(DataGenerator, ABC):
                 })
                 cpu_cores_list.append(int(cores))
                 memory_list.append(int(memory))
+                duration_list.append(int(duration))  # Convert duration to seconds
                 task_ids[task_id] = True
                 if len(data) >= num_records:
                     break
@@ -94,6 +98,7 @@ class AzureDataGenerator(DataGenerator, ABC):
         if reassign_ids:
             for i in range(len(data)):
                 data[i]["taskId"] = i
-        print("Average cores: {}, Average memory: {}".format(sum(cpu_cores_list) / len(cpu_cores_list),
-                                                             sum(memory_list) / len(memory_list)))
+        print("Average cores: {}, Average memory: {}, Average Duration:{} ms ".format(sum(cpu_cores_list) / len(cpu_cores_list),
+                                                             sum(memory_list) / len(memory_list),
+                                                             sum(duration_list) / len(duration_list)))
         return data

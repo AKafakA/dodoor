@@ -23,29 +23,30 @@ NUM_REQUESTS=100
 CODE_UPDATE="true"
 RUN_EXPERIMENT="true"
 EXPERIMENT_TIMEOUT_IN_MIN=10
-
+QPS="1000 100000 1000000"
 
 # --- Experiment Execution ---
 # Loop through every combination of the parameters defined above.
 # The structure matches your original script but uses more descriptive variable names.
 echo "Starting experiment runs..."
-
-for scheduler in $SCHEDULERS; do
-  for load in $AVG_CLUSTER_LOADS; do
-    for beta in $BETA_VALS; do
-      for batch in $BATCH_SIZES; do
-        for cpu_w in $CPU_WEIGHTS; do
-          for duration_w in $DURATION_WEIGHTS; do
-            echo "----------------------------------------------------------------------"
-            echo "🚀 RUNNING EXP:"
-            echo "  SCHEDULER=($scheduler) LOAD=($load) BETA=($beta)"
-            echo "  BATCH=($batch) CPU_W=($cpu_w) DURATION_W=($duration_w)"
-            echo "  DATA_PATH=($DATA_PATH) BRANCH_NAME=($BRANCH_NAME)"
-            echo "  REBUILD=($REBUILD) LOG_DIR_PREFIX=($LOG_DIR_PREFIX) RUN_EXPERIMENT=($RUN_EXPERIMENT)"
-            echo "----------------------------------------------------------------------"
-            # Execute the experiment script with the current combination of parameters.
-            # Argument order matches your original script: $l $m $n $o $k $j $DATA_PATH $i
-            sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$load" "$DATA_PATH" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$LOG_DIR_PREFIX" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS" "$CODE_UPDATE" "$RUN_EXPERIMENT" "$EXPERIMENT_TIMEOUT_IN_MIN"
+for qps in $QPS; do
+  for scheduler in $SCHEDULERS; do
+    for load in $AVG_CLUSTER_LOADS; do
+      for beta in $BETA_VALS; do
+        for batch in $BATCH_SIZES; do
+          for cpu_w in $CPU_WEIGHTS; do
+            for duration_w in $DURATION_WEIGHTS; do
+              echo "----------------------------------------------------------------------"
+              echo "🚀 RUNNING EXP:"
+              echo "  SCHEDULER=($scheduler) LOAD=($load) BETA=($beta)"
+              echo "  BATCH=($batch) CPU_W=($cpu_w) DURATION_W=($duration_w)"
+              echo "  DATA_PATH=($DATA_PATH) BRANCH_NAME=($BRANCH_NAME)"
+              echo "  REBUILD=($REBUILD) LOG_DIR_PREFIX=($LOG_DIR_PREFIX) RUN_EXPERIMENT=($RUN_EXPERIMENT)"
+              echo "----------------------------------------------------------------------"
+              # Execute the experiment script with the current combination of parameters.
+              # Argument order matches your original script: $l $m $n $o $k $j $DATA_PATH $i
+              sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$load" "$DATA_PATH" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$LOG_DIR_PREFIX" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS" "$CODE_UPDATE" "$RUN_EXPERIMENT" "$EXPERIMENT_TIMEOUT_IN_MIN" "$qps"
+            done
           done
         done
       done

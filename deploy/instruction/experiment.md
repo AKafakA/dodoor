@@ -5,6 +5,7 @@ To set up the testing cluster, just run the following command:
 ```bash
 # Update the username at top to set permission of docker
 cd dodoor && sh deploy/script/setup.sh
+# Retry if hit the maven rate limit or remove the maven repository under ~/.m2/repository if not able to build the project
 ```
 
 And then run the scripts like 
