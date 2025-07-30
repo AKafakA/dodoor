@@ -41,8 +41,8 @@ public class FifoTaskScheduler extends TaskScheduler {
         }
         int queuedReservations = _taskReservations.size();
         LOG.debug("Enqueueing task reservation with task id {} with {} slots filled and no enough resources: {}. Currently " +
-                        "{} already enqueued reservations.",
-                new Object[] {taskReservation._taskId, currentActiveTasks, noEnoughResources, queuedReservations});
+                        "{} already enqueued reservations, with number of total slots: {}",
+                new Object[] {taskReservation._taskId, currentActiveTasks, noEnoughResources, queuedReservations, _numSlots});
         _taskReservations.add(taskReservation);
         return queuedReservations;
     }

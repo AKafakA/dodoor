@@ -49,16 +49,16 @@ public class TaskLauncherService {
                 Process process = executeLaunchTask(task);
                 long pid = process.pid();
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
+                int exitCode = 0;
                 if (task._taskType.equals("simulated")) {
                     Thread.sleep(task._durationInMs);
-                    process.destroyForcibly();
+                    exitCode = process.waitFor(task._durationInMs, TimeUnit.MILLISECONDS) ? 0 : -1;
                 } else {
                     // Wait for the process to complete
-                    int exitCode = process.waitFor();
-                    if (exitCode != 0) {
-                        LOG.error("Task {} failed with exit code {}", task._taskId, exitCode);
-                    }
+                    exitCode = process.waitFor();
                 }
+                LOG.debug("Task {} with pid {} finished with exit code {}",
+                        new Object[]{task._taskId, pid, exitCode});
                 _node.taskFinished(task.getFullTaskId());
                 _nodeServiceMetrics.taskFinished();
                 BufferedReader stdError = new BufferedReader(new
@@ -153,17 +153,18 @@ public class TaskLauncherService {
     }
 
     private static String generateStressCommand(double cores, long memory, long disks, double durationInSec) {
+        String stressCommand;
         if (Math.floor(cores) == cores) {
             int intCores = (int) cores;
             if (disks <= 0 && memory <= 0) {
-                return String.format("stress -c %d --timeout %f", intCores, durationInSec);
+                stressCommand = String.format("stress -c %d --timeout %f", intCores, durationInSec);
             } else if (disks <= 0) {
-                return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
+                stressCommand =  String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
                         intCores, memory, durationInSec, durationInSec);
             } else if (memory <= 0) {
-                return String.format("stress -c %d --hdd 1 --hdd-bytes %dM --timeout %f", intCores, disks, durationInSec);
+                stressCommand =  String.format("stress -c %d --hdd 1 --hdd-bytes %dM --timeout %f", intCores, disks, durationInSec);
             } else {
-                return String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
+                stressCommand =  String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
                         intCores, memory, durationInSec, disks, durationInSec);
             }
         } else {
@@ -171,19 +172,21 @@ public class TaskLauncherService {
             int intCores = (int) Math.ceil(cores);
             double load = cores / intCores; // load is the fraction of the core to be used
             if (disks <= 0 && memory <= 0) {
-                return String.format("stress-ng -c %d -l %f --timeout %f",
+                stressCommand =  String.format("stress-ng -c %d -l %f --timeout %f",
                         intCores, load, durationInSec);
             } else if (disks <= 0) {
-                return String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
+                stressCommand =  String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
                         intCores, load, memory, durationInSec, durationInSec);
             } else if (memory <= 0) {
-                return String.format("stress-ng -c %d -l %f --hdd 1 --hdd-bytes %dM --timeout %f",
+                stressCommand =  String.format("stress-ng -c %d -l %f --hdd 1 --hdd-bytes %dM --timeout %f",
                         intCores, load, disks, durationInSec);
             } else {
-                return String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
+                stressCommand =  String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
                         intCores, load, memory, durationInSec, disks, durationInSec);
             }
         }
+        LOG.debug("Generated stress command: {}", stressCommand);
+        return stressCommand;
     }
 
     private static String generatePythonCommand(String pythonScriptPath, String dockerImageName,

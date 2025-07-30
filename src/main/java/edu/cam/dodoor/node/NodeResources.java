@@ -16,6 +16,8 @@ public class NodeResources {
         _cores = new AtomicDouble(cores);
         _memory = new AtomicLong(memory);
         _disk = new AtomicLong(disk);
+        LOG.info("Node initialized with resources: cores={}, memory={}, disk={}",
+                new Object[]{_cores.get(), _memory.get(), _disk.get()});
     }
 
     public synchronized boolean runTaskIfPossible(double cores, long memory, long disk) {
