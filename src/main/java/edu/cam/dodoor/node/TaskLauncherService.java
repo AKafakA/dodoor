@@ -43,7 +43,7 @@ public class TaskLauncherService {
             TaskSpec task = _task; // blocks until task is ready
             long waitingDuration = System.currentTimeMillis() - task._enqueuedTime;
             _nodeServiceMetrics.taskLaunched(waitingDuration);
-            LOG.debug("Received task {}", task._taskId);
+            LOG.debug("Received task {} with waited {} ms", task._taskId, waitingDuration);
             long taskStartTime = System.currentTimeMillis();
             try {
                 Process process = executeLaunchTask(task);
@@ -73,8 +73,7 @@ public class TaskLauncherService {
                 throw new RuntimeException(e);
             }
             long taskEndTime = System.currentTimeMillis();
-            LOG.debug(String.format("Task {} executed in {} ms and waited for {} ms",
-                    task._taskId, taskEndTime - taskStartTime, waitingDuration));
+            LOG.debug("Task {} finished in {} ms", task._taskId, taskEndTime - taskStartTime);
         }
 
         /** Executes to launch a task */
