@@ -157,7 +157,8 @@ public class TaskTracePlayer {
                 }
             } else {
                 //  follow poisson distribution under qps
-                long waitTime = expDistribution.sample() > 0 ? (long) expDistribution.sample() * 1000 : 10;
+                double sampleInSeconds = expDistribution.sample();
+                long waitTime = sampleInSeconds > 0 ? (long) (sampleInSeconds * 1000) : 10;
                 startTime += waitTime;
             }
             String taskType = parts[6];

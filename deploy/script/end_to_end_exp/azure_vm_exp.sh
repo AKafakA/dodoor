@@ -14,13 +14,13 @@ SCHEDULERS="sparrow powerOfTwo powerOfTwoDuration prequal random dodoor cachedPo
 # Dataset is constant and not iterated over.
 DATA_PATH="deploy/resources/data/azure_data"
 BRANCH_NAME="main"
-REBUILD="true"
+REBUILD="false"
 STATIC_CONFIG_PATH="~/dodoor/config.conf"
 HOST_CONFIG_PATH="~/cloud_lab/host_config.json"
 TASK_CONFIG_PATH="~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json"
 LOG_DIR_PREFIX="azure"
 NUM_REQUESTS=10000
-CODE_UPDATE="true"
+CODE_UPDATE="false"
 RUN_EXPERIMENT="true"
 EXPERIMENT_TIMEOUT_IN_MIN=60
 QPS="10 50 100 500"
