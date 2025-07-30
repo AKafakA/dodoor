@@ -160,6 +160,9 @@ public class TaskTracePlayer {
                 double sampleInSeconds = expDistribution.sample();
                 long waitTime = sampleInSeconds > 0 ? (long) (sampleInSeconds * 1000) : 10;
                 startTime += waitTime;
+                System.out.println(
+                        "Sampled waitTime (ms): " + waitTime +
+                                ", Cumulative startTime (ms): " + startTime);
             }
             String taskType = parts[6];
             String mode = parts.length > 7 ? parts[7] : "long";
