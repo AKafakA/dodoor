@@ -1,16 +1,13 @@
 package edu.cam.dodoor.client;
 
 import edu.cam.dodoor.DodoorConf;
-import edu.cam.dodoor.node.TaskTypeID;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.ExponentialDistribution;
 import org.apache.commons.math.distribution.ExponentialDistributionImpl;
-import org.apache.commons.math.distribution.PoissonDistributionImpl;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
@@ -21,12 +18,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Comparator;
 import java.util.List;
-import java.util.PriorityQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 public class TaskTracePlayer {
@@ -140,10 +132,10 @@ public class TaskTracePlayer {
                 DodoorConf.DEFAULT_TASK_REPLAY_TIME_SCALE);
 
         double externalQPS = -1;
-        double meanWaitTimeInSeconds = 1.0 / externalQPS;
         ExponentialDistributionImpl expDistribution;
         if (options.has("q")) {
             externalQPS = (double) options.valueOf("q");
+            double meanWaitTimeInSeconds = 1.0 / externalQPS;
             expDistribution = new ExponentialDistributionImpl(meanWaitTimeInSeconds);
         } else {
             expDistribution = new ExponentialDistributionImpl(0.01);
