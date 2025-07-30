@@ -105,7 +105,6 @@ public class TaskLauncherService {
                 command = generatePythonCommand(scriptPath, _dockerImageName, cpuCores, memory,
                         _rootDir, mode);
             }
-            LOG.info("Executing command: {}", command);
             return rt.exec(command);
         }
     }
@@ -171,19 +170,20 @@ public class TaskLauncherService {
         } else {
             // If cores is not an integer, we round it up to the next integer
             int intCores = (int) Math.ceil(cores);
-            double load = cores / intCores; // load is the fraction of the core to be used
+            double load = cores / intCores;
+            int loadPercentage = (int) (load * 100);
             if (disks <= 0 && memory <= 0) {
-                stressCommand =  String.format("stress-ng -c %d -l %f --timeout %f",
-                        intCores, load, durationInSec);
+                stressCommand =  String.format("stress-ng -c %d -l %d --timeout %f",
+                        intCores, loadPercentage, durationInSec);
             } else if (disks <= 0) {
-                stressCommand =  String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
-                        intCores, load, memory, durationInSec, durationInSec);
+                stressCommand =  String.format("stress-ng -c %d -l %d --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
+                        intCores, loadPercentage, memory, durationInSec, durationInSec);
             } else if (memory <= 0) {
-                stressCommand =  String.format("stress-ng -c %d -l %f --hdd 1 --hdd-bytes %dM --timeout %f",
-                        intCores, load, disks, durationInSec);
+                stressCommand =  String.format("stress-ng -c %d -l %d --hdd 1 --hdd-bytes %dM --timeout %f",
+                        intCores, loadPercentage, disks, durationInSec);
             } else {
-                stressCommand =  String.format("stress-ng -c %d -l %f --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
-                        intCores, load, memory, durationInSec, disks, durationInSec);
+                stressCommand =  String.format("stress-ng -c %d -l %d --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
+                        intCores, loadPercentage, memory, durationInSec, disks, durationInSec);
             }
         }
         return stressCommand;
