@@ -105,6 +105,7 @@ public class TaskLauncherService {
                 command = generatePythonCommand(scriptPath, _dockerImageName, cpuCores, memory,
                         _rootDir, mode);
             }
+            LOG.info("Executing command: {}", command);
             return rt.exec(command);
         }
     }
@@ -185,7 +186,6 @@ public class TaskLauncherService {
                         intCores, load, memory, durationInSec, disks, durationInSec);
             }
         }
-        LOG.debug("Generated stress command: {}", stressCommand);
         return stressCommand;
     }
 
