@@ -44,6 +44,7 @@ public class TaskLauncherService {
             long waitingDuration = System.currentTimeMillis() - task._enqueuedTime;
             _nodeServiceMetrics.taskLaunched(waitingDuration);
             LOG.debug("Received task {}", task._taskId);
+            long taskStartTime = System.currentTimeMillis();
             try {
                 Process process = executeLaunchTask(task);
                 long pid = process.pid();
@@ -51,14 +52,11 @@ public class TaskLauncherService {
                 if (task._taskType.equals("simulated")) {
                     Thread.sleep(task._durationInMs);
                     process.destroyForcibly();
-                    LOG.debug("Task {} completed", task._taskId);
                 } else {
                     // Wait for the process to complete
                     int exitCode = process.waitFor();
                     if (exitCode != 0) {
                         LOG.error("Task {} failed with exit code {}", task._taskId, exitCode);
-                    } else {
-                        LOG.debug("Task {} completed successfully", task._taskId);
                     }
                 }
                 _node.taskFinished(task.getFullTaskId());
@@ -74,7 +72,9 @@ public class TaskLauncherService {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            LOG.debug("Completed task {} on application backend at system time {}", task._taskId, System.currentTimeMillis());
+            long taskEndTime = System.currentTimeMillis();
+            LOG.debug(String.format("Task {} executed in {} ms and waited for {} ms",
+                    task._taskId, taskEndTime - taskStartTime, waitingDuration));
         }
 
         /** Executes to launch a task */
