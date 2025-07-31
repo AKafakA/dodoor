@@ -18,7 +18,7 @@
         "system.cores": 8,
         "system.memory": 65536,
         "system.disks": 0,
-        "node_monitor.num_slots": 1,
+        "node_monitor.num_slots": 2,
         "hosts": []
       },
       {
@@ -26,7 +26,7 @@
         "system.cores": 10,
         "system.memory": 65536,
         "system.disks": 0,
-        "node_monitor.num_slots": 1,
+        "node_monitor.num_slots": 2,
         "hosts": []
       },
       {
@@ -34,7 +34,7 @@
         "system.cores": 16,
         "system.memory": 131072,
         "system.disks": 0,
-        "node_monitor.num_slots": 2,
+        "node_monitor.num_slots": 3,
         "hosts": []
       },
       {
@@ -42,7 +42,7 @@
         "system.cores": 28,
         "system.memory": 131072,
         "system.disks": 0,
-        "node_monitor.num_slots": 4,
+        "node_monitor.num_slots": 5,
         "hosts": []
       }
     ]

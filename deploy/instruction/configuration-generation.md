@@ -15,6 +15,8 @@ This process generates the necessary host and IP configuration files based on yo
 
     This will generate the host and IP configuration files under `deploy/resources/host_addresses/cloud_lab/`.
 
+The basic host setting is defined in `deploy/resources/configuration/host_config_template.json`, which includes the host name, IP address, and other hardware specifications and number of testing slots
+
 ---
 ## Experiment Configuration Generation
 
