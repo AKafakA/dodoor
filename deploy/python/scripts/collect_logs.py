@@ -34,14 +34,15 @@ cpu_weight = sys.argv[4]
 duration_weight = sys.argv[5]
 system_load = sys.argv[6]
 root_dir = sys.argv[7]
+qps = sys.argv[8]
 
-exp_name = "{}/{}_batch_{}_beta_{}_cpu_{}_duration_{}_load_{}".format(root_dir,
+exp_name = "{}/{}_batch_{}_beta_{}_cpu_{}_duration_{}_load_{}_qps_{}".format(root_dir,
                                                                       scheduler_name,
                                                                       batch_size,
                                                                       beta,
                                                                       cpu_weight,
                                                                       duration_weight,
-                                                                      system_load)
+                                                                      system_load, qps)
 node_host = []
 node_host_file = "deploy/resources/host_addresses/cloud_lab/test_nodes"
 scheduler_host_file = "deploy/resources/host_addresses/cloud_lab/test_scheduler"

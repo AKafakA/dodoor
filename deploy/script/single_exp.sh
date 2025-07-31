@@ -40,7 +40,7 @@ sh deploy/script/test_cloudlab.sh $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DATA
 if [ "$RUN_EXPERIMENT" = "true" ]; then
   echo "Experiment run completed. Collecting logs..."
   export PYTHONPATH=~/Code/scheduling/dodoor
-  python3 deploy/python/scripts/collect_logs.py $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DURATION_WEIGHT $AVG_CLUSTER_LOAD $LOG_DIR_PREFIX
+  python3 deploy/python/scripts/collect_logs.py $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DURATION_WEIGHT $AVG_CLUSTER_LOAD $LOG_DIR_PREFIX $QPS
   parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "rm ~/*.log && rm ~/*.out && rm ~/*.err"
 else
   echo "Skipping log collection as RUN_EXPERIMENT is set to false."
