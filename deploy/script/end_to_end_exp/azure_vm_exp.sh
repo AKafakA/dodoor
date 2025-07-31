@@ -23,7 +23,7 @@ NUM_REQUESTS=10000
 CODE_UPDATE="true"
 RUN_EXPERIMENT="true"
 EXPERIMENT_TIMEOUT_IN_MIN=60
-QPS="5"
+QPS="10"
 
 # --- Experiment Execution ---
 # Loop through every combination of the parameters defined above.

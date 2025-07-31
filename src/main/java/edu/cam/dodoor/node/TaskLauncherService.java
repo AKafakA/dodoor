@@ -51,7 +51,6 @@ public class TaskLauncherService {
                 LOG.debug("Task {} launched with pid {}", task._taskId, pid);
                 int exitCode = 0;
                 if (task._taskType.equals("simulated")) {
-                    Thread.sleep(task._durationInMs);
                     exitCode = process.waitFor(task._durationInMs, TimeUnit.MILLISECONDS) ? 0 : -1;
                 } else {
                     // Wait for the process to complete
@@ -86,7 +85,7 @@ public class TaskLauncherService {
                 long disks = task._resourceVector.disks;
                 double cpu = task._resourceVector.cores;
                 long durationInMs = task._durationInMs;
-                long durationInSec = durationInMs / 1000;
+                double durationInSec = (durationInMs * 1.0) / 1000;
                 command = generateStressCommand(cpu, memory, disks, durationInSec);
             } else {
                 String scriptPath = _taskScriptPaths.get(taskType);
