@@ -9,7 +9,8 @@ CPU_WEIGHTS="1.0"
 DURATION_WEIGHTS="1.0"
 AVG_CLUSTER_LOADS="0"
 #SCHEDULERS="sparrow powerOfTwo powerOfTwoDuration prequal random dodoor cachedPowerOfTwo"
-SCHEDULERS="random"
+SCHEDULERS="sparrow powerOfTwo prequal dodoor"
+#SCHEDULERS="random"
 
 # Dataset is constant and not iterated over.
 DATA_PATH="deploy/resources/data/azure_data"
@@ -19,7 +20,7 @@ STATIC_CONFIG_PATH="~/dodoor/config.conf"
 HOST_CONFIG_PATH="~/cloud_lab/host_config.json"
 TASK_CONFIG_PATH="~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json"
 LOG_DIR_PREFIX="azure"
-NUM_REQUESTS=10000
+NUM_REQUESTS=1000
 CODE_UPDATE="true"
 RUN_EXPERIMENT="true"
 EXPERIMENT_TIMEOUT_IN_MIN=60

@@ -39,7 +39,7 @@ def main():
 
     # Construct the exact string we need to find in the log file.
     target_log_line = (
-        f"type=COUNTER, name=scheduler.metrics.tasks.finished.count, count={args.num_requests}"
+        f"type=COUNTER, name=scheduler.metrics.tasks.finished.count, count="
     )
 
     if not args.log.is_file():
@@ -59,11 +59,16 @@ def main():
                 sys.exit(1) # Exit with a non-zero status to indicate failure
 
             with args.log.open("r", encoding="utf-8", errors="ignore") as f:
+                num_finished_count = []
                 for line in f:
                     if target_log_line in line:
-                        print(f"\n✅ Success! Found completion marker in log file.")
-                        print(f"[{time.strftime('%H:%M:%S')}] All {args.num_requests} tasks are finished.")
-                        return  # Exit the script successfully
+                        # Extract the count from the line
+                        count_str = line.split("count=")[-1].strip()
+                        count = int(count_str)
+                        num_finished_count.append(count)
+                if max(num_finished_count, default=0) >= args.num_requests:
+                    print(f"\n✅ All {args.num_requests} tasks have been marked as finished in {elapsed_time} ms.")
+                    sys.exit(0)
 
             # If the line was not found after reading the whole file:
             time.sleep(60)

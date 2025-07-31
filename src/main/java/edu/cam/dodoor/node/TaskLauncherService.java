@@ -4,6 +4,7 @@ import edu.cam.dodoor.DodoorConf;
 import edu.cam.dodoor.thrift.TResourceVector;
 import edu.cam.dodoor.utils.*;
 import org.apache.commons.configuration.Configuration;
+import org.apache.thrift.TException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TaskLauncherService {
     private final static Logger LOG = LoggerFactory.getLogger(TaskLauncherService.class);
@@ -38,41 +40,74 @@ public class TaskLauncherService {
             _task = task;
         }
 
+        /**
+         * IMPROVEMENT: Terminates the entire process tree (parent and all children).
+         * This is crucial for commands like stress-ng that spawn worker processes.
+         * @param process The process to terminate.
+         */
+        private void terminateProcessTree(Process process) {
+            long pid = process.pid();
+            LOG.debug("Attempting to terminate process tree for PID: {}", pid);
+            try {
+                // Get a handle to the process
+                ProcessHandle processHandle = process.toHandle();
+
+                // First, destroy all descendant processes (the children)
+                Stream<ProcessHandle> descendants = processHandle.descendants();
+                descendants.forEach(ph -> {
+                    LOG.debug("Destroying child process PID: {}", ph.pid());
+                    ph.destroyForcibly();
+                });
+
+                // Finally, destroy the main parent process
+                LOG.debug("Destroying parent process PID: {}", pid);
+                processHandle.destroyForcibly();
+
+            } catch (Exception e) {
+                LOG.error("Error during process tree termination for PID {}", pid, e);
+            }
+        }
+
         @Override
         public void run() {
-            TaskSpec task = _task; // blocks until task is ready
-            long waitingDuration = System.currentTimeMillis() - task._enqueuedTime;
+            long waitingDuration = System.currentTimeMillis() - _task._enqueuedTime;
             _nodeServiceMetrics.taskLaunched(waitingDuration);
-            LOG.debug("Received task {} with waited {} ms", task._taskId, waitingDuration);
+            LOG.debug("Received task {} which waited {} ms", _task._taskId, waitingDuration);
+
+            Process process = null;
             long taskStartTime = System.currentTimeMillis();
             try {
-                Process process = executeLaunchTask(task);
-                long pid = process.pid();
-                LOG.debug("Task {} launched with pid {}", task._taskId, pid);
-                int exitCode = 0;
-                if (task._taskType.equals("simulated")) {
-                    exitCode = process.waitFor(task._durationInMs, TimeUnit.MILLISECONDS) ? 0 : -1;
+                process = executeLaunchTask(_task);
+                // Wait for the process to complete, with a timeout
+                boolean finishedInTime = process.waitFor(_task._durationInMs, TimeUnit.MILLISECONDS);
+
+                if (!finishedInTime) {
+                    LOG.warn("Task {} timed out after {} ms. Forcibly terminating.",
+                            _task._taskId, _task._durationInMs);
                 } else {
-                    // Wait for the process to complete
-                    exitCode = process.waitFor();
+                    int exitCode = process.exitValue();
+                    LOG.debug("Task {} finished with exit code {}", _task._taskId, exitCode);
+                    if (exitCode != 0) {
+                        LOG.error("Task {} failed with a non-zero exit code: {}", _task._taskId, exitCode);
+                    }
                 }
-                LOG.debug("Task {} with pid {} finished with exit code {}",
-                        new Object[]{task._taskId, pid, exitCode});
-                _node.taskFinished(task.getFullTaskId());
+            } catch (IOException | InterruptedException e) {
+                LOG.error("Failed to execute or wait for task {}", _task._taskId, e);
+                Thread.currentThread().interrupt();
+            } finally {
+                if (process != null) {
+                    // This now reliably kills stress-ng and all its workers.
+                    terminateProcessTree(process);
+                }
+                try {
+                    _node.taskFinished(_task.getFullTaskId());
+                } catch (TException e) {
+                    throw new RuntimeException(e);
+                }
                 _nodeServiceMetrics.taskFinished();
-                BufferedReader stdError = new BufferedReader(new
-                        InputStreamReader(process.getErrorStream()));
-                List<String> errorLines = stdError.lines().collect(Collectors.toList());
-                if (!errorLines.isEmpty()) {
-                    // 3. If there are errors, join and log them.
-                    LOG.error("Task {} failed to execute with error {} or unterminated", task._taskId,
-                            String.join(", ", errorLines));
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                long taskEndTime = System.currentTimeMillis();
+                LOG.debug("Task {} processing completed in {} ms", _task._taskId, taskEndTime - taskStartTime);
             }
-            long taskEndTime = System.currentTimeMillis();
-            LOG.debug("Task {} finished in {} ms", task._taskId, taskEndTime - taskStartTime);
         }
 
         /** Executes to launch a task */
@@ -158,13 +193,13 @@ public class TaskLauncherService {
             if (disks <= 0 && memory <= 0) {
                 stressCommand = String.format("stress -c %d --timeout %f", intCores, durationInSec);
             } else if (disks <= 0) {
-                stressCommand =  String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
-                        intCores, memory, durationInSec, durationInSec);
+                stressCommand =  String.format("stress -c %d --vm 1 --vm-bytes %dM --timeout %f",
+                        intCores, memory, durationInSec);
             } else if (memory <= 0) {
                 stressCommand =  String.format("stress -c %d --hdd 1 --hdd-bytes %dM --timeout %f", intCores, disks, durationInSec);
             } else {
-                stressCommand =  String.format("stress -c %d --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
-                        intCores, memory, durationInSec, disks, durationInSec);
+                stressCommand =  String.format("stress -c %d --vm 1 --vm-bytes %dM -d 1 --hdd-bytes %dM --timeout %f",
+                        intCores, memory, disks, durationInSec);
             }
         } else {
             // If cores is not an integer, we round it up to the next integer
@@ -175,14 +210,14 @@ public class TaskLauncherService {
                 stressCommand =  String.format("stress-ng -c %d -l %d --timeout %f",
                         intCores, loadPercentage, durationInSec);
             } else if (disks <= 0) {
-                stressCommand =  String.format("stress-ng -c %d -l %d --vm 1 --vm-bytes %dM --vm-hang %f --timeout %f",
-                        intCores, loadPercentage, memory, durationInSec, durationInSec);
+                stressCommand =  String.format("stress-ng -c %d -l %d --vm 1 --vm-bytes %dM --timeout %f",
+                        intCores, loadPercentage, memory, durationInSec);
             } else if (memory <= 0) {
                 stressCommand =  String.format("stress-ng -c %d -l %d --hdd 1 --hdd-bytes %dM --timeout %f",
                         intCores, loadPercentage, disks, durationInSec);
             } else {
-                stressCommand =  String.format("stress-ng -c %d -l %d --vm 1 --vm-bytes %dM --vm-hang %f -d 1 --hdd-bytes %dM --timeout %f",
-                        intCores, loadPercentage, memory, durationInSec, disks, durationInSec);
+                stressCommand =  String.format("stress-ng -c %d -l %d --vm 1 --vm-bytes %dM -d 1 --hdd-bytes %dM --timeout %f",
+                        intCores, loadPercentage, memory, disks, durationInSec);
             }
         }
         return stressCommand;
