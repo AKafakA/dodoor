@@ -24,14 +24,17 @@ def generate_serverless_data(serverless_data_dir,
     serverlessDataGenerator.write_data_target_output(data, serverless_output_path)
 
 
+#  It assume the vm request in azure is submitted in d-family enterprise-level virtual machines,
+#  with 96 vCPUs and 384 GB memory
+#  refer to https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/d-family
 def generate_azure_data(azure_data_path,
                         azure_output_path,
                         num_records,
                         target_qps=-1,
                         distribution_type="gamma",
                         burstiness=1.0,
-                        projected_host_cores=64,
-                        projected_host_memory=512 * 1024,
+                        projected_host_cores=96,
+                        projected_host_memory=384 * 1024,
                         max_cores=8,
                         max_memory=62 * 1024,
                         max_duration=60 * 1000):
@@ -88,13 +91,13 @@ if __name__ == "__main__":
                         help="Projected cores for the Azure trace data, used to convert to real cores")
     parser.add_argument("--projected_host_memory", type=int, default=512 * 1024,
                         help="Projected memory for the Azure trace data in MB, used to convert to real memory")
-    parser.add_argument("--max_cores", type=int, default=8,
+    parser.add_argument("--max_cores", type=int, default=4,
                         help="Maximum number of cores for the generated records for smallest hosts, "
                              "Used by Azure as a task filter to avoid unaccommodated tasks")
-    parser.add_argument("--max_memory", type=int, default=62 * 1024,
+    parser.add_argument("--max_memory", type=int, default=32 * 1024,
                         help="Maximum memory for the generated records in MB for smallest hosts for "
                              "Used by Azure as a task filter to avoid unaccommodated tasks")
-    parser.add_argument("--max_duration", type=int, default=1000 * 60 * 1,
+    parser.add_argument("--max_duration", type=int, default=1000 * 30 * 1,
                         help="Maximum duration for the generated records in milliseconds for Azure, default is 1 minute")
     parser.add_argument("--function_bench_config", type=str,
                         default="deploy/resources/configuration/function_bench_config.json",

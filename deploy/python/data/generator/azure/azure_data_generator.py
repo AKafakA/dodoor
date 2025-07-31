@@ -71,12 +71,8 @@ class AzureDataGenerator(DataGenerator, ABC):
                     continue
 
                 # if resource values are not in the range, just cut them off
-                if cores > max_cores:
-                    cores = max_cores
-                if memory > max_memory:
-                    memory = max_memory
-                if disk > max_disk > 0:
-                    disk = max_disk
+                if cores > max_cores or memory > max_memory or disk > max_disk > 0:
+                    continue
                 # generate the override start time specify target qps
                 if self.target_qps > 0:
                     # if given target qps, we need to override the start time with timeline

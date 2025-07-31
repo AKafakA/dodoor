@@ -23,8 +23,8 @@ LOG_DIR_PREFIX="azure"
 NUM_REQUESTS=10000
 CODE_UPDATE="true"
 RUN_EXPERIMENT="true"
-EXPERIMENT_TIMEOUT_IN_MIN=10
-QPS="10 50 100 500"
+EXPERIMENT_TIMEOUT_IN_MIN=20
+QPS="10"
 
 # --- Experiment Execution ---
 # Loop through every combination of the parameters defined above.
