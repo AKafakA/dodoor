@@ -46,6 +46,7 @@ for max_duration in $MAX_DURATIONS; do
                 echo "  BATCH=($batch) CPU_W=($cpu_w) DURATION_W=($duration_w)"
                 echo "  DATA_PATH=($DATA_PATH) BRANCH_NAME=($BRANCH_NAME)"
                 echo "  REBUILD=($REBUILD) LOG_DIR_PREFIX=($LOG_DIR_PREFIX) RUN_EXPERIMENT=($RUN_EXPERIMENT)"
+                echo "  QPS=($qps) MAX_DURATION=($max_duration)"
                 echo "----------------------------------------------------------------------"
                 # Execute the experiment script with the current combination of parameters.
                 # Argument order matches your original script: $l $m $n $o $k $j $DATA_PATH $i
