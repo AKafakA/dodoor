@@ -67,7 +67,7 @@ def main():
                         count = int(count_str)
                         num_finished_count.append(count)
                 if max(num_finished_count, default=0) >= args.num_requests:
-                    print(f"\n✅ All {args.num_requests} tasks have been marked as finished in {elapsed_time} ms.")
+                    print(f"\n✅ All {args.num_requests} tasks have been marked as finished in {elapsed_time} s.")
                     sys.exit(0)
 
             # If the line was not found after reading the whole file:

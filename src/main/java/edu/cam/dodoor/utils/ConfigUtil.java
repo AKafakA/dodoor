@@ -40,7 +40,7 @@ public class ConfigUtil {
       for (int i = 0; i < hosts.length(); i++) {
         String host = hosts.getString(i);
         for (int j = 0; j < ports.length(); j++) {
-          String port = ports.getString(j);
+          String port = String.valueOf(ports.getInt(j));
           String nodePort = host + ":" + port;
           Optional<InetSocketAddress> addr = Serialization.strToSocket(nodePort);
           if (!addr.isPresent()) {

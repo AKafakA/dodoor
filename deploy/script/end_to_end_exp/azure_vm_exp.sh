@@ -3,27 +3,27 @@
 # --- Configuration & Iteration Parameters ---
 # All parameters are defined as lists. Add more space-separated values
 # to any variable to expand the number of experiment combinations.
-BETA_VALS="1.0"
-BATCH_SIZES="100"
+BETA_VALS="0.9"
+BATCH_SIZES="80"
 CPU_WEIGHTS="1.0"
 DURATION_WEIGHTS="1.0"
 AVG_CLUSTER_LOADS="0"
-#SCHEDULERS="sparrow powerOfTwo powerOfTwoDuration prequal random dodoor cachedPowerOfTwo"
+SCHEDULERS="dodoor"
 #SCHEDULERS="sparrow powerOfTwo prequal dodoor"
-SCHEDULERS="random"
+#SCHEDULERS="random"
 
 # Dataset is constant and not iterated over.
 DATA_PATH="deploy/resources/data/azure_data"
 BRANCH_NAME="main"
-REBUILD="true"
+REBUILD="false"
 STATIC_CONFIG_PATH="~/dodoor/config.conf"
 HOST_CONFIG_PATH="~/cloud_lab/host_config.json"
 TASK_CONFIG_PATH="~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json"
 LOG_DIR_PREFIX="azure"
 NUM_REQUESTS=10000
-CODE_UPDATE="true"
+CODE_UPDATE="false"
 RUN_EXPERIMENT="true"
-EXPERIMENT_TIMEOUT_IN_MIN=20
+EXPERIMENT_TIMEOUT_IN_MIN=30
 QPS="10"
 
 # --- Experiment Execution ---

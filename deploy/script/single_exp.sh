@@ -33,10 +33,11 @@ else
 fi
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "rm ~/*.log && rm ~/*.out && rm ~/*.err"
-
+sleep 5
 #parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
 sh deploy/script/test_cloudlab.sh $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $AVG_CLUSTER_LOAD $HOST_CONFIG_PATH $TASK_CONFIG_PATH $STATIC_CONFIG_PATH $NUM_REQUESTS $RUN_EXPERIMENT $EXPERIMENT_TIMEOUT_IN_MIN $QPS
 
+sleep 5
 if [ "$RUN_EXPERIMENT" = "true" ]; then
   echo "Experiment run completed. Collecting logs..."
   export PYTHONPATH=~/Code/scheduling/dodoor
