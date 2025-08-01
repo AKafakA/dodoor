@@ -16,7 +16,7 @@ STATIC_CONFIG_PATH=${10}
 NUM_REQUESTS=${11}
 RUN_EXPERIMENT=${12}
 EXPERIMENT_TIMEOUT_IN_MIN=${13}
-QPS=${13}
+QPS=${14}
 
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "sudo pkill -f dodoor"
 parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "sudo pkill -f stress"
@@ -30,6 +30,7 @@ parallel-ssh -t 0 -h deploy/resources/host_addresses/cloud_lab/test_scheduler -i
 
 if [ "$RUN_EXPERIMENT" = "true" ]; then
   sleep 20
+  echo "Starting the experiment run with QPS=${QPS} and NUM_REQUESTS=${NUM_REQUESTS} for scheduler type ${SCHEDULER_TYPE} with data path ${DATA_PATH}."
   parallel-ssh -t 0 -h deploy/resources/host_addresses/cloud_lab/test_scheduler -i "nohup java -cp dodoor/target/dodoor-1.0-SNAPSHOT.jar edu.cam.dodoor.client.TaskTracePlayer -c ${STATIC_CONFIG_PATH} -hc ${HOST_CONFIG_PATH} -q ${QPS} -f dodoor/$DATA_PATH 1>${SCHEDULER_TYPE}_replay.out 2>${SCHEDULER_TYPE}_replay.err &"
   # Wait for the tasks to complete
   sleep 10

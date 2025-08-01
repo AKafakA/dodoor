@@ -1,4 +1,5 @@
 {
+  "documentation": "This is a template for host configuration. the slots is calculated in math.ceil(total capacity / maximum VM resource * 0.9)",
   "scheduler": {
     "type": "d6515",
     "hosts": [],
@@ -18,7 +19,7 @@
         "system.cores": 8,
         "system.memory": 65536,
         "system.disks": 0,
-        "node_monitor.num_slots": 2,
+        "node_monitor.num_slots": 3,
         "hosts": []
       },
       {
@@ -26,7 +27,7 @@
         "system.cores": 10,
         "system.memory": 65536,
         "system.disks": 0,
-        "node_monitor.num_slots": 2,
+        "node_monitor.num_slots": 3,
         "hosts": []
       },
       {
@@ -34,7 +35,7 @@
         "system.cores": 16,
         "system.memory": 131072,
         "system.disks": 0,
-        "node_monitor.num_slots": 3,
+        "node_monitor.num_slots": 5,
         "hosts": []
       },
       {
@@ -42,7 +43,7 @@
         "system.cores": 28,
         "system.memory": 131072,
         "system.disks": 0,
-        "node_monitor.num_slots": 5,
+        "node_monitor.num_slots": 8,
         "hosts": []
       }
     ]

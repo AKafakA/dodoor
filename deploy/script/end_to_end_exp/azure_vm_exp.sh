@@ -3,8 +3,8 @@
 # --- Configuration & Iteration Parameters ---
 # All parameters are defined as lists. Add more space-separated values
 # to any variable to expand the number of experiment combinations.
-BETA_VALS="0.95"
-BATCH_SIZES="100"
+BETA_VALS="1.0"
+BATCH_SIZES="80"
 CPU_WEIGHTS="1.0"
 DURATION_WEIGHTS="0.5"
 AVG_CLUSTER_LOADS="0 0.5"
