@@ -7,7 +7,7 @@ BETA_VALS="0.9"
 BATCH_SIZES="80"
 CPU_WEIGHTS="1.0"
 DURATION_WEIGHTS="0.5"
-AVG_CLUSTER_LOADS="0"
+AVG_CLUSTER_LOADS="0 0.5"
 #SCHEDULERS="sparrow powerOfTwo prequal dodoor"
 SCHEDULERS="dodoor sparrow"
 
@@ -33,6 +33,7 @@ echo "Starting experiment runs..."
 for max_duration in $MAX_DURATIONS; do
   data_path="${DATA_PATH}/azure_data_${max_duration}"
   NUM_REQUESTS=$((NUM_REQUESTS * max_duration / 30))  # Adjust NUM_REQUESTS based on max_duration so experiments can completed
+  LOG_DIR_PREFIX="${LOG_DIR_PREFIX}_${max_duration}"
   for qps in $QPS; do
     for scheduler in $SCHEDULERS; do
       for load in $AVG_CLUSTER_LOADS; do
