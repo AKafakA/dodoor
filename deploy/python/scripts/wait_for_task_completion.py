@@ -49,6 +49,8 @@ def main():
     print(f"🔍 Monitoring log file: {args.log} at {time.strftime('%H:%M:%S')}")
     start_time = time.time()
     timeout_seconds = args.timeout * 60  # Convert minutes to seconds
+    elapsed_time = 0
+    completed_requests = 0
     while True:
         try:
             # Open and read the log file to find the target line.
@@ -68,8 +70,8 @@ def main():
                         num_finished_count.append(count)
                 if max(num_finished_count, default=0) >= args.num_requests:
                     print(f"\n✅ All {args.num_requests} tasks have been marked as finished in {elapsed_time} s.")
-                    sys.exit(0)
-
+                    completed_requests = max(num_finished_count, default=0)
+                    break
             # If the line was not found after reading the whole file:
             time.sleep(60)
         except KeyboardInterrupt:
@@ -78,6 +80,11 @@ def main():
         except Exception as e:
             print(f"\nAn unexpected error occurred: {e}")
             break
+
+    if elapsed_time > 0 and completed_requests >= args.num_requests:
+        with args.log.open("a", encoding="utf-8") as f:
+            f.write(f"experiment completed in {elapsed_time:.2f} seconds\n and lead to "
+                    f"throughput of {completed_requests / elapsed_time} requests/seconds\n")
 
 
 if __name__ == "__main__":
