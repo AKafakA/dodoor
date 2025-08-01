@@ -3,8 +3,8 @@
 # --- Configuration & Iteration Parameters ---
 # All parameters are defined as lists. Add more space-separated values
 # to any variable to expand the number of experiment combinations.
-BETA_VALS="0.9"
-BATCH_SIZES="80"
+BETA_VALS="0.95"
+BATCH_SIZES="100"
 CPU_WEIGHTS="1.0"
 DURATION_WEIGHTS="0.5"
 AVG_CLUSTER_LOADS="0 0.5"
@@ -24,19 +24,22 @@ NUM_REQUESTS=10000
 CODE_UPDATE="true"
 RUN_EXPERIMENT="true"
 EXPERIMENT_TIMEOUT_IN_MIN=30
-QPS="10"
+QPS="10 50 100"
 
 # --- Experiment Execution ---
 # Loop through every combination of the parameters defined above.
 # The structure matches your original script but uses more descriptive variable names.
 echo "Starting experiment runs..."
-for max_duration in $MAX_DURATIONS; do
-  data_path="${DATA_PATH}/azure_data_${max_duration}"
-  NUM_REQUESTS=$((NUM_REQUESTS * max_duration / 30))  # Adjust NUM_REQUESTS based on max_duration so experiments can completed
-  LOG_DIR_PREFIX="${LOG_DIR_PREFIX}_${max_duration}"
-  for qps in $QPS; do
-    for scheduler in $SCHEDULERS; do
-      for load in $AVG_CLUSTER_LOADS; do
+for load in $AVG_CLUSTER_LOADS; do
+  experiment_timout_in_min=$((EXPERIMENT_TIMEOUT_IN_MIN / (1 - load)))
+  for max_duration in $MAX_DURATIONS; do
+    data_path="${DATA_PATH}/azure_data_${max_duration}"
+#    num_request=$((NUM_REQUESTS * max_duration / 30))
+    num_request=10000
+    experiment_timout_in_min=$((experiment_timout_in_min * max_duration / 30))
+    LOG_DIR_PREFIX="${LOG_DIR_PREFIX}_${max_duration}"
+    for qps in $QPS; do
+      for scheduler in $SCHEDULERS; do
         for beta in $BETA_VALS; do
           for batch in $BATCH_SIZES; do
             for cpu_w in $CPU_WEIGHTS; do
@@ -48,10 +51,11 @@ for max_duration in $MAX_DURATIONS; do
                 echo "  DATA_PATH=($DATA_PATH) BRANCH_NAME=($BRANCH_NAME)"
                 echo "  REBUILD=($REBUILD) LOG_DIR_PREFIX=($LOG_DIR_PREFIX) RUN_EXPERIMENT=($RUN_EXPERIMENT)"
                 echo "  QPS=($qps) MAX_DURATION=($max_duration)"
+                echo "  NUM_REQUESTS=($num_request) timeout_in_sec=($experiment_timout_in_min)"
                 echo "----------------------------------------------------------------------"
                 # Execute the experiment script with the current combination of parameters.
                 # Argument order matches your original script: $l $m $n $o $k $j $DATA_PATH $i
-                sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$load" "$data_path" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$LOG_DIR_PREFIX" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS" "$CODE_UPDATE" "$RUN_EXPERIMENT" "$EXPERIMENT_TIMEOUT_IN_MIN" "$qps"
+                sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$load" "$data_path" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$LOG_DIR_PREFIX" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$num_request" "$CODE_UPDATE" "$RUN_EXPERIMENT" "$experiment_timout_in_min" "$qps"
               done
             done
           done
