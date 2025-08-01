@@ -2,6 +2,8 @@ import math
 import random
 from abc import ABC
 import json
+
+import numpy
 import numpy as np
 
 from deploy.python.data.generator.data_generator import DataGenerator
@@ -108,4 +110,14 @@ class FunctionBenchGenerator(DataGenerator, ABC):
                                                              sum(memory_list) / len(memory_list),
                                                              sum(duration_list) / len(duration_list)))
 
+        print("duration variance: {}, duration std:{}, duration max: {}, duration min: {},"
+              "duration mean: {}, duration p50: {}, duration p90: {}, duration p99: {}".format(
+                numpy.var(duration_list),
+                numpy.std(duration_list),
+                max(duration_list),
+                min(duration_list),
+                numpy.mean(duration_list),
+                numpy.percentile(duration_list, 50),
+                numpy.percentile(duration_list, 90),
+                numpy.percentile(duration_list, 99)))
         return generated_tasks

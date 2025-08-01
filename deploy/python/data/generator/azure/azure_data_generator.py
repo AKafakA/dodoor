@@ -1,6 +1,8 @@
 import math
 from abc import ABC
 
+import numpy
+
 from deploy.python.data.generator.azure.azure_sqlite_processor import AzureSqliteProcessor, TableKeys
 from deploy.python.data.generator.data_generator import DataGenerator
 from deploy.python.data.generator.utils import get_wait_time
@@ -104,7 +106,20 @@ class AzureDataGenerator(DataGenerator, ABC):
         if reassign_ids:
             for i in range(len(data)):
                 data[i]["taskId"] = i
-        print("Average cores: {}, Average memory: {}, Average Duration:{} ms ".format(sum(cpu_cores_list) / len(cpu_cores_list),
-                                                             sum(memory_list) / len(memory_list),
-                                                             sum(duration_list) / len(duration_list)))
+        print("Average cores: {}, Average memory: {}, Average Duration:{} ms ".format(
+            sum(cpu_cores_list) / len(cpu_cores_list),
+            sum(memory_list) / len(memory_list),
+            sum(duration_list) / len(duration_list)))
+        print("duration variance: {}, duration std:{}, duration max: {}, duration min: {},"
+              "duration mean: {}, duration p50: {}, duration p90: {}, duration p99: {}".format(
+                numpy.var(duration_list),
+                numpy.std(duration_list),
+                max(duration_list),
+                min(duration_list),
+                numpy.mean(duration_list),
+                numpy.percentile(duration_list, 50),
+                numpy.percentile(duration_list, 90),
+                numpy.percentile(duration_list, 99)
+            )
+        )
         return data

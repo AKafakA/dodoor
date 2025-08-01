@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_memory", type=int, default=32 * 1024,
                         help="Maximum memory for the generated records in MB for smallest hosts for "
                              "Used by Azure as a task filter to avoid unaccommodated tasks")
-    parser.add_argument("--max_duration", type=int, default=1000 * 30 * 1,
+    parser.add_argument("--max_duration", type=int, default=1000 * 600 * 1,
                         help="Maximum duration for the generated records in milliseconds for Azure, default is 1 minute")
     parser.add_argument("--function_bench_config", type=str,
                         default="deploy/resources/configuration/function_bench_config.json",
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         # if not use target qps but the raw trace timeline, set the target_qps to -1
         generate_azure_data(
             azure_data_path=args.azure_data_path,
-            azure_output_path=args.azure_output_path,
+            azure_output_path=args.azure_output_path + f"/azure_data_{int(args.max_duration/1000)}",
             num_records=args.num_records,
             target_qps=args.target_qps,
             distribution_type=args.distribution_type,

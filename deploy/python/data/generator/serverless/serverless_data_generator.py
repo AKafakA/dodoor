@@ -1,4 +1,7 @@
+import math
 from abc import ABC
+
+import numpy
 import numpy as np
 import csv
 from deploy.python.data.generator.data_generator import DataGenerator
@@ -90,10 +93,13 @@ class ServerlessDataGenerator(DataGenerator, ABC):
             for _ in range(num_tasks_this_minute):
                 # Randomly pick a function based on its request frequency
                 function_index = np.random.choice(self._num_functions, p=probabilities)
+                if self._delay[current_minute_index][function_index] <= 0:
+                    print(f"Generating task for function index: {function_index} with probability {probabilities[function_index]}")
+                    print(f"Current minute index: {current_minute_index}, Function index: {function_index} and delay: {self._delay[current_minute_index][function_index]}")
 
                 cpu_cores = self._cpu_cores[current_minute_index][function_index]
                 memory = self._memory[current_minute_index][function_index]
-                delay = self._delay[current_minute_index][function_index]
+                delay = math.ceil(self._delay[current_minute_index][function_index])
 
                 # Advance start time for the next task
                 wait_time_ms = get_wait_time(self._target_qps, self._distribution_type,
@@ -105,7 +111,7 @@ class ServerlessDataGenerator(DataGenerator, ABC):
                     "cores": float(cpu_cores),
                     "memory": int(memory),
                     "disk": 0,
-                    "duration": int(delay),
+                    "duration": delay,
                     "startTime": int(start_time_ms),
                     "taskType": "simulated",
                     "mode": "small"  # Serverless data does not have mode to control the task load, so we set to small.
@@ -113,7 +119,7 @@ class ServerlessDataGenerator(DataGenerator, ABC):
                 task_id += 1
                 cpu_cores_list.append(float(cpu_cores))
                 memory_list.append(int(memory))
-                duration_list.append(int(delay))
+                duration_list.append(delay)
 
                 # Stop if we have generated the required number of records
                 if len(generated_tasks) >= num_records:
@@ -128,5 +134,15 @@ class ServerlessDataGenerator(DataGenerator, ABC):
             avg_duration = sum(duration_list) / len(duration_list)
             print(f"Average cores: {avg_cores:.2f}, Average memory: {avg_mem:.2f}MB, "
                   f"Average Duration: {avg_duration:.2f}ms")
+            print("duration variance: {}, duration std:{}, duration max: {}, duration min: {},"
+                  "duration mean: {}, duration p50: {}, duration p90: {}, duration p99: {}".format(
+                    numpy.var(duration_list),
+                    numpy.std(duration_list),
+                    max(duration_list),
+                    min(duration_list),
+                    numpy.mean(duration_list),
+                    numpy.percentile(duration_list, 50),
+                    numpy.percentile(duration_list, 90),
+                    numpy.percentile(duration_list, 99)))
 
         return generated_tasks
