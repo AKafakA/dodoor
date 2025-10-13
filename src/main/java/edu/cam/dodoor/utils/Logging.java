@@ -17,9 +17,9 @@ public class Logging {
   public final static String AUDIT_LOG_FILENAME_FORMAT = "sparrow_audit.%d.%d.log";
   public final static String AUDIT_LOG_FORMAT = "%c\t%m%n";
 
-  private static Joiner paramJoiner = Joiner.on(",").useForNull("null");
-  private static Joiner auditParamJoiner = Joiner.on("\t");
-  private static Joiner auditEventParamJoiner = Joiner.on(":");
+  private static Joiner _paramJoiner = Joiner.on(",").useForNull("null");
+  private static Joiner _auditParamJoiner = Joiner.on("\t");
+  private static Joiner _auditEventParamJoiner = Joiner.on(":");
 
   /**
    * Sets up audit logging to log to a file named based on the current time (in
@@ -78,8 +78,8 @@ public class Logging {
    * Returns a log string for the given event, starting with the epoch time.
    */
   public static String auditEventString(Object... params) {
-    return auditParamJoiner.join(System.currentTimeMillis(),
-        auditEventParamJoiner.join(params));
+    return _auditParamJoiner.join(System.currentTimeMillis(),
+        _auditEventParamJoiner.join(params));
   }
 
   /**
@@ -98,6 +98,6 @@ public class Logging {
    */
   public static String functionCall(Object... params) {
     String name = Thread.currentThread().getStackTrace()[2].getMethodName();
-    return name + ": [" + paramJoiner.join(params) + "]";
+    return name + ": [" + _paramJoiner.join(params) + "]";
   }
 }

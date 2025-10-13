@@ -18,57 +18,50 @@ include 'types.thrift'
 
 namespace java edu.cam.dodoor.thrift
 
-# SchedulerService is used by application frontends to communicate with Dodoor
-# and place jobs.
+# SchedulerService for scheduling tasks
 service SchedulerService {
   # Submit a job composed of a list of individual tasks.
   void submitJob(1: types.TSchedulingRequest req) throws (1: types.IncompleteRequestException e);
+  # Update the a view of state of the nodes for scheduling decisions
+  void updateNodeState(1: map<string, types.TNodeState> snapshot);
+  # Register a node with the given socket address for enqueue and monitoring (IP: nmPort:nePort)
+  void registerNode(1: string nodeFullAddress, 2: string nodeType);
+    # Register a datastore with the given socket address (IP: Port)
+  void registerDataStore(1: string dataStoreAddress);
+  # used to caculate the end 2 end latency
+  void taskFinished(1: types.TFullTaskId task, 2: i64 nodeWallTime);
 
-  # called by data store services to update the nodes
-  bool updateNodeLoad(1:list<types.TNodeState> nodeStates);
+  bool confirmTaskReadyToExecute(1: types.TFullTaskId taskId, 2:string nodeEnqueueAddress);
 }
 
+# DataStoreService for storing the state of the nodes
 service DataStoreService {
-  # Inform the store service that a particular task has finished
-  bool updateNodeLoad(1:types.TNodeState nodeStates);
-  list<types.TNodeState> getNodeStates();
+  # Register a scheduler with the given socket address (IP: Port)
+  void registerScheduler(1: string schedulerAddress);
+  # Register a node with the given socket address for enqueue and monitoring (IP: nmPort:nePort)
+  void registerNode(1: string nodeFullAddress, 2: string nodeType);
+  # Update the state of the nodes for scheduling decisions by given the node enqueue socket address and the node state
+  void overrideNodeState(1:string nodeEnqueueAddress, 2:types.TNodeState nodeState);
+  # Add the load of set of tasks to the node specified by the nodeEnqueueAddress
+  void addNodeLoads(1: map<string, types.TNodeState> additionNodeStates, 2: i32 sign);
+
+  map<string, types.TNodeState> getNodeStates();
 }
 
-# A service that workers backends are expected to extend.
-# lauch the scheduled tasks
-service BackendService {
-  void launchTask(1: binary message, 2: types.TFullTaskId taskId,
-                  3: types.TUserGroupInfo user);
-}
 
-# A service that workers frontends are expected to extend.
-service FrontendService {
-  # See SchedulerService.sendFrontendMessage
-  void frontendMessage(1: types.TFullTaskId taskId, 2: i32 status,
-                       3: binary message);
-}
-
-# A service worked as worker nodes to communicate with scheduler
+# Service of the node exposed for querying state and registering with the DataStore
+# Two services are exposed to the node: NodeMonitorService and NodeEnqueueService
+# which allow the nodes to be queried synchronously for realtime probing and request asynchronously for cached based approach
 service NodeMonitorService {
-  # Inform the NodeMonitor that a particular task has finished
-  void tasksFinished(1: list<types.TFullTaskId> tasks);
-
-  # Scheduler send requests to current node
-  void assignTask(1: types.TFullTaskId taskId, 2: i32 status, 3: binary message);
+   # Register a datastore with the given socket address (IP: Port)
+  void registerDataStore(1: string dataStoreAddress);
+  # called by the scheduler to status of the node
+  types.TNodeState getNodeState();
 }
 
-
-service InternalService {
-  # Enqueues a reservation to launch the given number of tasks. The NodeMonitor sends
-  # a GetTask() RPC to the given schedulerAddress when it is ready to launch a task, for each
-  # enqueued task reservation. Returns whether or not the task was successfully enqueued.
-  bool enqueueTaskReservations(1: types.TEnqueueTaskReservationsRequest request);
-
-  # Cancels reservations for jobs for which all tasks have already been launched.
-  void cancelTaskReservations(1: types.TCancelTaskReservationsRequest request);
-}
-
-service GetTaskService {
-  # Called by a node monitor when it has available responses to run a task.
-  list<types.TTaskLaunchSpec> getTask(1: string requestId, 2: types.THostPort nodeMonitorAddress);
+# Service of the node exposed to the scheduler to enqueue tasks
+service NodeEnqueueService {
+  bool enqueueTaskReservation(1: types.TEnqueueTaskReservationRequest request);
+  bool cancelTaskReservation(1: types.TFullTaskId taskId);
+  void taskFinished(1: types.TFullTaskId task);
 }

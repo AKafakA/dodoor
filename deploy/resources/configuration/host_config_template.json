@@ -1,0 +1,51 @@
+{
+  "documentation": "This is a template for host configuration. the slots is calculated in math.ceil(total capacity / maximum VM resource * 0.9)",
+  "scheduler": {
+    "type": "d6515",
+    "hosts": [],
+    "ports": [20503, 20504, 20505, 20506, 20507]
+  },
+  "datastore": {
+    "type": "d6515",
+    "hosts": [],
+    "ports": [20510]
+  },
+  "nodes": {
+    "node.monitor.thrift.ports": [20501],
+    "node.enqueue.thrift.ports": [20502],
+    "node.types": [
+      {
+        "node.type": "m510",
+        "system.cores": 8,
+        "system.memory": 65536,
+        "system.disks": 0,
+        "node_monitor.num_slots": 8,
+        "hosts": []
+      },
+      {
+        "node.type": "xl170",
+        "system.cores": 10,
+        "system.memory": 65536,
+        "system.disks": 0,
+        "node_monitor.num_slots": 10,
+        "hosts": []
+      },
+      {
+        "node.type": "c6525-25g",
+        "system.cores": 16,
+        "system.memory": 131072,
+        "system.disks": 0,
+        "node_monitor.num_slots": 16,
+        "hosts": []
+      },
+      {
+        "node.type": "c6620",
+        "system.cores": 28,
+        "system.memory": 131072,
+        "system.disks": 0,
+        "node_monitor.num_slots": 28,
+        "hosts": []
+      }
+    ]
+  }
+}

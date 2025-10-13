@@ -4,13 +4,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import edu.cam.dodoor.thrift.TResourceVector;
 import org.apache.commons.configuration.Configuration;
 
 import edu.cam.dodoor.DodoorConf;
+import org.json.JSONObject;
 
 /** Utilities for interrogating system resources. */
 public class Resources {
-  public static int getSystemMemoryMb(Configuration conf) {
+  public static int getMemoryMbCapacity(JSONObject nodeConfig) {
     int systemMemory = -1;
     try {
       Process p = Runtime.getRuntime().exec("cat /proc/meminfo");  
@@ -27,8 +29,8 @@ public class Resources {
         line = in.readLine();
       }
     } catch (IOException ignored) {}
-    if (conf.containsKey(DodoorConf.SYSTEM_MEMORY)) {
-      return conf.getInt(DodoorConf.SYSTEM_MEMORY);
+    if (nodeConfig.has(DodoorConf.SYSTEM_MEMORY)) {
+      return nodeConfig.getInt(DodoorConf.SYSTEM_MEMORY);
     } else {
       if (systemMemory != -1) {
         return systemMemory;
@@ -38,8 +40,21 @@ public class Resources {
     }
   }
   
-  public static int getSystemCPUCount(Configuration conf) {
+  public static int getSystemCoresCapacity(JSONObject nodeConfig) {
     // No system interrogation yet
-    return conf.getInt(DodoorConf.SYSTEM_CPUS, DodoorConf.DEFAULT_SYSTEM_CPUS);
+    return nodeConfig.optInt(DodoorConf.SYSTEM_CORES, DodoorConf.DEFAULT_SYSTEM_CORES);
+  }
+
+  public static int getSystemDiskGbCapacity(JSONObject nodeConfig) {
+    return nodeConfig.optInt(DodoorConf.SYSTEM_DISK, DodoorConf.DEFAULT_SYSTEM_DISK);
+  }
+
+  public static TResourceVector getSystemResourceVector(Configuration staticConf, JSONObject nodeConfig) {
+    if (staticConf.getBoolean(DodoorConf.REPLAY_WITH_DISK, DodoorConf.DEFAULT_REPLAY_WITH_DISK)) {
+      return new TResourceVector(getSystemCoresCapacity(nodeConfig), getMemoryMbCapacity(nodeConfig),
+              getSystemDiskGbCapacity(nodeConfig));
+    } else {
+        return new TResourceVector(getSystemCoresCapacity(nodeConfig), getMemoryMbCapacity(nodeConfig), 0);
+    }
   }
 }
