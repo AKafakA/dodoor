@@ -1,0 +1,81 @@
+{
+  "experiment": {
+    "name": "azure_4000_task_comparison",
+    "description": "Compare all schedulers with exactly 4000 Azure tasks, wait for all to finish",
+    "duration_ms": 3600000,
+    "timeout_ms": null,
+    "target_completed_tasks": 4000,
+    "drain_on_finish": true,
+    "seed": 12345,
+    "warmup_duration_ms": 0
+  },
+  "scheduler": {
+    "type": "dodoor",
+    "beta": 1.0,
+    "batch_size": 50,
+    "weights": {
+      "cpu": 1.0,
+      "memory": 1.0,
+      "disk": 0.0,
+      "duration": 0.5
+    },
+    "num_tasks_to_update": 4
+  },
+  "cluster": {
+    "node_types": [
+      {
+        "type": "m510",
+        "count": 40,
+        "cores": 8,
+        "memory": 65536,
+        "disk": 0,
+        "slots": 8
+      },
+      {
+        "type": "xl170",
+        "count": 25,
+        "cores": 10,
+        "memory": 65536,
+        "disk": 0,
+        "slots": 10
+      },
+      {
+        "type": "c6525-25g",
+        "count": 18,
+        "cores": 16,
+        "memory": 131072,
+        "disk": 0,
+        "slots": 16
+      },
+      {
+        "type": "c6620",
+        "count": 17,
+        "cores": 28,
+        "memory": 131072,
+        "disk": 0,
+        "slots": 28
+      }
+    ],
+    "network": {
+      "mean_latency_ms": 2.0,
+      "std_latency_ms": 0.5
+    },
+    "restrict_fifo": false
+  },
+  "workload": {
+    "type": "trace",
+    "trace_file": "deploy/resources/data/azure_data/azure_data_600",
+    "task_profile_file": "deploy/resources/configuration/generated_config/merged_profiler_config.json",
+    "synthetic": {
+      "arrival_rate": 0.5,
+      "arrival_pattern": "poisson"
+    },
+    "task_types": {}
+  },
+  "output": {
+    "output_directory": "simulation_output/debug_experiment",
+    "log_level": "INFO",
+    "enable_detailed_metrics": true,
+    "metrics_interval_ms": 10000
+  }
+}

@@ -1,0 +1,1 @@
+"""Configuration management for Dodoor Python Simulator"""

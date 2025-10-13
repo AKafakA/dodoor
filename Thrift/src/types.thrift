@@ -30,7 +30,7 @@ struct TPlacementPreference {
 }
 
 struct TResourceVector {
-  1: i32 cores;       // # Cores
+  1: double cores;       // # Cores
   2: i64 memory;      // Memory, in Mb
   3: i64 disks;
 }
@@ -38,9 +38,11 @@ struct TResourceVector {
 
 // A fully-specified Task
 struct TFullTaskId {
-  1: string taskId;    // Task ID as reported from the FE
-  2: string requestId; // Scheduling request ID as assigned by the FE
-  3: THostPort schedulerAddress; // Address of the scheduler that scheduled the task.
+  1: string taskId;
+  2: TResourceVector resourceRequest;
+  3: i64 durationInMs;
+  4: string taskType = "simulate";
+  5: string taskMode = "long"; // The mode of the task, e.g. "long", "short", "medium"
 }
 
 struct TUserGroupInfo {
@@ -53,58 +55,45 @@ struct TUserGroupInfo {
 
 struct TTaskSpec {
   1: string taskId;
+  # The placement preference for selected noded for the task, not been implemented so far.
   2: TPlacementPreference preference;
   3: binary message;
   4: TResourceVector resourceRequest;
+  5: i64 durationInMs;
+  6: string taskType = "simulate";
+  7: string taskMode = "long"; // The mode of the task, e.g. "long", "short", "medium"
 }
 
 struct TSchedulingRequest {
   1: list<TTaskSpec> tasks;
+  # Not been implemented with user level priority
   2: TUserGroupInfo user;
   # A description that will be logged alongside the requestId that Pigeon assigns.
   3: optional string description;
-}
-
-struct TLaunchTasksRequest {
-    1: TUserGroupInfo user;
-    2: string requestID;
-    3: THostPort schedulerAddress;
-    4: list<TTaskLaunchSpec> tasksToBeLaunched;
-}
-
-# Information needed to launch a task.
-struct TTaskLaunchSpec {
-  # Task ID
-  1: string taskId;
-
-  # Description of the task passed on to the application backend.
-  2: binary message;
+  4: i64 requestId;
 }
 
 # Represents the State Store's view of resource consumption on a node.
 struct TNodeState {
-  1: TResourceVector resourceUsed;   # Resources currently used
-  2: TResourceVector resourceRequested;  # Resources has been requested and pending
-  3: THostPort nodeAddress;
+  1: TResourceVector resourceRequested;  # Resources has been requested and pending
+  2: i32 numTasks;  # Number of tasks running on the node
+  3: i64 totalDurations;  # Total duration of all tasks pending on the node
+  4: string nodeIp;  # The address of the node's enqueue service
+  5: string nodeType;  # The type of the node, e.g. "HW", "LW", "GPU"
 }
 
 exception ServerNotReadyException {
     1: string message; # Thrown when master has less than one HW/LW
 }
 
-
-struct LoadSpec {
-  1: double load;
-}
-
-struct TEnqueueTaskReservationsRequest {
-  1: string appId;
-  2: TUserGroupInfo user;
-  3: string requestId;
-  4: THostPort schedulerAddress;
-  5: i32 numTasks;
-}
-
-struct TCancelTaskReservationsRequest {
-  1: string requestId;
+struct TEnqueueTaskReservationRequest {
+  1: TUserGroupInfo user;
+  2: string taskId;
+  3: THostPort schedulerAddress;
+  4: TResourceVector resourceRequested;
+  5: i64 durationInMs;
+  6: THostPort nodeEnqueueAddress;
+  7: i64 enqueueTime;
+  8: string taskType = "simulate"; // The type of the task, e.g. "simulate", "train", "inference"
+  9: string taskMode = "long"; // The mode of the task, e.g. "long", "short", "medium"
 }

@@ -1,0 +1,180 @@
+{
+    "tasks": [
+        {
+            "taskTypeId": "float_operation",
+            "taskExecPath": "float_operation.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        },
+        {
+            "taskTypeId": "linpack",
+            "taskExecPath": "linpack.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        },
+        {
+            "taskTypeId": "matmul",
+            "taskExecPath": "matmul.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        },
+        {
+            "taskTypeId": "chameleon_rendering",
+            "taskExecPath": "chameleon_rendering.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        },
+        {
+            "taskTypeId": "pyaes_generation",
+            "taskExecPath": "pyaes_generation.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        },
+        {
+            "taskTypeId": "lr_train",
+            "taskExecPath": "lr_model_train.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        },
+        {
+            "taskTypeId": "lr_prediction",
+            "taskExecPath": "lr_prediction.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        },
+        {
+            "taskTypeId": "rnn_name_generation",
+            "taskExecPath": "rnn_name_generation.py",
+            "instanceInfo": {
+                "m400": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                },
+                "m510": {
+                    "resourceVector": {
+                        "cores": 1.0,
+                        "memory": 1024,
+                        "disks": 0
+                    },
+                    "estimatedDuration": 1000
+                }
+            }
+        }
+    ]
+}

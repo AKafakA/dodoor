@@ -32,7 +32,7 @@ public class ThriftClientPool<T extends TAsyncClient> {
   private static final Logger LOG = Logger.getLogger(ThriftClientPool.class);
 
   /** Get the configuration parameters used on the underlying client pool. */
-  protected static Config getPoolConfig() {
+  public static Config getPoolConfig() {
     Config conf = new Config();
     conf.minIdle = MIN_IDLE_CLIENTS_PER_ADDR;
     conf.maxIdle = -1;
@@ -68,15 +68,24 @@ public class ThriftClientPool<T extends TAsyncClient> {
     }
   }
 
-  public static class FrontendServiceMakerFactory
-    implements MakerFactory<FrontendService.AsyncClient> {
+  // MakerFactory implementations for Sparrow interfaces...
+  public static class NodeEnqueuServiceMakerFactory
+          implements MakerFactory<NodeEnqueueService.AsyncClient> {
     @Override
-    public FrontendService.AsyncClient create(TNonblockingTransport tr,
-        TAsyncClientManager mgr, TProtocolFactory factory) {
-      return new FrontendService.AsyncClient(factory, mgr, tr);
+    public NodeEnqueueService.AsyncClient create(TNonblockingTransport tr,
+                                              TAsyncClientManager mgr, TProtocolFactory factory) {
+      return new NodeEnqueueService.AsyncClient(factory, mgr, tr);
     }
   }
 
+  public static class NodeMonitorServiceMakerFactory
+          implements MakerFactory<NodeMonitorService.AsyncClient> {
+    @Override
+    public NodeMonitorService.AsyncClient create(TNonblockingTransport tr,
+                                              TAsyncClientManager mgr, TProtocolFactory factory) {
+      return new NodeMonitorService.AsyncClient(factory, mgr, tr);
+    }
+  }
 
   private class PoolFactory implements KeyedPoolableObjectFactory<InetSocketAddress, T> {
     // Thrift clients do not expose their underlying transports, so we track them
@@ -140,7 +149,7 @@ public class ThriftClientPool<T extends TAsyncClient> {
   }
 
   /** Constructor (for unit tests) which overrides default configuration. */
-  protected ThriftClientPool(MakerFactory<T> maker, Config conf) {
+  public ThriftClientPool(MakerFactory<T> maker, Config conf) {
     this(maker);
     pool.setConfig(conf);
   }
