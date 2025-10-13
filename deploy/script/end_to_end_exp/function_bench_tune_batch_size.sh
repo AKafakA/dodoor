@@ -8,18 +8,15 @@ BATCH_SIZES="50 25 100 75 150 200"
 CPU_WEIGHTS="1.0"
 DURATION_WEIGHTS="0.5"
 SCHEDULERS="dodoor"
-#SCHEDULERS="dodoor"
 LOG_LEVEL="${LOG_LEVEL:-info}"
-#SCHEDULERS="sparrow dodoor"
 
 # Dataset is constant and not iterated over.
 DATA_PATH="deploy/resources/data/function_bench"
 TASK_DISTRIBUTION="100-0-0"
-BRANCH_NAME="traceback"
+BRANCH_NAME="main"
 REBUILD="false"
 STATIC_CONFIG_PATH="~/dodoor/config.conf"
 HOST_CONFIG_PATH="~/cloud_lab/host_config.json"
-#HOST_CONFIG_PATH="~/dodoor/deploy/resources/host_addresses/cloud_lab/mask_host_config.json"
 TASK_CONFIG_PATH="~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json"
 LOG_DIR_PREFIX="function_100k_tune_batch"
 NUM_REQUESTS=100000
@@ -28,8 +25,6 @@ RUN_EXPERIMENT="true"
 EXPERIMENT_TIMEOUT_IN_MIN=40
 QPS="200"
 MAX_DURATIONS="600"
-#QPS="30"
-#MAX_DURATIONS="30"
 RESTRICT_FIFO="true"
 ENABLE_BACKGROUND_QUERY="false"
 

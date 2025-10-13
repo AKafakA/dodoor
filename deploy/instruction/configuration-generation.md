@@ -1,5 +1,9 @@
 
-  
+This guide explains how to generate host/IP configurations based on your testbed and how to produce experiment configs used by the services and scripts. Dodoor currently runs without a simulator and does not include late-binding in the default docs.
+
+---
+
+Host/IP Configuration
 
 This process generates the necessary host and IP configuration files based on your hardware setup.
 
@@ -15,22 +19,30 @@ This process generates the necessary host and IP configuration files based on yo
 
     This will generate the host and IP configuration files under `deploy/resources/host_addresses/cloud_lab/`.
 
-The basic host setting is defined in `deploy/resources/configuration/host_config_template.json`, which includes the host name, IP address, and other hardware specifications and number of testing slots
+The basic host setting is defined in `deploy/resources/configuration/host_config_template.json`, which includes host name, IP, node type, and number of slots. Update this file to match your hardware (e.g., mix of m510/xl170/c6525-25g/c6620) and desired per-host concurrency.
 
 ---
-## Experiment Configuration Generation
+Experiment Configuration Generation
 
-The experiment configuration contains the tunable parameters for each experiment, such as  scheduler, beta abd batch size can be generated using the following script:
+The experiment configuration contains the tunable parameters for each experiment (scheduler, beta, batch size, weights, etc.). Generate it with:
 
 ```
 python deploy/python/scripts/config_generator.py
 ```
-However, such configuration generation is part of sub-experiments and auto included in the testing scripts, discussed under instruction/experiment.md.
+
+Key flags you may care about:
+- `--scheduler-type`: `dodoor` | `powerOfTwo` | `prequal` | `random`
+- `--beta`, `--batch-size`, `--scheduler-num-tasks-update`
+- `--cpu_weight`, `--memory_weight`, `--disk_weight`, `--duration_weight`
+- `--network_interface` for binding
+
+Note: late-binding (Sparrow) is not part of the default instructions due to open issues.
+
+This generation step is also called by the end-to-end scripts; see `deploy/instruction/experiment.md`.
 
 
 ---
-
-## Task Configuration Generation
+Task Configuration Generation
 
 This process is for profiling new functions or node types to determine their resource requirements and execution times.
 
@@ -46,7 +58,7 @@ If you're introducing new tasks, follow these steps first:
 
 ### Step 1: Initial Environment Setup & Profiling
 
-First, we'll profile the tasks on a new host without any resource limitations. For this example, we'll use an `xl170` node in Cloudlab.
+First, profile the tasks on a host without resource limits. For example, on a CloudLab `xl170` node:
 
 1.  **SSH into the host and set up the environment**:
 
@@ -66,7 +78,7 @@ First, we'll profile the tasks on a new host without any resource limitations. F
 
 ### Step 2: Merge Initial Profiles & Define Resource Slots
 
-Next, transfer the profiled configurations to your local machine to merge them. Here, you'll also define the maximum number of tasks (slots) that can run concurrently on a single host.
+Next, transfer the profiled configs to your local machine to merge them. Here, you also define the maximum number of tasks (slots) that can run concurrently on a single host.
 
 1.  **Copy the profiled configs to your local machine**:
 
@@ -88,7 +100,7 @@ Next, transfer the profiled configurations to your local machine to merge them. 
 
 ### Step 3: Profile Tasks in Docker with Resource Limits
 
-Now, we'll run a second profiler to estimate the task durations within a Docker container that has resource restrictions.
+Now, run a second profiler to estimate task durations within a Docker container under resource limits.
 
 1.  **SSH into the host and run the Docker profiler**:
 
@@ -120,5 +132,31 @@ Finally, merge the Docker-based profiling results to generate the final configur
     python deploy/python/scripts/profiler_merge.py --simple-merge
     ```
 
-2.  **Done!** The final, complete configuration file will be located at `dodoor/deploy/resources/configuration/generated/merged_profiler_config.json`.
-````
+2.  **Done!** The final configuration will be at `dodoor/deploy/resources/configuration/generated/merged_profiler_config.json`.
+
+---
+
+Service Startup (Manual)
+
+Most experiments use the provided scripts to start services. If you prefer to start them manually with `ServiceDaemon`:
+
+- Node on a worker:
+  ```bash
+  java -cp target/dodoor-1.0-SNAPSHOT.jar \
+    edu.cam.dodoor.ServiceDaemon \
+    -c deploy/resources/configuration/example_dodoor_configuration.conf \
+    -hc deploy/resources/host_addresses/cloud_lab/host_config.json \
+    -tc deploy/resources/configuration/generated_config/merged_profiler_config.json \
+    -d false -s false -n true
+  ```
+- Scheduler + Data Store on control node:
+  ```bash
+  java -cp target/dodoor-1.0-SNAPSHOT.jar \
+    edu.cam.dodoor.ServiceDaemon \
+    -c deploy/resources/configuration/example_dodoor_configuration.conf \
+    -hc deploy/resources/host_addresses/cloud_lab/host_config.json \
+    -tc deploy/resources/configuration/generated_config/merged_profiler_config.json \
+    -d true -s true -n false
+  ```
+
+Tip: Some helper scripts use a placeholder username (e.g., `asdwb`). Replace with your own where needed.
