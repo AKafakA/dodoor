@@ -173,14 +173,14 @@ def plot_metric_category(df, category_name, plot_config, output_dir):
             sns.lineplot(data=qps_df, x='timestamp', y=metric, hue='scheduler',
                          ax=ax, palette=color_map, linewidth=2.5, legend=False)
 
-            if row_idx == 0: ax.set_title(f'{qps} QPS', fontsize=18, pad=20)
+            if row_idx == 0: ax.set_title(f'{qps} QPS', fontsize=25, pad=20)
             if col_idx == 0:
-                ax.set_ylabel(ylabel, fontsize=15)
+                ax.set_ylabel(ylabel, fontsize=25)
             else:
                 ax.set_ylabel('')
 
             if row_idx == num_metrics - 1:
-                ax.set_xlabel('Time (seconds)', fontsize=15)
+                ax.set_xlabel('Time (seconds)', fontsize=25)
             else:
                 ax.set_xlabel('')
 
@@ -190,7 +190,7 @@ def plot_metric_category(df, category_name, plot_config, output_dir):
 
     handles = [mpatches.Patch(color=color_map[scheduler], label=scheduler) for scheduler in scheduler_order]
     fig.legend(handles=handles, loc='upper center', bbox_to_anchor=(0.5, 1.0),
-               ncol=len(handles), fontsize=15, title='Scheduler', title_fontsize=16)
+               ncol=len(handles), fontsize=25, title='Scheduler', title_fontsize=25)
 
     fig.suptitle(f'Node-Level {category_name} Comparison Across Workloads', fontsize=24, y=1.08)
     plt.tight_layout(rect=[0, 0, 1, 0.93])

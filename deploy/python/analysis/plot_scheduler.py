@@ -139,7 +139,7 @@ def plot_metrics(df, output_dir):
 
     plot_config = {
         'rpc_count': ('RPC count', 'RPC Messages handled by scheduler', False),
-        'throughput': ('throughput as number of requests / wall time', 'Throughput', True),
+        'throughput': ('Throughput', 'Throughput', True),
         'makespan_latency_mean': ('Mean Makespan Latency (ms)', 'Mean E2E Makespan Latency', False),
         'makespan_latency_p99': ('P95 Makespan Latency (ms)', '95th Percentile E2E Makespan Latency', False),
         'scheduling_latency_mean': ('Mean Scheduling Latency (ms)', 'Mean Scheduling Latency', False),
@@ -253,7 +253,7 @@ def plot_metrics(df, output_dir):
                                               facecolor='#d62728', alpha=0.4, ec='#d62728', lw=1.5, ls='--')
                     ax.add_patch(rect)
                     ax.text(red_bar_x, red_box_y + red_box_height * 1.05, f'{cost_pct:.1f}%',
-                            ha='center', va='bottom', color='white', fontsize=9, fontweight='bold',
+                            ha='center', va='bottom', color='white', fontsize=10, fontweight='bold',
                             bbox=dict(boxstyle='round,pad=0.3', facecolor='#d62728', alpha=0.8, edgecolor='#d62728'))
 
                 # GREEN ZONE: Improvement - compare dodoor with next-worse baseline
@@ -306,19 +306,19 @@ def plot_metrics(df, output_dir):
                                                       facecolor='#2ca02c', alpha=0.4, ec='#2ca02c', lw=1.5, ls='--')
                             ax.add_patch(rect)
                             ax.text(green_bar_x, green_box_y + green_box_height * 1.05, f'{improvement_pct:.1f}%',
-                                    ha='center', va='bottom', color='white', fontsize=9, fontweight='bold',
+                                    ha='center', va='bottom', color='white', fontsize=10, fontweight='bold',
                                     bbox=dict(boxstyle='round,pad=0.3', facecolor='#2ca02c', alpha=0.8, edgecolor='#2ca02c'))
 
-        ax.set_title(title, fontsize=14, pad=15)
-        ax.set_ylabel(ylabel, fontsize=10)
+        ax.set_title(title, fontsize=20, pad=15)
+        ax.set_ylabel(ylabel, fontsize=15)
         ax.set_xticks(x_coords)
-        ax.set_xticklabels(qps_values)
+        ax.set_xticklabels(qps_values, fontsize=13)
         ax.grid(axis='y', linestyle='--', alpha=0.7)
         ax.spines[['top', 'right']].set_visible(False)
         ax.set_facecolor('#f7f7f7')
 
     # --- Final Touches on the Combined Figure ---
-    axes[4].set_xlabel('Queries Per Second (QPS)', fontsize=12)
+    axes[4].set_xlabel('Queries Per Second (QPS)', fontsize=15)
 
     handles = [mpatches.Patch(color=color_map[scheduler], label=scheduler) for scheduler in scheduler_order]
     if improvement_shown_globally:
@@ -329,7 +329,7 @@ def plot_metrics(df, output_dir):
                                      label='Dodoor Cost (vs best baseline)'))
 
     fig.legend(handles=handles, loc='upper center', bbox_to_anchor=(0.5, 1.0),
-               ncol=len(handles), fontsize=12, title_fontsize=13, title='Scheduler')
+               ncol=len(handles), fontsize=15, title_fontsize=15, title='Scheduler')
 
     fig.suptitle('Scheduler Performance Comparison vs. QPS (Fixed Order)', fontsize=20, y=1.06)
     plt.tight_layout(rect=[0, 0, 1, 0.95])
