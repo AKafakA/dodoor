@@ -55,7 +55,7 @@ Examples (adjust paths/ports for your environment):
 - Start Node on a worker
   ```bash
   java -cp target/dodoor-1.0-SNAPSHOT.jar \
-    edu.cam.dodoor.ServiceDaemon \
+    org.anon.scheduler.ServiceDaemon \
     -c deploy/resources/configuration/example_dodoor_configuration.conf \
     -hc deploy/resources/host_addresses/cloud_lab/host_config.json \
     -tc deploy/resources/configuration/generated_config/merged_profiler_config.json \
@@ -65,7 +65,7 @@ Examples (adjust paths/ports for your environment):
 - Start Scheduler and Data Store on the control node
   ```bash
   java -cp target/dodoor-1.0-SNAPSHOT.jar \
-    edu.cam.dodoor.ServiceDaemon \
+    org.anon.scheduler.ServiceDaemon \
     -c deploy/resources/configuration/example_dodoor_configuration.conf \
     -hc deploy/resources/host_addresses/cloud_lab/host_config.json \
     -tc deploy/resources/configuration/generated_config/merged_profiler_config.json \
@@ -75,14 +75,14 @@ Examples (adjust paths/ports for your environment):
 ### Running Experiments
 
 - Config generation and profiling: see `deploy/instruction/configuration-generation.md`.
-- CloudLab multi-host orchestration and collection: `deploy/script/single_exp.sh` and `deploy/script/test_cloudlab.sh`.
+- testbed multi-host orchestration and collection: `deploy/script/single_exp.sh` and `deploy/script/test_testbed.sh`.
 - Python evaluation tools and workloads live under `deploy/python` (analysis, data generation, and function benchmarks).
 
 ## User Guide
 
 ### Submitting a Job
 
-Submit via the `SchedulerService` Thrift API. A job is a list of `TTaskSpec` items with resource requirements, duration, and type. See `src/main/java/edu/cam/dodoor/client/DodoorClient.java` and `src/main/java/edu/cam/dodoor/client/TaskTracePlayer.java` for examples (trace replay, Poisson/QPS replay).
+Submit via the `SchedulerService` Thrift API. A job is a list of `TTaskSpec` items with resource requirements, duration, and type. See `src/main/java/org/anon/scheduler/client/DodoorClient.java` and `src/main/java/org/anon/scheduler/client/TaskTracePlayer.java` for examples (trace replay, Poisson/QPS replay).
 
 ### Monitoring the System
 
@@ -90,6 +90,5 @@ Submit via the `SchedulerService` Thrift API. A job is a list of `TTaskSpec` ite
 
 ### Extending the System
 
-- Add a policy: implement `edu.cam.dodoor.scheduler.Scheduler` and wire in `SchedulerImpl`/`SchedulerThrift`.
+- Add a policy: implement `org.anon.scheduler.scheduler.Scheduler` and wire in `SchedulerImpl`/`SchedulerThrift`.
 - Add workloads: define tasks and resource shapes in the task config; server backends support Linux `stress-ng` and Docker-executed Python functions.
-

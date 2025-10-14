@@ -46,6 +46,10 @@ logs/
 target/
 /deploy/figure/
 
+# Prevent accidental inclusion of experiment logs and plots in submissions
+deploy/resources/log/
+deploy/plots/
+
 *__pycache__/
 
 deploy/resources/cl_manifest.xml

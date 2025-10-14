@@ -1,5 +1,5 @@
 #
-# Copyright 2024 Univeristy of Cambridge
+# Copyright 2024 Anonymous Institution (For Review)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 include 'types.thrift'
 
-namespace java edu.cam.dodoor.thrift
+namespace java org.anon.scheduler.thrift
 
 # SchedulerService for scheduling tasks
 service SchedulerService {

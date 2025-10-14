@@ -69,7 +69,7 @@ def parse_args():
                       help="The time scale to replay the tasks in the trace, used to speed up the replay process for "
                            "debugging scheduler performances")
     # Removed host load knobs
-    parser.add_option("--docker_image_name", default="wd312/dodoor-function-bench",
+    parser.add_option("--docker_image_name", default="anonymous/dodoor-function-bench",
                         help="The docker image name to be used for the tasks in the trace")
     parser.add_option("--user_name_test_host", default="asdwb",
                         help="The user name to be used for the test host, used to set the correct permissions for.")

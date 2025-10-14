@@ -15,7 +15,7 @@
     "node.enqueue.thrift.ports": [20502],
     "node.types": [
       {
-        "node.type": "m510",
+        "node.type": "node",
         "system.cores": 8,
         "system.memory": 65536,
         "system.disks": 0,

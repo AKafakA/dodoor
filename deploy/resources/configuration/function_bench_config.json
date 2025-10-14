@@ -52,7 +52,7 @@
                         2365
                     ]
                 },
-                "m510": {
+                "node": {
                     "resourceVector": {
                         "cores": [
                             2,
@@ -154,7 +154,7 @@
                         1575
                     ]
                 },
-                "m510": {
+                "node": {
                     "resourceVector": {
                         "cores": [
                             4,
@@ -256,7 +256,7 @@
                         10412
                     ]
                 },
-                "m510": {
+                "node": {
                     "resourceVector": {
                         "cores": [
                             4,
@@ -358,7 +358,7 @@
                         55188
                     ]
                 },
-                "m510": {
+                "node": {
                     "resourceVector": {
                         "cores": [
                             2,
@@ -460,7 +460,7 @@
                         6316
                     ]
                 },
-                "m510": {
+                "node": {
                     "resourceVector": {
                         "cores": [
                             2,
@@ -562,7 +562,7 @@
                         279635
                     ]
                 },
-                "m510": {
+                "node": {
                     "resourceVector": {
                         "cores": [
                             4,
@@ -664,7 +664,7 @@
                         10853
                     ]
                 },
-                "m510": {
+                "node": {
                     "resourceVector": {
                         "cores": [
                             4,
@@ -766,7 +766,7 @@
                         1822
                     ]
                 },
-                "m510": {
+                "node": {
                     "resourceVector": {
                         "cores": [
                             4,

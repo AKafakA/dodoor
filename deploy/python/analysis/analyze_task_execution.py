@@ -25,7 +25,7 @@ def parse_manifest(manifest_path: str) -> Dict[str, str]:
         manifest_path: Path to manifest.xml file
 
     Returns:
-        Dictionary mapping node names (e.g., 'amd105') to hardware types (e.g., 'm510')
+        Dictionary mapping node names (e.g., 'amd105') to hardware types (e.g., 'node')
     """
     tree = ET.parse(manifest_path)
     root = tree.getroot()
@@ -42,7 +42,7 @@ def parse_manifest(manifest_path: str) -> Dict[str, str]:
         if vnode is not None:
             node_name = vnode.get('name')
 
-            # Get hardware type (e.g., 'm510')
+            # Get hardware type (e.g., 'node')
             hardware = node.find('.//ns:hardware_type', ns)
             if hardware is not None:
                 hardware_type = hardware.get('name')

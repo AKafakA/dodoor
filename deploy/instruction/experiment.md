@@ -1,4 +1,4 @@
-This guide explains how to run end-to-end experiments on a multi-host testbed (e.g., CloudLab) and generate plots. Experiments use `ServiceDaemon` to start Scheduler, Data Store, and Node services. The simulator is not used; late-binding is not included in default runs.
+This guide explains how to run end-to-end experiments on a multi-host testbed (e.g., testbed) and generate plots. Experiments use `ServiceDaemon` to start Scheduler, Data Store, and Node services. The simulator is not used; late-binding is not included in default runs.
 
 Prerequisites
 

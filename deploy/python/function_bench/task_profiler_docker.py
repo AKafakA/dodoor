@@ -247,7 +247,7 @@ if __name__ == "__main__":
     parser.add_argument('--verbose', action='store_true', help="Enable verbose output.")
 
     # --- Docker-specific Arguments ---
-    parser.add_argument('--docker-image', type=str, default="wd312/dodoor-function-bench",
+    parser.add_argument('--docker-image', type=str, default="anonymous/dodoor-function-bench",
                         help="Docker image to use for profiling. Please checking setup_docker.sh for more information.")
     parser.add_argument('--min-docker-cpus', type=float, default=1.0,
                         help="CPU limit for the Docker container.")
