@@ -1,6 +1,6 @@
 # Dodoor: Decentralized Scheduling with Cached Load and Heterogeneous Tasks
 
-Dodoor is a research prototype for decentralized task scheduling on heterogeneous clusters. It makes placement decisions using cached server load snapshots that are refreshed in batches, avoiding per-decision runtime probing. For heterogeneous tasks, Dodoor uses a load score that captures resource alignment (CPU, memory, disk) and anticipated wait time, following the approach described in the accompanying paper draft.
+Dodoor is a research prototype for decentralized task scheduling on heterogeneous clusters. It makes placement decisions using cached server load snapshots that are refreshed in batches, avoiding per-decision runtime probing. For heterogeneous tasks, Dodoor uses a load score that captures resource alignment (CPU, memory, disk) and anticipated wait time, following the approach described in the accompanying paper at [link](https://arxiv.org/abs/2510.12889)
 
 ## Architecture
 
@@ -92,4 +92,18 @@ Submit via the `SchedulerService` Thrift API. A job is a list of `TTaskSpec` ite
 
 - Add a policy: implement `edu.cam.dodoor.scheduler.Scheduler` and wire in `SchedulerImpl`/`SchedulerThrift`.
 - Add workloads: define tasks and resource shapes in the task config; server backends support Linux `stress-ng` and Docker-executed Python functions.
+
+### Bibetex
+If you feel this useful, please consider to cite our paper 
+```
+@misc{da2025dodoorefficientrandomizeddecentralized,
+      title={Dodoor: Efficient Randomized Decentralized Scheduling with Load Caching for Heterogeneous Tasks and Clusters}, 
+      author={Wei Da and Evangelia Kalyvianaki},
+      year={2025},
+      eprint={2510.12889},
+      archivePrefix={arXiv},
+      primaryClass={cs.DC},
+      url={https://arxiv.org/abs/2510.12889}, 
+}
+```
 
