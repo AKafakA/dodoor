@@ -56,3 +56,22 @@ deploy/resources/data/raw_data/
 deploy/resources/old_logs/
 
 *.out
+# Claude Code per-user permissions overrides
+.claude/settings.local.json
+.claude/
+
+# Artifact-evaluation runtime outputs (kept local; never committed)
+deploy/resources/log/
+deploy/resources/log_ae/
+deploy/plots_ae/
+tier3a_results/
+tier3b_results/
+tier4_results/
+.dodoor_*.pid
+.dodoor_*.sh
+.dodoor_*.log
+.tier3*_wallclock.txt
+.tier3*_watcher.pid
+.rsync.pid
+dodoor_*_run.log
+Dodoor-artifact-euro-par-2026.zip

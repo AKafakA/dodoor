@@ -81,8 +81,9 @@ def main():
     parser.add_argument(
         "--check_interval_in_seconds",
         type=int,
-        default=600,
-        help="Interval in seconds to check the remote log file for updates. Default is 10 minutes (600 seconds)."
+        default=30,
+        help="Interval in seconds to check the remote log file for updates. Default is 30s (was 600s; "
+             "10-minute polling drowned out short experiments before the scheduler had a chance to write metrics)."
     )
 
     args = parser.parse_args()
@@ -104,7 +105,11 @@ def main():
     timeout_seconds = args.timeout * 60
     check_interval = args.check_interval_in_seconds
 
-    max_retries = 2  # Maximum retries for SSH command
+    # Tolerate roughly 30 minutes of consecutive transient errors (e.g. the
+    # scheduler is still starting and the metrics log doesn't exist yet, or
+    # SSH hiccups). Successful grep resets the counter.
+    max_consecutive_errors = max(60, (30 * 60) // max(check_interval, 1))
+    consecutive_errors = 0
 
     try:
         while True:
@@ -123,12 +128,17 @@ def main():
                 )
 
                 if result.returncode > 1:  # 0=found, 1=not found. >1 is an error.
-                    print(f"\n❌ SSH or remote command error (Exit Code: {result.returncode}):")
+                    consecutive_errors += 1
+                    print(f"\n⚠️  SSH/grep error (Exit Code: {result.returncode}; "
+                          f"consecutive {consecutive_errors}/{max_consecutive_errors}):")
                     print(f"   - Stderr: {result.stderr.strip()}")
-                    max_retries -= 1
-                    if max_retries <= 0:
-                        print("   - Maximum retries exceeded. Exiting.")
+                    if consecutive_errors >= max_consecutive_errors:
+                        print(f"   - Too many consecutive errors. Exiting.")
                         sys.exit(1)
+                    time.sleep(check_interval)
+                    continue
+                else:
+                    consecutive_errors = 0
 
                 selected_completed_count = 0
                 if result.stdout:

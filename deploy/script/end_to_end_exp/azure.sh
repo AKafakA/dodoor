@@ -3,37 +3,37 @@
 # --- Configuration & Iteration Parameters ---
 # All parameters are defined as lists. Add more space-separated values
 # to any variable to expand the number of experiment combinations.
-BETA_VALS="1.0"
-BATCH_SIZES="50"
-CPU_WEIGHTS="1.0"
-DURATION_WEIGHTS="0.5"
-SCHEDULERS="powerOfTwo dodoor prequal random"
+BETA_VALS="${BETA_VALS:-1.0}"
+BATCH_SIZES="${BATCH_SIZES:-50}"
+CPU_WEIGHTS="${CPU_WEIGHTS:-1.0}"
+DURATION_WEIGHTS="${DURATION_WEIGHTS:-0.5}"
+SCHEDULERS="${SCHEDULERS:-powerOfTwo dodoor prequal random}"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 
 # Dataset is constant and not iterated over.
-DATA_PATH="deploy/resources/data/azure_data"
-BRANCH_NAME="main"
-REBUILD="false"
-STATIC_CONFIG_PATH="~/dodoor/config.conf"
-HOST_CONFIG_PATH="~/cloud_lab/host_config.json"
-TASK_CONFIG_PATH="~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json"
-LOG_DIR_PREFIX="azure"
-NUM_REQUESTS=4000
-CODE_UPDATE="false"
-RUN_EXPERIMENT="true"
-EXPERIMENT_TIMEOUT_IN_MIN=600
-QPS="1 5 10 20"
-MAX_DURATIONS="600"
-RESTRICT_FIFO="true"
-ENABLE_BACKGROUND_QUERY="false"
-NOISE_INTENSITY="0.0"
+DATA_PATH="${DATA_PATH:-deploy/resources/data/azure_data}"
+BRANCH_NAME="${BRANCH_NAME:-main}"
+REBUILD="${REBUILD:-false}"
+STATIC_CONFIG_PATH="${STATIC_CONFIG_PATH:-~/dodoor/config.conf}"
+HOST_CONFIG_PATH="${HOST_CONFIG_PATH:-~/cloud_lab/host_config.json}"
+TASK_CONFIG_PATH="${TASK_CONFIG_PATH:-~/dodoor/deploy/resources/configuration/generated_config/merged_profiler_config.json}"
+LOG_DIR_PREFIX="${LOG_DIR_PREFIX:-azure}"
+NUM_REQUESTS="${NUM_REQUESTS:-4000}"   # paper-exact
+CODE_UPDATE="${CODE_UPDATE:-false}"
+RUN_EXPERIMENT="${RUN_EXPERIMENT:-true}"
+EXPERIMENT_TIMEOUT_IN_MIN="${EXPERIMENT_TIMEOUT_IN_MIN:-600}"
+QPS="${QPS:-1 5 10 20}"
+MAX_DURATIONS="${MAX_DURATIONS:-600}"
+RESTRICT_FIFO="${RESTRICT_FIFO:-true}"
+ENABLE_BACKGROUND_QUERY="${ENABLE_BACKGROUND_QUERY:-false}"
+NOISE_INTENSITY="${NOISE_INTENSITY:-0.0}"
 
-RUN_WARMUP="true"
-WARMUP_REQUESTS=100
-WARMUP_QPS=5
-WARMUP_TRACE="${DATA_PATH}/warmup"
+RUN_WARMUP="${RUN_WARMUP:-true}"
+WARMUP_REQUESTS="${WARMUP_REQUESTS:-100}"
+WARMUP_QPS="${WARMUP_QPS:-5}"
+WARMUP_TRACE="${WARMUP_TRACE:-${DATA_PATH}/warmup}"
 
-ENABLE_PER_TASK_LOGS="false"
+ENABLE_PER_TASK_LOGS="${ENABLE_PER_TASK_LOGS:-false}"
 
 # --- Experiment Execution ---
 # Loop through every combination of the parameters defined above.
@@ -67,7 +67,7 @@ for restrict_fifo in $RESTRICT_FIFO; do
                   echo "----------------------------------------------------------------------"
                     # Execute the experiment script with the current combination of parameters.
                     # Argument order matches your original script: $l $m $n $o $k $j $DATA_PATH $i
-                  sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$data_path" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$log_dir_prefix" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS" "$CODE_UPDATE" "$RUN_EXPERIMENT" "$experiment_timout_in_min" "$qps" "$restrict_fifo" "$ENABLE_BACKGROUND_QUERY" "false" "$LOG_LEVEL" "$RUN_WARMUP" "$WARMUP_REQUESTS" "$WARMUP_QPS" "$WARMUP_TRACE"
+                  sh deploy/script/single_exp.sh "$beta" "$batch" "$cpu_w" "$duration_w" "$data_path" "$scheduler" "$BRANCH_NAME" "$REBUILD" "$log_dir_prefix" "$STATIC_CONFIG_PATH" "$HOST_CONFIG_PATH" "$TASK_CONFIG_PATH" "$NUM_REQUESTS" "$CODE_UPDATE" "$RUN_EXPERIMENT" "$experiment_timout_in_min" "$qps" "$restrict_fifo" "$ENABLE_BACKGROUND_QUERY" "${DEBUG_LOGS:-true}" "$LOG_LEVEL" "$RUN_WARMUP" "$WARMUP_REQUESTS" "$WARMUP_QPS" "$WARMUP_TRACE" "$ENABLE_PER_TASK_LOGS"
     done
               done
             done

@@ -8,6 +8,11 @@ manifest_path = "deploy/resources/configuration/manifest.xml"
 template_json_path = "deploy/resources/configuration/host_config_template.json"
 host_ssh_path = "deploy/resources/host_addresses/cloud_lab"
 
+# CloudLab account that the AE reviewer (or experimenter) holds. Set via env
+# var so a single manifest profile can be reused across accounts without code
+# edits.
+cl_user = os.environ.get("CLOUDLAB_USER") or os.environ.get("USER") or "asdwb"
+
 if not os.path.exists(host_ssh_path):
     os.makedirs(host_ssh_path)
 
@@ -52,15 +57,15 @@ with open(host_files, "w+") as f, open(scheduler_files, "w+") as s, open(node_fi
     j = 0
     for node in nodes:
         node_info = nodes[node]
-        f.write("asdwb@" + node_info["hostname"] + "\n")
+        f.write(cl_user + "@" + node_info["hostname"] + "\n")
         if j < num_schedulers:
-            s.write("asdwb@" + node_info["hostname"] + "\n")
+            s.write(cl_user + "@" + node_info["hostname"] + "\n")
             sip.write(node + ":" + node_info["ip_adresses"] + "\n")
             j += 1
         else:
-            n.write("asdwb@" + node_info["hostname"] + "\n")
+            n.write(cl_user + "@" + node_info["hostname"] + "\n")
             nip.write(node + ":" + node_info["ip_adresses"] + "\n")
-        host_names.append("asdwb@" + node_info["hostname"])
+        host_names.append(cl_user + "@" + node_info["hostname"])
         if node_info["hardware_type"] == host_json["scheduler"]["type"]:
             host_json["scheduler"]["hosts"].append(node_info["ip_adresses"])
             host_json["datastore"]["hosts"].append(node_info["ip_adresses"])

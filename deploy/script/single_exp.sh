@@ -32,9 +32,11 @@ WARMUP_TRACE=${25}
 ENABLE_PER_TASK_LOGS=${26}
 
 
+CL_USER="${CLOUDLAB_USER:-${USER:-asdwb}}"
+
 if [ "$CODE_UPDATE" = "true" ]; then
-  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "cd dodoor && sudo chown -R asdwb .git"
-  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "cd dodoor && git config --global --add safe.directory /users/asdwb/dodoor"
+  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "cd dodoor && sudo chown -R ${CL_USER} .git"
+  parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "cd dodoor && git config --global --add safe.directory /users/${CL_USER}/dodoor"
   parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "cd dodoor && git fetch -a"
   parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "cd dodoor && git checkout $BRANCH_NAME && git reset --hard HEAD~20 && git pull"
 fi
@@ -46,10 +48,14 @@ else
   echo "Skipping rebuild step."
 fi
 
-parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "rm ~/*.log && rm ~/*.out && rm ~/*.err" > /dev/null 2>&1
+# Clean previous combo's logs but PRESERVE .err files: if a service crashes,
+# its .err is the only diagnostic we have, and it must survive the next
+# combo's startup rm so we can fetch it via collect_logs (DEBUG_LOGS=true)
+# or directly via ssh after the failure.
+parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  "rm -f ~/*.log ~/*.out" > /dev/null 2>&1
 sleep 5
 #parallel-ssh -h deploy/resources/host_addresses/cloud_lab/test_host  -i "rm ~/*.log && rm ~/*.out"
-sh deploy/script/test_cloudlab.sh $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $HOST_CONFIG_PATH $TASK_CONFIG_PATH $STATIC_CONFIG_PATH $NUM_REQUESTS $RUN_EXPERIMENT $EXPERIMENT_TIMEOUT_IN_MIN $QPS $RESTRICT_FIFO $ENABLE_BACKGROUND_QUERY $LOG_LEVEL $WARMUP $WARMUP_REQUESTS $WARMUP_QPS $WARMUP_TRACE $ENABLE_PER_TASK_LOGS
+bash deploy/script/test_cloudlab.sh $SCHEDULER $BATCH_SIZE $BETA $CPU_WEIGHT $DATA_PATH $DURATION_WEIGHT $HOST_CONFIG_PATH $TASK_CONFIG_PATH $STATIC_CONFIG_PATH $NUM_REQUESTS $RUN_EXPERIMENT $EXPERIMENT_TIMEOUT_IN_MIN $QPS $RESTRICT_FIFO $ENABLE_BACKGROUND_QUERY $LOG_LEVEL $WARMUP $WARMUP_REQUESTS $WARMUP_QPS $WARMUP_TRACE $ENABLE_PER_TASK_LOGS
 
 sleep 5
 if [ "$RUN_EXPERIMENT" = "true" ]; then

@@ -1,3 +1,4 @@
+import os
 from optparse import OptionParser
 
 
@@ -71,8 +72,10 @@ def parse_args():
     # Removed host load knobs
     parser.add_option("--docker_image_name", default="wd312/dodoor-function-bench",
                         help="The docker image name to be used for the tasks in the trace")
-    parser.add_option("--user_name_test_host", default="asdwb",
-                        help="The user name to be used for the test host, used to set the correct permissions for.")
+    parser.add_option("--user_name_test_host",
+                        default=os.environ.get("CLOUDLAB_USER") or os.environ.get("USER") or "asdwb",
+                        help="The user name to be used for the test host, used to set the correct permissions for. "
+                             "Defaults to $CLOUDLAB_USER then $USER.")
     parser.add_option("--restrict_fifo", default=False,
                         help="If FIFO, will only try to run the first task in the pending list, and block rests")
     parser.add_option("--start_tracking_task_makespan_id", default=0,
